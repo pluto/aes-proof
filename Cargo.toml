@@ -12,11 +12,16 @@ aes-gcm = "0.9"
 aes-gcm-siv = "0.11.1"
 ghash = "0.5.1"
 cipher = "=0.5.0-pre.4"
-ark-circom = { git = "https://github.com/gakonst/ark-circom.git" }
-ark-bn254 = { version = "=0.4.0" }
+ark-circom = { git = "https://github.com/vimwitch/circom-compat.git", version = "0.1.0" }
+
+ark-crypto-primitives = { version = "=0.4.0" }
 ark-ec = { version = "=0.4.1", default-features = false, features = ["parallel"] }
 ark-ff = { version = "=0.4.1", default-features = false, features = ["parallel", "asm"] }
 ark-std = { version = "=0.4.0", default-features = false, features = ["parallel"] }
-ark-crypto-primitives = { version = "=0.4.0" }
-ark-groth16 = { version = "=0.4.0", default-features = false, features = ["parallel", "std"] }
-ark-relations = { version = "=0.4.0", features=["std"] }
+ark-bn254 = { version = "=0.4.0" }
+ark-groth16 = { version = "=0.4.0", default-features = false, features = ["parallel"] }
+ark-poly = { version = "=0.4.1", default-features = false, features = ["parallel"] }
+ark-relations = { version = "=0.4.0", default-features = false }
+ark-serialize = { version = "=0.4.1", default-features = false }
+
+ark-zkey = { path = "../ark-zkey"}

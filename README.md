@@ -40,9 +40,9 @@ The goal of this repo is to create a proof-of-concept for our AES requests.
 *generate trusted setup*
 NOTE: This is currently unused because the rust zkey parser is horrible. 
 
-`cd build && wget "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_10.ptau" && cd ..`
+`cd build && curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_10.ptau" --output './build/powersOfTau28_hez_final_10.ptau' && cd ..`
 
-`cd build && wget "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_19.ptau" && cd ..`
+`cd build && curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_19.ptau" --output './build/powersOfTau28_hez_final_19.ptau' && cd ..`
 
 `SJS_BIN=$(dirname $(npm list -g --depth=0 | head -n 1)); SJS_BIN+="/bin/snarkjs"`
 
