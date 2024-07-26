@@ -11,7 +11,7 @@ window.generateAndLogProof = async function(circuit) {
 
 const getKeys = async function(circuit) {
     const wasmUrl = new URL(`${circuit}.wasm`, `https://localhost:8090/build/${circuit}_js/`).toString();
-    const zkeyUrl = new URL(`test_new_0001.zkey`, "https://localhost:8090/build/").toString();
+    const zkeyUrl = new URL(`test_0000.zkey`, "https://localhost:8090/build/").toString();
     const wasm = await fetch(wasmUrl).then((r) => r.arrayBuffer());
     const zkey = await fetch(zkeyUrl).then((r) => r.arrayBuffer());
     return { wasm, zkey };

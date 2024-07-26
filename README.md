@@ -17,6 +17,18 @@ The goal of this repo is to create a proof-of-concept for our AES requests.
 7. Concerningly, these proofs verify with invalid ciphertext (only output is invalid)
 
 
+## Browser Execution
+
+*install node*
+
+*setup js*
+`cd client && npm install`
+`cd client && npm start`
+
+*add build symlink*
+`cd client/static && ln -s ../../build build`
+
+
 ## Installation
 
 *install ark-zkey*
