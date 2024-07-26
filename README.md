@@ -19,6 +19,9 @@ The goal of this repo is to create a proof-of-concept for our AES requests.
 
 ## Installation
 
+*install ark-zkey*
+`git clone https://github.com/zkmopro/ark-zkey`
+
 *install circom*
 
 `git clone https://github.com/iden3/circom.git`
