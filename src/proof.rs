@@ -1,8 +1,7 @@
-use ark_bn254::{Bn254, Fr, Fq};
+use ark_bn254::{Bn254, Fr};
 use ark_circom::{circom::R1CSFile, CircomBuilder, CircomConfig};
 use ark_crypto_primitives::snark::SNARK;
 use ark_ec::pairing::Pairing;
-use ark_ff::PrimeField;
 use ark_groth16::Groth16;
 use ark_std::rand::thread_rng;
 use std::fs::File;
@@ -70,7 +69,6 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
 
     // HANGING? Why.
     println!("gen params");
-    use std::io::BufReader;
     // ./build/tiny.zkey
     // let mut file = File::open("./build/test_new_0001.zkey").unwrap();
     // let mut reader = BufReader::new(file);
