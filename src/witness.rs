@@ -11,14 +11,17 @@ use ctr;
 use ghash;
 use hex;
 
+type Ctr32BE<Aes128> = ctr::CtrCore<Aes128, ctr::flavors::Ctr32BE>;
 type Aes256Ctr32BE = ctr::Ctr32BE<Aes256>;
-type Block = GenericArray<u8, U16>;    
+type Block = GenericArray<u8, U16>;
 type Aes128Ctr32BE = ctr::Ctr32BE<aes::Aes128>; // Note: Ctr32BE is used in AES GCM
 
 pub enum CipherMode {
-    Vanilla,
+    Vanilla, // no IV Here
     Ctr256,
     GcmSiv,
+    GCM256,
+    Ctr128,
 }
 
 use crate::{make_nonce, make_tls13_aad, Witness};
@@ -104,38 +107,6 @@ fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Vec<u8> {
         .expect("error generating ct")
 }
 
-// pub fn aes_ctr_witnesses(
-//     key_out: &mut Vec<u8>,
-//     iv_out: &mut Vec<u8>,
-//     ct_out: &mut Vec<u8>,
-//     pt_out: &mut Vec<u8>,
-// ) {
-//     let ct = encrypt_tls(
-//         MESSAGE.as_bytes(),
-//         KEY_ASCII.as_bytes(),
-//         IV_ASCII.as_bytes(),
-//         1,
-//     );
-
-//     println!(
-//         "ENC: cipher_text={:?}, cipher_len={:?}",
-//         hex::encode(ct.clone()),
-//         ct.len()
-//     );
-//     let key = GenericArray::from(KEY_BYTES);
-//     let key_256 = GenericArray::from(KEY_BYTES_256);
-//     let iv = GenericArray::from(IV_BYTES);
-
-//     // Base AES Cipher (no CTR), unused, demo.
-//     let cipher = Aes128::new(&key);
-//     let mut block_no_ctr = GenericArray::from(MESSAGE_BYTES);
-//     cipher.encrypt_block(&mut block_no_ctr);
-// }
-
-// thoughts on design here
-// we should have this just take in an enum specifying the cipher mode (vanilla, ctr, gcm, gcm-siv)
-// and then have the witness function just call the appropriate encryption function. 
-// Then we match on the variant and return the stuff we need.
 
 pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
     // NOTES on AES
@@ -162,70 +133,77 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
     let key = GenericArray::from(KEY_BYTES);
     let key_256 = GenericArray::from(KEY_BYTES_256);
     let iv = GenericArray::from(IV_BYTES);
+    let mut block = GenericArray::from(MESSAGE_BYTES);
+    let mut block_256 = GenericArray::from(MESSAGE_BYTES_256);
 
-    match cipher_mode {
+    let cipher_text = match cipher_mode {
         CipherMode::Vanilla => {
             let cipher = Aes128::new(&key);
-            let mut block_no_ctr = GenericArray::from(MESSAGE_BYTES);
-            cipher.encrypt_block(&mut block_no_ctr);
+            cipher.encrypt_block(&mut block);
+            block.to_vec()
         }
         CipherMode::Ctr256 => {
-            // what we want
+            // AES CTR 256, adjusted to match GCM. ✅, matches AES-256-GCM impl
+            let mut cipher_256 = Aes256Ctr32BE::new(&key_256, &IV_BYTES_256.into());
+            let mut tag_mask_256 = Block::default();
+
+            cipher_256.apply_keystream(&mut tag_mask_256);
+            cipher_256.apply_keystream(&mut block_256);
+            block_256.to_vec()
         }
         CipherMode::GcmSiv => {
-            // keep current logic
+            // AES GCM SIV, WOO MATCHES CIRCOM!! ✅
+            use aes_gcm_siv::{
+                aead::{Aead, Payload as SIVPayload},
+                Aes256GcmSiv,
+            };
+            let cipher = Aes256GcmSiv::new_from_slice(&key_256).unwrap();
+            let nonce = GenericArray::from_slice(&IV_BYTES_SHORT_256);
+            let aes_payload = SIVPayload {
+                msg: &MESSAGE_BYTES_256,
+                aad: &SIV_AAD,
+            };
+            let ciphertext_siv = cipher
+                .encrypt(nonce, aes_payload)
+                .expect("error generating ct");
+            println!(
+                "AES GCM 256 SIV: ct={:?}, bytes={:?}",
+                hex::encode(ciphertext_siv.clone()),
+                ciphertext_siv
+            );
+            ciphertext_siv.to_vec()
         }
-    }
+        CipherMode::GCM256 => {
+            // Standard AES 256 GCM
+            let cipher = Aes256Gcm::new_from_slice(&key_256).unwrap();
+            let nonce = GenericArray::from_slice(&IV_BYTES_SHORT_256);
+            let aes_payload = Payload {
+                msg: &MESSAGE_BYTES_256,
+                aad: &SIV_AAD,
+            };
+            let ct = cipher
+                .encrypt(nonce, aes_payload)
+                .expect("error generating ct");
+            ct.to_vec()
+        }
+        CipherMode::Ctr128 => {
+            // AES CTR 128, adjusted to match GCM. ✅, matches AES-128-GCM impl
+            let mut cipher = Aes128Ctr32BE::new(&key, &iv);
+            let mut tag_mask = Block::default();
+            cipher.apply_keystream(&mut tag_mask); // In AES-GCM, an empty mask is encrypted first.
+            cipher.apply_keystream(&mut block);
+            block.to_vec()
+        }
 
-    // AES CTR 256, adjusted to match GCM. ✅, matches AES-256-GCM impl
-    let mut cipher_256 = Aes256Ctr32BE::new(&key_256.into(), &IV_BYTES_256.into());
-    let mut block_256 = GenericArray::from(MESSAGE_BYTES_256);
-    let mut tag_mask_256 = Block::default();
-    cipher_256.apply_keystream(&mut tag_mask_256);
-    cipher_256.apply_keystream(&mut block_256);
-
-    // AES GCM SIV, WOO MATCHES CIRCOM!! ✅
-    use aes_gcm_siv::{
-        aead::{Aead, Payload as SIVPayload},
-        Aes256GcmSiv,
     };
-    let cipher = Aes256GcmSiv::new_from_slice(&key_256).unwrap();
-    let nonce = GenericArray::from_slice(&IV_BYTES_SHORT_256);
-    let aes_payload = SIVPayload {
-        msg: &MESSAGE_BYTES_256,
-        aad: &SIV_AAD,
-    };
-    let ciphertext_siv = cipher
-        .encrypt(nonce, aes_payload)
-        .expect("error generating ct");
 
-    // Standard AES 256 GCM
-    let cipher = Aes256Gcm::new_from_slice(&key_256).unwrap();
-    let nonce = GenericArray::from_slice(&IV_BYTES_SHORT_256);
-    let aes_payload = Payload {
-        msg: &MESSAGE_BYTES_256,
-        aad: &SIV_AAD,
-    };
-    let ciphertext = cipher
-        .encrypt(nonce, aes_payload)
-        .expect("error generating ct");
-
-    // AES CTR 128, adjusted to match GCM. ✅, matches AES-128-GCM impl
-    let mut cipher = Aes128Ctr32BE::new(&key, &iv);
-    let mut block = GenericArray::from(MESSAGE_BYTES);
-    let mut tag_mask = Block::default();
-    cipher.apply_keystream(&mut tag_mask); // In AES-GCM, an empty mask is encrypted first.
-    cipher.apply_keystream(&mut block);
-    // let mut repeat_block = GenericArray::from(message_bytes);
-    // cipher.apply_keystream(&mut repeat_block)
-
+    // TODO: WTF is this
     // AES-GCM Duplication. NOTE: This is identical to section 246.
     // Init logic in AES-GCM. This standard procedure can be applied to the TLS IV.
     let mut ghash_iv = ghash::Block::default();
     ghash_iv[..12].copy_from_slice(&IV_BYTES_SHORT);
     ghash_iv[15] = 1;
 
-    type Ctr32BE<Aes128> = ctr::CtrCore<Aes128, ctr::flavors::Ctr32BE>;
     let inner_cipher = Aes128::new(&key);
     let mut ctr = Ctr32BE::inner_iv_init(&inner_cipher, &ghash_iv);
     let mut tag_mask = Block::default();
@@ -239,12 +217,12 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
     apply_keystream(ctr, &mut buffer);
 
     // WORKING!  The aes-ctr and aes-gcm now match.
+    // TODO: Clean up these printlns
     println!(
         "INPUT iv={:?}, key={:?}",
         hex::encode(IV_BYTES),
         hex::encode(KEY_BYTES)
     );
-    // println!("AES NO CTR: ct={:?}", hex::encode(block_no_ctr));
     println!(
         "AES GCM IV={:?}, tm={:?}, ct={:?}",
         hex::encode(ghash_iv),
@@ -252,22 +230,15 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
         hex::encode(buffer)
     );
     println!("AES CTR: ct={:?}", hex::encode(block));
-    println!("AES CTR 256, 96 IV: ct={:?}", hex::encode(block_256));
-    println!("AES GCM 256: ct={:?}", hex::encode(ciphertext.clone()));
-    println!(
-        "AES GCM 256 SIV: ct={:?}, bytes={:?}",
-        hex::encode(ciphertext_siv.clone()),
-        ciphertext_siv
-    );
+    println!("AES CTR 256, 96 IV: ct={:?}", hex::encode(block));
+    println!("AES GCM 256: ct={:?}", hex::encode(cipher_text.clone()));
 
-    let mut key_out = Vec::new();
-    let mut iv_out = Vec::new();
-    let mut ct_out = Vec::new();
-    let mut pt_out = Vec::new();
-    ct_out.extend_from_slice(&ciphertext_siv);
-    key_out.extend_from_slice(&key_256);
-    iv_out.extend_from_slice(&IV_BYTES_SHORT_256);
-    pt_out.extend_from_slice(&MESSAGE_BYTES_256);
+    let key_out = key_256.to_vec();
+    let ct_out = cipher_text.to_vec();
+
+    // same for all modes, vanilla has no IV
+    let iv_out = IV_BYTES_SHORT_256.to_vec();
+    let pt_out = MESSAGE_BYTES_256.to_vec();
 
     Witness {
         key: key_out,

@@ -6,24 +6,21 @@ use ark_std::rand::thread_rng;
 use std::fs::File;
 
 type GrothBn = Groth16<Bn254>;
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
 
-use crate::push_bytes_as_bits;
-
-const SIV_WTNS: &str = "./build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm";
-const SIV_R1CS: &str = "./build/gcm_siv_dec_2_keys_test.r1cs";
-
-const AES_256_CRT_WTNS: &str = "./build/aes_256_ctr_test_js/aes_256_ctr_test.wasm";
-const AES_256_CRT_R1CS: &str = "./build/aes_256_cr_test.r1cs";
+use crate::{push_bytes_as_bits, Witness};
 
 // load up the circom
 // generate a witness
 // generate the proof
 // check plaintext
 // check success bit
-pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
+// key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]
+pub fn gen_proof_aes_gcm_siv(witness: &Witness, wtns: &str, r1cs: &str) {
     println!("prep config");
 
-    let cfg = CircomConfig::<Bn254>::new(SIV_WTNS, SIV_R1CS).unwrap();
+    // read from disk
+    let cfg = CircomConfig::<Bn254>::new(wtns, r1cs).unwrap();
 
     println!("prep builder");
     let mut builder = CircomBuilder::new(cfg);
@@ -31,12 +28,13 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
     // No AAD, but the circuit is sensitive to it. Needs 128 bits.
     let aad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // aes ctr has no aad
 
-    builder = push_bytes_as_bits(builder, "K1", key);
-    builder = push_bytes_as_bits(builder, "N", iv); // aes vanilla has no iv
+    builder = push_bytes_as_bits(builder, "K1", &witness.key);
+    builder = push_bytes_as_bits(builder, "N", &witness.iv);
     builder = push_bytes_as_bits(builder, "AAD", &aad);
-    builder = push_bytes_as_bits(builder, "CT", ct);
+    builder = push_bytes_as_bits(builder, "CT", &witness.ct);
 
-    let reader = File::open("./build/gcm_siv_dec_2_keys_test.r1cs").unwrap();
+    // read from disk again
+    let reader = File::open(r1cs).unwrap();
     let r1cs = R1CSFile::<Bn254>::new(reader).unwrap();
     println!("header.n_wires={:?}", r1cs.header.n_wires);
     println!("header.n_pub_out={:?}", r1cs.header.n_pub_out);
@@ -87,7 +85,6 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
         output_bytes.push(out_byte);
     }
 
-    use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
     let cs = ConstraintSystem::<Fr>::new_ref();
     circom.clone().generate_constraints(cs.clone()).unwrap();
     assert!(cs.is_satisfied().unwrap());
@@ -106,9 +103,12 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
     assert!(verified);
 
     // Duplicate check, but ensure the plaintext is correct.
-    let pt_bytes = &output_bytes[..pt.len()];
+    let pt_bytes = &output_bytes[..witness.pt.len()];
     println!("Output bytes matches plaintext pt={:?}", pt_bytes);
-    assert!(pt_bytes.iter().zip(pt.iter()).all(|(&a, &b)| a == b));
+    assert!(pt_bytes
+        .iter()
+        .zip(witness.pt.iter())
+        .all(|(&a, &b)| a == b));
 
     // Check the success bit (auth_tag matches)
     let success_bit = output_bytes[output_bytes.len() - 1];

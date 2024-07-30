@@ -2,23 +2,21 @@
 
 use std::io;
 
-use ark_ec::pairing::Pairing;
 use ark_circom::CircomBuilder;
+use ark_ec::pairing::Pairing;
 
 mod proof;
 mod witness;
-#[cfg(test)]
-mod tests;
 
 
-#[tokio::main]
-async fn main() -> io::Result<()> {
-    // aes_gcm_siv_test
-    aes_gcm_siv_test().await?;
-    Ok(())
+// You have to compile circom artifacts first if these aren't found.
+// should I commit them?
+const SIV_WTNS: &str = "./build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm";
+const SIV_R1CS: &str = "./build/gcm_siv_dec_2_keys_test.r1cs";
 
-    // plain aes_ctr test
-}
+const AES_256_CRT_WTNS: &str = "./build/aes_256_ctr_test_js/aes_256_ctr_test.wasm";
+const AES_256_CRT_R1CS: &str = "./build/aes_256_ctr_test.r1cs";
+
 
 pub struct Witness {
     pub key: Vec<u8>,
@@ -26,10 +24,35 @@ pub struct Witness {
     pub ct: Vec<u8>,
     pub pt: Vec<u8>,
 }
-async fn aes_gcm_siv_test() -> io::Result<()> {
 
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    // aes_gcm_siv_test
+    // aes_gcm_siv_test().await?;
+
+    // plain aes_ctr test
+    aes_256ctr_test().await?;
+    Ok(())
+}
+
+async fn aes_gcm_siv_test() -> io::Result<()> {
     // generate witness
     let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv);
+
+    // log one of them
+    println!(
+        "proof gen: key={:?}, iv={:?}, ct={:?}, pt={:?}",
+        witness.key, witness.iv, witness.ct, witness.pt
+    );
+    witness.iv.extend_from_slice(&[0, 0, 0, 0]); // hackz for 128 bit iv, Ask Tracy about this
+
+    // generate a proof
+    proof::gen_proof_aes_gcm_siv(&witness, SIV_WTNS, SIV_R1CS);
+    Ok(())
+}
+
+async fn aes_256ctr_test() -> io::Result<()> {
+    let mut witness = witness::aes_witnesses(witness::CipherMode::Ctr256);
 
     // log one of them
     println!(
@@ -39,7 +62,8 @@ async fn aes_gcm_siv_test() -> io::Result<()> {
     witness.iv.extend_from_slice(&[0, 0, 0, 0]); // hackz for 128 bit iv
 
     // generate a proof
-    proof::gen_proof_aes_gcm_siv(&witness.key, &witness.iv, &witness.ct, &witness.pt);
+    proof::gen_proof_aes_gcm_siv(&witness, AES_256_CRT_WTNS, AES_256_CRT_R1CS);
+
     Ok(())
 }
 
