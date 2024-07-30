@@ -1,28 +1,19 @@
 use ark_bn254::{Bn254, Fr};
 use ark_circom::{circom::R1CSFile, CircomBuilder, CircomConfig};
 use ark_crypto_primitives::snark::SNARK;
-use ark_ec::pairing::Pairing;
 use ark_groth16::Groth16;
 use ark_std::rand::thread_rng;
 use std::fs::File;
 
 type GrothBn = Groth16<Bn254>;
 
-// Convert bytes to bits (process in big endian order)
-fn push_bytes_as_bits<T: Pairing>(
-    mut builder: CircomBuilder<T>,
-    field: &str,
-    bytes: &[u8],
-) -> CircomBuilder<T> {
-    for byte in bytes {
-        for i in 0..8 {
-            let bit = (byte >> (7 - i)) & 1;
-            builder.push_input(field, bit as u64);
-        }
-    }
+use crate::push_bytes_as_bits;
 
-    builder
-}
+const SIV_WTNS: &str = "./build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm";
+const SIV_R1CS: &str = "./build/gcm_siv_dec_2_keys_test.r1cs";
+
+const AES_256_CRT_WTNS: &str = "./build/aes_256_ctr_test_js/aes_256_ctr_test.wasm";
+const AES_256_CRT_R1CS: &str = "./build/aes_256_cr_test.r1cs";
 
 // load up the circom
 // generate a witness
@@ -32,20 +23,16 @@ fn push_bytes_as_bits<T: Pairing>(
 pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
     println!("prep config");
 
-    let cfg = CircomConfig::<Bn254>::new(
-        "./build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm",
-        "./build/gcm_siv_dec_2_keys_test.r1cs",
-    )
-    .unwrap();
+    let cfg = CircomConfig::<Bn254>::new(SIV_WTNS, SIV_R1CS).unwrap();
 
     println!("prep builder");
     let mut builder = CircomBuilder::new(cfg);
 
     // No AAD, but the circuit is sensitive to it. Needs 128 bits.
-    let aad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let aad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // aes ctr has no aad
 
     builder = push_bytes_as_bits(builder, "K1", key);
-    builder = push_bytes_as_bits(builder, "N", iv);
+    builder = push_bytes_as_bits(builder, "N", iv); // aes vanilla has no iv
     builder = push_bytes_as_bits(builder, "AAD", &aad);
     builder = push_bytes_as_bits(builder, "CT", ct);
 
@@ -67,22 +54,8 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
     println!("load params");
     let mut rng = thread_rng();
 
-    // HANGING? Why.
     println!("gen params");
-    // ./build/tiny.zkey
-    // let mut file = File::open("./build/test_new_0001.zkey").unwrap();
-    // let mut reader = BufReader::new(file);
-    // println!("file open, parsing");
-    // let (params, _matrices) = ark_circom::read_zkey(&mut file).unwrap();
-
     let params = GrothBn::generate_random_parameters_with_reduction(circom, &mut rng).unwrap();
-
-    // Under the hood this just calls the zkey thing
-    // let r = ark_zkey::read_proving_key_and_matrices_from_zkey("./build/test_new_0000.zkey").unwrap();
-    // let params = r.0.0;
-
-    // let r = ark_zkey::read_arkzkey("./build/test_0000.arkzkey").unwrap();
-    // let params = r.0;
 
     println!("build builder");
     let circom = builder.build().unwrap();
@@ -91,7 +64,6 @@ pub fn gen_proof_aes_gcm_siv(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) {
     println!("len={:?}", inputs.len());
 
     // convert bits to bytes
-    // let output_bytes = Vec::new();
     fn bits_to_u8(bits: &[u8]) -> u8 {
         bits.iter()
             .rev()
