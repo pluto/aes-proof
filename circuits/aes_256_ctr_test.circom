@@ -3,15 +3,15 @@ pragma circom 2.0.0;
 include "aes_256_ctr.circom";
 include "aes_256_key_expansion.circom";
 
-template AES_256_CTR_TEST(n_bits_msg) {
+template AES_256_CTR_TEST(n_bits_msg, n_bits_aad) {
 
-    // var aad_len = n_bits_aad/8;
+    var aad_len = n_bits_aad/8;
     var msg_len = n_bits_msg/8;
-    // assert(aad_len%16 == 0);
+    assert(aad_len%16 == 0);
     assert(msg_len%16 == 0);
     signal input K1[256];
     signal input N[128];
-    // signal input AAD[n_bits_aad];
+    signal input AAD[n_bits_aad];
     signal input CT[(msg_len+16)*8];
     signal output MSG[n_bits_msg];
     signal output success;
@@ -48,4 +48,4 @@ template AES_256_CTR_TEST(n_bits_msg) {
 }
 
 
-component main = AES_256_CTR_TEST(256);
+component main = AES_256_CTR_TEST(128, 128);

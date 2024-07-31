@@ -104,10 +104,10 @@ template GCM_SIV_DEC_2_Keys(n_bits_aad, n_bits_msg)
 
     component aes_256_ctr = AES256CTR(msg_len*8);
     for(i=0; i<msg_len*8; i++) aes_256_ctr.in[i] <== CT_msg[i];
-    for(i=0; i<128; i++) aes_256_ctr.ctr[i] <== CTR[i];
-    for(i=0; i<1920; i++) aes_256_ctr.ks[i] <== ks[i];
+    for(i=0; i<128; i++) aes_256_ctr.ctr[i] <== CTR[i]; // how is this populated?
+    for(i=0; i<1920; i++) aes_256_ctr.ks[i] <== ks[i]; // how is this populated?
     MSG_t = aes_256_ctr.out;
-
+    
     component polyval_1 = POLYVAL(n_bits_aad);
     if(aad_len != 0)
     {
