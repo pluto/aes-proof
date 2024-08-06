@@ -36,9 +36,11 @@ circom --wasm --sym --r1cs --output ./build ./circuits/aes/gcm_siv_dec_2_keys_te
 # generate trusted setup
 # NOTE: This is currently unused because the rust zkey parser is horrible. 
 
-cd build && curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_10.ptau" --output './build/powersOfTau28_hez_final_10.ptau' && cd ..
-
-cd build && curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_19.ptau" --output './build/powersOfTau28_hez_final_19.ptau' && cd ..
+pushd build 
+curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_10.ptau" --output 'powersOfTau28_hez_final_10.ptau' 
+# we just did this:
+curl "https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_19.ptau" --output 'powersOfTau28_hez_final_19.ptau' 
+popd
 
 SJS_BIN=$(dirname $(npm list -g --depth=0 | head -n 1)); SJS_BIN+="/bin/snarkjs"
 

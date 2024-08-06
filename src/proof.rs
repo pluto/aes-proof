@@ -11,6 +11,7 @@ use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
 
 use crate::{push_bytes_as_bits, Witness};
 
+// TODO(TK 2024-08-06): refactor kludge
 // load up the circom
 // generate a witness
 // generate the proof
