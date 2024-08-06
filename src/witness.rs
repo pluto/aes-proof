@@ -7,9 +7,6 @@ use aes_gcm::{
     Aes128Gcm, Aes256Gcm,
 };
 use cipher::consts::U16;
-use ctr;
-use ghash;
-use hex;
 
 type Ctr32BE<Aes128> = ctr::CtrCore<Aes128, ctr::flavors::Ctr32BE>;
 type Aes256Ctr32BE = ctr::Ctr32BE<Aes256>;
