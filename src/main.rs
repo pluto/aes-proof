@@ -25,9 +25,9 @@ const AES_256_CRT_R1CS: &str = "./build/aes_256_ctr_test.r1cs";
 
 pub struct Witness {
     pub key: Vec<u8>,
-    pub iv: Vec<u8>,
-    pub ct: Vec<u8>,
-    pub pt: Vec<u8>,
+    pub iv:  Vec<u8>,
+    pub ct:  Vec<u8>,
+    pub pt:  Vec<u8>,
 }
 
 #[tokio::main]

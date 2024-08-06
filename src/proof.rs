@@ -1,9 +1,10 @@
+use std::fs::File;
+
 use ark_bn254::{Bn254, Fr};
 use ark_circom::{circom::R1CSFile, CircomBuilder, CircomConfig};
 use ark_crypto_primitives::snark::SNARK;
 use ark_groth16::Groth16;
 use ark_std::rand::thread_rng;
-use std::fs::File;
 
 type GrothBn = Groth16<Bn254>;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
@@ -63,10 +64,7 @@ pub fn gen_proof_aes_gcm_siv(witness: &Witness, wtns: &str, r1cs: &str) {
 
     // convert bits to bytes
     fn bits_to_u8(bits: &[u8]) -> u8 {
-        bits.iter()
-            .rev()
-            .enumerate()
-            .fold(0, |acc, (i, &bit)| acc | ((bit & 1) << i))
+        bits.iter().rev().enumerate().fold(0, |acc, (i, &bit)| acc | ((bit & 1) << i))
     }
     let mut output_bytes = Vec::new();
     for i in inputs.chunks(8) {
@@ -90,10 +88,7 @@ pub fn gen_proof_aes_gcm_siv(witness: &Witness, wtns: &str, r1cs: &str) {
     assert!(cs.is_satisfied().unwrap());
 
     let proof = GrothBn::prove(&params, circom, &mut rng).unwrap();
-    println!(
-        "proof_a={:?}, proof_b={:?}, proof_c={:?}",
-        proof.a, proof.b, proof.c
-    );
+    println!("proof_a={:?}, proof_b={:?}, proof_c={:?}", proof.a, proof.b, proof.c);
 
     println!("process vk");
     let pvk = GrothBn::process_vk(&params.vk).unwrap();
@@ -105,10 +100,7 @@ pub fn gen_proof_aes_gcm_siv(witness: &Witness, wtns: &str, r1cs: &str) {
     // Duplicate check, but ensure the plaintext is correct.
     let pt_bytes = &output_bytes[..witness.pt.len()];
     println!("Output bytes matches plaintext pt={:?}", pt_bytes);
-    assert!(pt_bytes
-        .iter()
-        .zip(witness.pt.iter())
-        .all(|(&a, &b)| a == b));
+    assert!(pt_bytes.iter().zip(witness.pt.iter()).all(|(&a, &b)| a == b));
 
     // Check the success bit (auth_tag matches)
     let success_bit = output_bytes[output_bytes.len() - 1];
