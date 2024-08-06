@@ -1,3 +1,4 @@
+// @devloper: document each const origin on call
 pub(crate) const KEY_ASCII: &str = "1111111111111111"; // 16 bytes
 pub(crate) const IV_ASCII: &str = "111111111111"; // 12 bytes
 pub(crate) const MESSAGE: &str = "test000000000000";
@@ -12,7 +13,7 @@ pub(crate) const KEY_BYTES_256: [u8; 32] = [
 pub(crate) const MESSAGE_BYTES: [u8; 16] = [
     0x74, 0x65, 0x73, 0x74, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
 ];
-pub(crate) const MESSAGE_BYTES_256: [u8; 16] =
+pub(crate) const ZERO_MESSAGE_BYTES_256: [u8; 16] =
     [0x74, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0];
 
 // 765697b2244f246112a0d551aba59013a51e2eb57a229b92be46bf4e1e1c2068
