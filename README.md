@@ -6,6 +6,12 @@ A (WIP) implementation of [AES-GCM](https://web.cs.ucdavis.edu/~rogaway/ocb/gcm.
 Generate witnesses and an AES proof:
 `cargo run --release`
 
+## Testing
+
+To test the circuits with circomkit:
+`yarn install`
+`yarn test`
+
 ## Browser Execution Demo
 To prove an AES execution with the witness files generated above:
 
