@@ -107,7 +107,6 @@ fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Vec<u8> {
         .expect("error generating ct")
 }
 
-
 pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
     // NOTES on AES
     // - AES-GCM, the authentication is a 16 byte string appended to the ciphertext.
@@ -194,7 +193,6 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
             cipher.apply_keystream(&mut block);
             block.to_vec()
         }
-
     };
 
     // TODO: WTF is this

@@ -8,7 +8,6 @@ use ark_ec::pairing::Pairing;
 mod proof;
 mod witness;
 
-
 // You have to compile circom artifacts first if these aren't found.
 // should I commit them?
 const SIV_WTNS: &str = "./build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm";
@@ -16,7 +15,6 @@ const SIV_R1CS: &str = "./build/gcm_siv_dec_2_keys_test.r1cs";
 
 const AES_256_CRT_WTNS: &str = "./build/aes_256_ctr_test_js/aes_256_ctr_test.wasm";
 const AES_256_CRT_R1CS: &str = "./build/aes_256_ctr_test.r1cs";
-
 
 pub struct Witness {
     pub key: Vec<u8>,
