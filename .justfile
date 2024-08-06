@@ -39,7 +39,7 @@ run:
     cargo run -r
 
 test:
-    cargo test --all -- --nocapture
+    RUST_MIN_STACK=8388608 cargo test --all -- --nocapture
 
 @versions:
     rustc --version
