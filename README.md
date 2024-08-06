@@ -5,6 +5,10 @@ Go through installation steps below to prepare build artifacts.
 Generate various witnesses & an aes proof
 `cargo run --release`
 
+## Design documents
+- [Miro board](https://miro.com/app/board/uXjVKs-YCfM=/)
+- [AES-GCM deep dive](https://gist.github.com/thor314/53cdab54aaf16bdafd5ac936d5447eb8)
+
 ## TODO
 The goal of this repo is to create a proof-of-concept for our AES requests. 
 
