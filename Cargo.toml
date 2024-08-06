@@ -23,6 +23,7 @@ ark-groth16 = { version = "=0.4.0", default-features = false, features = ["paral
 ark-poly = { version = "0.4.1", default-features = false, features = ["parallel"] }
 ark-relations = { version = "=0.4.0", default-features = false }
 ark-serialize = { version = "0.4.1", default-features = false }
+anyhow = "1.0.86"
 
 [profile.release]
 lto = true
