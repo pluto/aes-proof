@@ -11,9 +11,12 @@
 
 use std::io;
 
+use aes::{cipher::generic_array::GenericArray, Aes256};
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
+use cipher::consts::U16;
 
+mod consts;
 mod proof;
 mod utils;
 mod witness;
@@ -27,6 +30,14 @@ const AES_256_CRT_R1CS: &str = "./build/aes_256_ctr_test.r1cs";
 
 pub type AAD = [u8; 5];
 pub type Nonce = [u8; 12];
+
+// convenience type aliases for AES-CTR, wrapping type aliases from `ctr` crate
+pub(crate) type Ctr32BE<Aes128> = ctr::CtrCore<Aes128, ctr::flavors::Ctr32BE>;
+pub(crate) type Aes256Ctr32BE = ctr::Ctr32BE<Aes256>;
+pub(crate) type Aes128Ctr32BE = ctr::Ctr32BE<aes::Aes128>; // Note: Ctr32BE is used in AES GCM
+
+/// AES 128-bit block
+pub(crate) type Block = GenericArray<u8, U16>;
 
 #[cfg(test)]
 mod tests {

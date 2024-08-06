@@ -4,6 +4,7 @@ use ark_ec::pairing::Pairing;
 use crate::{Nonce, AAD};
 
 // TODO(TK 2024-08-06): test with test vectors at bottom of rfc 8452
+// @devloper: do you know/couldyou find where make_nonce is specified in rfc8452?
 //
 /// construct the nonce from the `iv` and `seq` as specified in RFC 8452
 /// https://www.rfc-editor.org/rfc/rfc8452
