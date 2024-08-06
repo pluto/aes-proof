@@ -1,3 +1,5 @@
+//! Generate proofs with ark-circom with the circom artifacts and the generated witness
+
 use std::fs::File;
 
 use ark_bn254::{Bn254, Fr};

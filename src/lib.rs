@@ -47,7 +47,7 @@ mod tests {
     #[tokio::test]
     async fn test_aes_gcm_siv() -> io::Result<()> {
         // generate witness
-        let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv);
+        let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv).unwrap();
 
         // log one of them
         println!(

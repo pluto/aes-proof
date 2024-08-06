@@ -1,5 +1,5 @@
 //! Generate witnesses for different AES cipher modes
-//! 
+//!
 //! NOTES on AES
 //! - AES-GCM, the authentication is a 16 byte string appended to the ciphertext.
 //! - AES-GCM auth tag is encrypted at the end.
@@ -17,6 +17,7 @@ use aes_gcm::{
     aead::{generic_array::GenericArray, Aead, NewAead, Payload},
     Aes128Gcm, Aes256Gcm,
 };
+use anyhow::{Context, Result};
 use cipher::consts::U16;
 
 use crate::{
@@ -35,8 +36,8 @@ pub struct Witness {
 }
 
 impl Witness {
-    pub fn new(key: Vec<u8>, iv: Vec<u8>, ct: Vec<u8>, pt: Vec<u8>) -> Self {
-        Self { key, iv, ct, pt }
+    pub fn new(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) -> Self {
+        Self { key: key.to_vec(), iv: iv.to_vec(), ct: ct.to_vec(), pt: pt.to_vec() }
     }
 }
 
@@ -54,10 +55,10 @@ pub enum CipherMode {
 }
 
 // @devloper: to discuss refactor on call
-fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Vec<u8> {
+fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Result<Vec<u8>> {
     let total_len = message.len() + 1 + 16;
     let aad = make_tls13_aad(total_len);
-    let fixed_iv = iv[..12].try_into().unwrap();
+    let fixed_iv = iv[..12].try_into()?;
     let nonce = make_nonce(fixed_iv, seq);
 
     println!("ENC: msg={:?}, msg_len={:?}, seq={:?}", hex::encode(message), message.len(), seq);
@@ -70,26 +71,29 @@ fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Vec<u8> {
 
     let aes_payload = Payload {
         msg: &payload,
-        aad: &[], // empty aad ??
+        aad: &[], // todo empty aad ??
     };
 
     let cipher = Aes128Gcm::new_from_slice(key).unwrap();
     let nonce = GenericArray::from_slice(iv);
-    cipher.encrypt(nonce, aes_payload).expect("error generating ct")
+    Ok(cipher.encrypt(nonce, aes_payload).expect("error generating ct"))
 }
 
 // @devloper: to discuss refactor on call
-pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
+pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     // Base ASCII versions using TLS encryption.
-    let ct = encrypt_tls(MESSAGE.as_bytes(), KEY_ASCII.as_bytes(), IV_ASCII.as_bytes(), 1);
+    let ct = encrypt_tls(MESSAGE.as_bytes(), KEY_ASCII.as_bytes(), IV_ASCII.as_bytes(), 1).unwrap();
     println!("ENC: cipher_text={:?}, cipher_len={:?}", hex::encode(ct.clone()), ct.len());
+
+    // TODO(TK 2024-08-06): move initialization to a constructor
     let key = GenericArray::from(KEY_BYTES);
     let key_256 = GenericArray::from(KEY_BYTES_256);
     let iv = GenericArray::from(IV_BYTES);
     let mut block = GenericArray::from(MESSAGE_BYTES);
     let mut block_256 = GenericArray::from(ZERO_MESSAGE_BYTES_256);
 
-    let cipher_text = match cipher_mode {
+    // TODO(TK 2024-08-06):move to ciphermode method
+    let ct = match cipher_mode {
         CipherMode::Vanilla => {
             let cipher = Aes128::new(&key);
             cipher.encrypt_block(&mut block);
@@ -142,6 +146,7 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
         },
     };
 
+    // todo: document source
     // TODO: WTF is this
     // AES-GCM Duplication. NOTE: This is identical to section 246.
     // Init logic in AES-GCM. This standard procedure can be applied to the TLS IV.
@@ -172,14 +177,7 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Witness {
     );
     println!("AES CTR: ct={:?}", hex::encode(block));
     println!("AES CTR 256, 96 IV: ct={:?}", hex::encode(block));
-    println!("AES GCM 256: ct={:?}", hex::encode(cipher_text.clone()));
+    println!("AES GCM 256: ct={:?}", hex::encode(ct.clone()));
 
-    let key_out = key_256.to_vec();
-    let ct_out = cipher_text.to_vec();
-
-    // same for all modes, vanilla has no IV
-    let iv_out = IV_BYTES_SHORT_256.to_vec();
-    let pt_out = ZERO_MESSAGE_BYTES_256.to_vec();
-
-    Witness::new(key_out, iv_out, ct_out, pt_out)
+    Ok(Witness::new(&key_256, &IV_BYTES_SHORT_256, &ct, &ZERO_MESSAGE_BYTES_256))
 }
