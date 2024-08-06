@@ -6,6 +6,10 @@ A (WIP) implementation of [AES-GCM](https://web.cs.ucdavis.edu/~rogaway/ocb/gcm.
 Generate witnesses and an AES proof:
 `cargo run --release`
 
+## Design documents
+- [Miro board](https://miro.com/app/board/uXjVKs-YCfM=/)
+- [AES-GCM deep dive](https://gist.github.com/thor314/53cdab54aaf16bdafd5ac936d5447eb8)
+
 ## Browser Execution Demo
 To prove an AES execution with the witness files generated above:
 
