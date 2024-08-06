@@ -9,7 +9,7 @@ use ark_std::rand::thread_rng;
 type GrothBn = Groth16<Bn254>;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
 
-use crate::{push_bytes_as_bits, Witness};
+use crate::{utils::push_bytes_as_bits, witness::Witness};
 
 // TODO(TK 2024-08-06): refactor kludge
 // load up the circom
