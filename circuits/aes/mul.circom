@@ -1,7 +1,7 @@
 // Copyright © 2022, Electron Labs
 pragma circom 2.0.0;
 
-include "helper_functions.circom";
+include "aes/helper_functions.circom";
 
 template Mul()
 {

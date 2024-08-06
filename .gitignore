@@ -1,4 +1,10 @@
 target
-build
-node_modules
 /.vscode
+
+
+node_modules/*
+
+build/*
+ptau/*
+circuits/test/*.circom
+circuits/main/*
