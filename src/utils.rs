@@ -1,3 +1,4 @@
+use ark_bn254::Fr;
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
 
@@ -29,7 +30,7 @@ pub(crate) fn make_tls13_aad(len: usize) -> AAD {
     ]
 }
 
-// TODO(TK 2024-08-06): @devloper, document
+// TODO(TK 2024-08-06): @devloper, document and refactor for transparency
 pub(crate) fn push_bytes_as_bits<T: Pairing>(
     mut builder: CircomBuilder<T>,
     field: &str,
@@ -43,4 +44,23 @@ pub(crate) fn push_bytes_as_bits<T: Pairing>(
     }
 
     builder
+}
+
+// convert bits to bytes
+pub(crate) fn bits_to_u8(bits: &[u8]) -> u8 {
+    bits.iter().rev().enumerate().fold(0, |acc, (i, &bit)| acc | ((bit & 1) << i))
+}
+
+pub(crate) fn parse_bit_from_field(j: &Fr) -> u8 {
+    // TODO(TK 2024-08-06): move to lazy static to avoid duplication
+    let ONE = Fr::from(1);
+    let ZERO = Fr::from(0);
+
+    if *j == ONE {
+        1u8
+    } else if *j == ZERO {
+        0u8
+    } else {
+        panic!("results should be bits")
+    }
 }
