@@ -9,8 +9,11 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(unused_mut)]
 
+use std::{io, io::Write};
+
 use aes::{cipher::generic_array::GenericArray, Aes256};
 use cipher::consts::U16;
+use utils::make_json_witness;
 
 mod consts;
 mod proof;
@@ -34,6 +37,15 @@ pub(crate) type Aes128Ctr32BE = ctr::Ctr32BE<aes::Aes128>; // Note: Ctr32BE is u
 
 /// AES 128-bit block
 pub(crate) type Block = GenericArray<u8, U16>;
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv).unwrap();
+    witness.iv.extend_from_slice(&[0, 0, 0, 0]);
+
+    make_json_witness(&witness).unwrap();
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
