@@ -36,6 +36,14 @@ pub struct Witness {
     pub pt:  Vec<u8>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct AesGcmSivInputs {
+    pub K1: Vec<u8>,
+    pub N:  Vec<u8>,
+    pub AAD: Vec<u8>,
+    pub CT:  Vec<u8>,
+}
+
 impl Witness {
     pub fn new(key: &[u8], iv: &[u8], ct: &[u8], pt: &[u8]) -> Self {
         Self { key: key.to_vec(), iv: iv.to_vec(), ct: ct.to_vec(), pt: pt.to_vec() }

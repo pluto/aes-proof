@@ -1,8 +1,10 @@
 use ark_bn254::Fr;
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
+use anyhow::Result;
+use std::io::Write;
 
-use crate::{Nonce, AAD};
+use crate::{witness::{AesGcmSivInputs, Witness}, Nonce, AAD};
 
 // TODO(TK 2024-08-06): test with test vectors at bottom of rfc 8452
 // @devloper: do you know/couldyou find where make_nonce is specified in rfc8452?
@@ -63,4 +65,43 @@ pub(crate) fn parse_bit_from_field(j: &Fr) -> u8 {
     } else {
         panic!("results should be bits")
     }
+}
+
+///     Input signals for the AES-GCM-SIV circuit:
+///     signal input K1[256];
+///     signal input N[128];
+///     signal input AAD[n_bits_aad];
+///     signal input CT[(msg_len+16)*8];
+pub(crate) fn make_json_witness(witness: &Witness) -> Result<()> {
+    let aad = [0; 16];
+
+    let data = AesGcmSivInputs {
+        K1: bytes_to_bits(&witness.key),
+        N: bytes_to_bits(&witness.iv),
+        AAD: bytes_to_bits(&aad),
+        CT: bytes_to_bits(&witness.ct),
+    };
+
+    // Assert that K1 is 256 bits
+    assert_eq!(data.K1.len(), 256, "K1 must be 256 bits");
+
+    // Assert that N is 128 bits
+    assert_eq!(data.N.len(), 128, "N must be 128 bits");
+
+    // Assert that AAD is 128 bits
+    assert_eq!(data.AAD.len(), 128, "AAD must be 128 bits");
+
+    // Assert that CT is 256 bits
+    assert_eq!(data.CT.len(), 256, "CT must be 256 bits");
+
+    let mut file = std::fs::File::create("inputs/witness.json").unwrap();
+    file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
+
+    Ok(())
+}
+
+fn bytes_to_bits(bytes: &[u8]) -> Vec<u8> {
+    bytes.iter().flat_map(|&byte| {
+        (0..8).rev().map(move |i| (byte >> i) & 1)
+    }).collect()
 }
