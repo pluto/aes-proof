@@ -11,18 +11,17 @@
 
 use aes::{
     cipher::{BlockEncrypt, InnerIvInit, KeyInit, KeyIvInit, StreamCipher, StreamCipherCore},
-    Aes128, Aes256,
+    Aes128,
 };
 use aes_gcm::{
     aead::{generic_array::GenericArray, Aead, NewAead, Payload},
     Aes128Gcm, Aes256Gcm,
 };
-use anyhow::{Context, Result};
-use cipher::consts::U16;
+use anyhow::Result;
 
 use crate::{
     consts::*,
-    utils::{make_nonce, make_tls13_aad},
+    utils::{apply_keystream, make_nonce, make_tls13_aad},
     Aes128Ctr32BE, Aes256Ctr32BE, Block, Ctr32BE,
 };
 
@@ -161,11 +160,7 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     ctr.write_keystream_block(&mut tag_mask);
     let mut buffer: Vec<u8> = Vec::new();
     buffer.extend_from_slice(MESSAGE.as_bytes());
-    fn apply_keystream(ctr: Ctr32BE<&Aes128>, buf: &mut [u8]) {
-        ctr.apply_keystream_partial(buf.into());
-    }
     apply_keystream(ctr, &mut buffer);
-    // ctr.apply_keystream_partial(&mut (*buffer.into()));
 
     // WORKING! The aes-ctr and aes-gcm now match.
     println!("INPUT iv={:?}, key={:?}", hex::encode(IV_BYTES), hex::encode(KEY_BYTES));
@@ -179,9 +174,5 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     println!("AES CTR 256, 96 IV: ct={:?}", hex::encode(block));
     println!("AES GCM 256: ct={:?}", hex::encode(ct.clone()));
 
-    // let iv = IV_BYTES_SHORT_256.clone_from_slice().extend_from_slice(&[0, 0, 0, 0]);
-    let iv = [0; 16];
-
-    Ok(Witness::new(&key_256, &iv, &ct, &ZERO_MESSAGE_BYTES_256))
+    Ok(Witness::new(&key_256, &IV_BYTES_SHORT_256, &ct, &ZERO_MESSAGE_BYTES_256))
 }
-
