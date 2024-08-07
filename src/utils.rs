@@ -1,12 +1,15 @@
+use std::io::Write;
+
 use aes::{cipher::StreamCipherCore, Aes128};
+use anyhow::Result;
 use ark_bn254::Fr;
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
-use anyhow::Result;
-use std::io::Write;
 
-use crate::{witness::{AesGcmSivInputs, Witness}, Nonce, AAD};
-use crate::{Ctr32BE, Nonce, AAD};
+use crate::{
+    witness::{AesGcmSivInputs, Witness},
+    Ctr32BE, Nonce, AAD,
+};
 
 // TODO(TK 2024-08-06): test with test vectors at bottom of rfc 8452
 // @devloper: do you know/couldyou find where make_nonce is specified in rfc8452?
@@ -81,10 +84,10 @@ pub(crate) fn make_json_witness(witness: &Witness) -> Result<()> {
     let aad = [0; 16];
 
     let data = AesGcmSivInputs {
-        K1: bytes_to_bits(&witness.key),
-        N: bytes_to_bits(&witness.iv),
+        K1:  bytes_to_bits(&witness.key),
+        N:   bytes_to_bits(&witness.iv),
         AAD: bytes_to_bits(&aad),
-        CT: bytes_to_bits(&witness.ct),
+        CT:  bytes_to_bits(&witness.ct),
     };
 
     // Assert that K1 is 256 bits
@@ -105,11 +108,12 @@ pub(crate) fn make_json_witness(witness: &Witness) -> Result<()> {
     Ok(())
 }
 
+/// Convert bytes to bits
 fn bytes_to_bits(bytes: &[u8]) -> Vec<u8> {
-    bytes.iter().flat_map(|&byte| {
-        (0..8).rev().map(move |i| (byte >> i) & 1)
-    }).collect()
+    bytes.iter().flat_map(|&byte| (0..8).rev().map(move |i| (byte >> i) & 1)).collect()
 }
+
+/// Apply the keystream to a buffer
 pub(crate) fn apply_keystream(ctr: Ctr32BE<&Aes128>, buf: &mut [u8]) {
     ctr.apply_keystream_partial(buf.into());
 }
