@@ -15,6 +15,7 @@ use aes::{cipher::generic_array::GenericArray, Aes256};
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
 use cipher::consts::U16;
+use std::io::Write;
 
 mod consts;
 mod proof;
@@ -38,6 +39,22 @@ pub(crate) type Aes128Ctr32BE = ctr::Ctr32BE<aes::Aes128>; // Note: Ctr32BE is u
 
 /// AES 128-bit block
 pub(crate) type Block = GenericArray<u8, U16>;
+
+
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv).unwrap();
+    witness.iv.extend_from_slice(&[0, 0, 0, 0]);
+
+    let mut file = std::fs::File::create("inputs/witness.json").unwrap();
+    witness.iv.extend_from_slice(&[0, 0, 0, 0]);
+    file.write_all(serde_json::to_string_pretty(&witness).unwrap().as_bytes())
+        .unwrap();
+
+    Ok(())
+
+}
 
 #[cfg(test)]
 mod tests {
