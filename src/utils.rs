@@ -9,6 +9,8 @@ use crate::{Nonce, AAD};
 //
 /// construct the nonce from the `iv` and `seq` as specified in RFC 8452
 /// https://www.rfc-editor.org/rfc/rfc8452
+
+/// See TLS1.3
 pub(crate) fn make_nonce(iv: [u8; 12], seq: u64) -> Nonce {
     let mut nonce = [0u8; 12];
     nonce[4..].copy_from_slice(&seq.to_be_bytes());
@@ -20,6 +22,7 @@ pub(crate) fn make_nonce(iv: [u8; 12], seq: u64) -> Nonce {
     nonce
 }
 
+/// tls 1.3 aad
 pub(crate) fn make_tls13_aad(len: usize) -> AAD {
     [
         0x17, // ContentType::ApplicationData

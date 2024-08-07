@@ -55,10 +55,6 @@ mod tests {
             witness.key, witness.iv, witness.ct, witness.pt
         );
 
-        // TODO(TK 2024-08-06): replace hackz with documented methods
-        //  hackz for 128 bit iv, Ask Tracy about this
-        witness.iv.extend_from_slice(&[0, 0, 0, 0]);
-
         // generate proof
         proof::gen_proof_aes_gcm_siv(&witness, SIV_WTNS, SIV_R1CS);
         Ok(())
