@@ -11,7 +11,7 @@
 
 use aes::{
     cipher::{BlockEncrypt, InnerIvInit, KeyInit, KeyIvInit, StreamCipher, StreamCipherCore},
-    Aes128, Aes256,
+    Aes128,
 };
 use aes_gcm::{
     aead::{generic_array::GenericArray, Aead, NewAead, Payload},
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     consts::*,
-    utils::{make_nonce, make_tls13_aad},
+    utils::{apply_keystream, make_nonce, make_tls13_aad},
     Aes128Ctr32BE, Aes256Ctr32BE, Block, Ctr32BE,
 };
 
@@ -63,8 +63,9 @@ pub enum CipherMode {
     GCM128,
 }
 
-// @devloper: to discuss refactor on call
+/// borrowed from rust-tls
 fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Result<Vec<u8>> {
+    // see tls1.3; 1 byte type, 16b aad
     let total_len = message.len() + 1 + 16;
     let aad = make_tls13_aad(total_len);
     let fixed_iv = iv[..12].try_into()?;
@@ -80,7 +81,8 @@ fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Result<Vec<u8
 
     let aes_payload = Payload {
         msg: &payload,
-        aad: &[], // todo empty aad ??
+        aad: &[], /* refactor remove
+                   * aad: &aad, */
     };
 
     let cipher = Aes128Gcm::new_from_slice(key).unwrap();
@@ -88,20 +90,17 @@ fn encrypt_tls(message: &[u8], key: &[u8], iv: &[u8], seq: u64) -> Result<Vec<u8
     Ok(cipher.encrypt(nonce, aes_payload).expect("error generating ct"))
 }
 
-// @devloper: to discuss refactor on call
 pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     // Base ASCII versions using TLS encryption.
     let ct = encrypt_tls(MESSAGE.as_bytes(), KEY_ASCII.as_bytes(), IV_ASCII.as_bytes(), 1).unwrap();
     println!("ENC: cipher_text={:?}, cipher_len={:?}", hex::encode(ct.clone()), ct.len());
 
-    // TODO(TK 2024-08-06): move initialization to a constructor
     let key = GenericArray::from(KEY_BYTES);
     let key_256 = GenericArray::from(KEY_BYTES_256);
     let iv = GenericArray::from(IV_BYTES);
     let mut block = GenericArray::from(MESSAGE_BYTES);
     let mut block_256 = GenericArray::from(ZERO_MESSAGE_BYTES_256);
 
-    // TODO(TK 2024-08-06):move to ciphermode method
     let ct = match cipher_mode {
         CipherMode::Vanilla => {
             let cipher = Aes128::new(&key);
@@ -155,8 +154,9 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
         },
     };
 
-    // todo: document source
-    // TODO: WTF is this
+    // more manual AESGCM using rust crypto should be equiv to output of encrypt tls
+    // can remove or assert equiv later
+    //
     // AES-GCM Duplication. NOTE: This is identical to section 246.
     // Init logic in AES-GCM. This standard procedure can be applied to the TLS IV.
     let mut ghash_iv = ghash::Block::default();
@@ -170,13 +170,9 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     ctr.write_keystream_block(&mut tag_mask);
     let mut buffer: Vec<u8> = Vec::new();
     buffer.extend_from_slice(MESSAGE.as_bytes());
-    fn apply_keystream(ctr: Ctr32BE<&Aes128>, buf: &mut [u8]) {
-        ctr.apply_keystream_partial(buf.into());
-    }
     apply_keystream(ctr, &mut buffer);
 
-    // WORKING!  The aes-ctr and aes-gcm now match.
-    // TODO: Clean up these printlns
+    // WORKING! The aes-ctr and aes-gcm now match.
     println!("INPUT iv={:?}, key={:?}", hex::encode(IV_BYTES), hex::encode(KEY_BYTES));
     println!(
         "AES GCM IV={:?}, tm={:?}, ct={:?}",

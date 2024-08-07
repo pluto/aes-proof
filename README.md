@@ -7,10 +7,22 @@ Generate witnesses and an AES proof:
 `cargo run --release`
 
 ## Testing
+You can test witnesses are valid by generation one with rust crypto in rust/src/main.rs and then running the following:
+
+```sh 
+cd build && 
+node gcm_siv_dec_2_keys_test_js/generate_witness.js gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm ../inputs/witness.json witness.wtns
+```
+
+You can also test witnesses are valid by writing tests in circomkit and running:
 
 To test the circuits with circomkit:
 `yarn install`
 `yarn test`
+
+## Design documents
+- [Miro board](https://miro.com/app/board/uXjVKs-YCfM=/)
+- [AES-GCM deep dive](https://gist.github.com/thor314/53cdab54aaf16bdafd5ac936d5447eb8)
 
 ## Browser Execution Demo
 To prove an AES execution with the witness files generated above:

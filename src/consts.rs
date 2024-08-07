@@ -1,3 +1,4 @@
+//! values borrowed from https://github.com/Electron-Labs/aes-circom/blob/master/test/gcm_siv_dec_2_keys.test.js#L7
 // @devloper: document each const origin on call
 pub(crate) const KEY_ASCII: &str = "1111111111111111"; // 16 bytes
 pub(crate) const IV_ASCII: &str = "111111111111"; // 12 bytes
