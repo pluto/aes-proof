@@ -33,7 +33,7 @@ pub fn gen_proof_aes_gcm_siv(witness: &Witness, wtns: &str, r1cs: &str) {
     // TODO(TK 2024-08-06): replace with const
     // No AAD, but the circuit is sensitive to it. Needs 128 bits.
     // aes ctr has no aad
-    let aad = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let aad = [0; 16];
 
     // TODO(TK 2024-08-06):
     // code smell: can't tell what this is doing, even by looking at source

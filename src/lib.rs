@@ -9,11 +9,7 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(unused_mut)]
 
-use std::io;
-
 use aes::{cipher::generic_array::GenericArray, Aes256};
-use ark_circom::CircomBuilder;
-use ark_ec::pairing::Pairing;
 use cipher::consts::U16;
 
 mod consts;
@@ -45,7 +41,7 @@ mod tests {
 
     // Test the AES-GCM-SIV circuit (from electron labs)
     #[tokio::test]
-    async fn test_aes_gcm_siv() -> io::Result<()> {
+    async fn test_aes_gcm_siv() {
         // generate witness
         let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv).unwrap();
 
@@ -55,12 +51,10 @@ mod tests {
             witness.key, witness.iv, witness.ct, witness.pt
         );
 
-        // TODO(TK 2024-08-06): replace hackz with documented methods
-        //  hackz for 128 bit iv, Ask Tracy about this
-        witness.iv.extend_from_slice(&[0, 0, 0, 0]);
+        // tls1.3 junk
+        witness.iv.extend_from_slice(&[0; 4]);
 
         // generate proof
         proof::gen_proof_aes_gcm_siv(&witness, SIV_WTNS, SIV_R1CS);
-        Ok(())
     }
 }
