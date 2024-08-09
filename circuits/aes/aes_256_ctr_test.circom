@@ -30,7 +30,6 @@ template AES_256_CTR_TEST(n_bits_msg, n_bits_aad) {
     // populate tag for counter
     var TAG[128];
     for(i=0; i<128; i++) TAG[i] = CT[msg_len*8+i];
-
     // populate counter
     var CTR[128];
     for(i=0; i<128; i++) CTR[i] = TAG[i];

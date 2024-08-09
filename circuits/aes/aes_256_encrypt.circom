@@ -5,10 +5,19 @@ include "aes_emulation_tables.circom";
 include "aes_emulation.circom";
 include "helper_functions.circom";
 
+
+/// AES-256 Encrypt template
+/// We will need to change this to AES-128 Encrypt
+/// Which means we will need to change the key size to 128
+/// And the number of rounds to 10
+
 template AES256Encrypt()
 {
+    /// Input is 128 bit of plaintext
     signal input in[128];
+    /// Key schedule is 1920 bits
     signal input ks[1920];
+    /// Output is 128 bit of ciphertext
     signal output out[128];
 
     var ks_index = 0;
@@ -37,8 +46,14 @@ template AES256Encrypt()
     component num2bits_1[13][4][4];
     component xor_3[13][4][32];
 
+    /// 14 rounds of encryption TODO(WJ 2024-08-09): Change this to 10 rounds
     for(i=0; i<13; i++)
     {
+        /// 5 steps in each round
+        /// Step 1: SubBytes
+        /// Step 2: ShiftRows
+        /// Step 3: MixColumns
+        /// Step 4: AddRoundKey
         for(j=0; j<4; j++)
         {
             for(k=0; k<4; k++)
@@ -48,7 +63,7 @@ template AES256Encrypt()
                 var s_tmp[32] = s[(j+k)%4];
                 
                 for(l=0; l<8; l++) bits2num_1[i][j][k].in[l] <== s_tmp[k*8+7-l];
-
+                /// I think this is the sbox lookup
                 num2bits_1[i][j][k].in <-- emulated_aesenc_enc_table(k, bits2num_1[i][j][k].out);
 
                 if(k==0)
@@ -115,6 +130,7 @@ template AES256Encrypt()
         }
     }
 
+    /// Row shifting and substitution
     component row_shifting = EmulatedAesencRowShifting();
     component sub_bytes = EmulatedAesencSubstituteBytes();
     for(i=0; i<16; i++) row_shifting.in[i] <== s_bytes[i];

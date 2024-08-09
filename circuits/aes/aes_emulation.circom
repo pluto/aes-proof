@@ -3,8 +3,11 @@ pragma circom 2.0.0;
 
 include "aes_emulation_tables.circom";
 
+/// template or row shifting
 template EmulatedAesencRowShifting()
 {
+
+    /// Opperating on 16 bits at a time
     signal input in[16];
     signal output out[16];
     
@@ -29,6 +32,8 @@ template EmulatedAesencRowShifting()
     for(var i=0; i<16; i++) out[i] <== in[byte_order[i]];
 }
 
+/// Template for S-Box using the aes_encoding_rijndael_sbox
+/// https://en.wikipedia.org/wiki/Rijndael_S-box
 template EmulatedAesencSubstituteBytes()
 {
     signal input in[16];
