@@ -9,16 +9,18 @@ include "helper_functions.circom";
 /// AES-128 Encrypt template
 /// AES-128 has 10 rounds, 9 partial rounds, and 1 final round
 
-// The number of full rounds for this key size (Not the last partial round)
-const ROUNDS = 10 - 1
 
 template AES128Encrypt()
 {
     /// Input is 128 bit of plaintext
     signal input in[128]; // ciphertext
+
+    // The number of full rounds for this key size (Not the last partial round)
+    var ROUNDS = 10 - 1;
     
     // Key schedule for initial, final, and between each full round
-    key_size <== (1 + 1 + ROUNDS) * 4 * 32
+    var key_size = (1 + 1 + ROUNDS) * 4 * 32;
+
     signal input ks[key_size];
     
     /// Output is 128 bit of ciphertext

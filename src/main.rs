@@ -40,7 +40,7 @@ pub(crate) type Block = GenericArray<u8, U16>;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let mut witness = witness::aes_witnesses(witness::CipherMode::GcmSiv).unwrap();
+    let mut witness = witness::aes_witnesses(witness::CipherMode::Vanilla).unwrap();
     witness.iv.extend_from_slice(&[0, 0, 0, 0]);
 
     make_json_witness(&witness).unwrap();
