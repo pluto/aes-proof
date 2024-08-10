@@ -6,7 +6,7 @@ describe("AES Emulation", () => {
 
     before(async () => {
         circuit = await circomkit.WitnessTester(`RowShifting`, {
-            file: "aes/aes_emulation",
+            file: "aes-gcm/aes_emulation",
             template: "EmulatedAesencRowShifting",
         });
         console.log("#constraints:", await circuit.getConstraintCount());
@@ -14,11 +14,11 @@ describe("AES Emulation", () => {
 
     // TODO: Do we actually understand this?
     it("should have correct number of constraints", async () => {
-        await circuit.expectConstraintCount(16, true);
+        await circuit.expectConstraintCount(16, true); /// should fail
     });
 
     const zeroArray: number[] = new Array(16).fill(0);
-    2
+
     it("witness: in = [0,...]", async () => {
         await circuit.expectPass(
             { in: zeroArray },
