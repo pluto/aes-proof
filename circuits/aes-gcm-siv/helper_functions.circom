@@ -1,9 +1,9 @@
 // Copyright © 2022, Electron Labs
 pragma circom 2.0.0;
 
-include "./lib_circuits/bitify.circom";
-include "./lib_circuits/gates.circom";
-include "./lib_circuits/comparators.circom";
+include "../lib_circuits/bitify.circom";
+include "../lib_circuits/gates.circom";
+include "../lib_circuits/comparators.circom";
 
 template BitwiseRightShift(n, r) {
     signal input in[n];
