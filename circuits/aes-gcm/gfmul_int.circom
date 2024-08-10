@@ -12,7 +12,7 @@ template GFMULInt()
     var tmp[5][2][64];
     var XMMMASK[2] = [0x1, 0xc200000000000000];
 
-        var i, j, k;
+    var i, j, k;
 
     component num2bits_1[2];
     var XMMMASK_bits[2][64];

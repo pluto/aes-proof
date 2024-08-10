@@ -3,19 +3,26 @@ pragma circom 2.0.0;
 include "gfmul_int.circom";
 include "helper_functions.circom";
 
-// TODO(TK 2024-08-10): change from polyval to ghash
+// GHASH computes the authentication tag for AES-GCM.
+// Inputs:
+// - `H` the hash key
+// - AAD authenticated additional data
+// - M the message to authenticate
+// 
+// Outputs:
+// - `result` the authentication tag
+// TODO(TK 2024-08-10): rename - n_bits -> msg bytes?
 template GHASH(n_bits)
 {
-    var msg_len = n_bits/8;
-    signal input in[n_bits];
-    signal input H[128];
-    signal input T[2][64];
-    signal output result[2][64];
+    signal input in[n_bits]; // n-bit message input
+    signal input H[128]; // hash key
+    signal input T[2][64]; // TODO(TK 2024-08-10): doc
+    signal output result[2][64]; // tag
 
-    var current_res[2][64] = T, in_t[2][64];
-
+    var msg_len = n_bits/8; // TODO(TK 2024-08-10): doc
+    var current_res[2][64] = T, in_t[2][64]; // result intermediate state
     var i, j, k;
-    var blocks = msg_len/16;
+    var blocks = msg_len/16; 
 
     component xor_1[blocks][2][64];
     component gfmul_int_1[blocks];
