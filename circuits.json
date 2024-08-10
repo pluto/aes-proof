@@ -1,4 +1,9 @@
 {
+  "polyval": {
+    "file": "aes/polyval",
+    "template": "POLYVAL",
+    "params": [128]
+  },
   "multiplier_3": {
     "file": "multiplier",
     "template": "Multiplier",
