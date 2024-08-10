@@ -45,11 +45,6 @@ template AES128Encrypt()
             /// i see so they are 32 bit chunks
             /// Then XOR each chuck with parts of the keys 
             xor_1[i][j].a <== in[i*32+j]; // plaintext
-            
-            
-            
-            /// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-            // (i+ks_index)*32+j
             xor_1[i][j].b <== ks[(i+ks_index)*32+j]; // key schedule
 
             s[i][j] = xor_1[i][j].out;
