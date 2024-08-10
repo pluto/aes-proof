@@ -79,6 +79,7 @@ pub(crate) fn parse_bit_from_field(j: &Fr) -> u8 {
 pub(crate) struct AESInputs {
     k1: Vec<u8>,
     r#in: Vec<u8>,
+    out: Vec<u8>,
 }
 ///     Input signals for the AES-GCM-SIV circuit:
 ///     signal input K1[256];
@@ -116,6 +117,7 @@ pub(crate) fn make_json_witness(witness: &Witness, mode: CipherMode) -> Result<(
             let data = AESInputs {
                 k1:  bytes_to_bits(&witness.key),
                 r#in:  bytes_to_bits(&witness.pt),
+                out: bytes_to_bits(&witness.ct),
             };
             assert_eq!(data.k1.len(), 128, "k1 must be 128 bits");
 
