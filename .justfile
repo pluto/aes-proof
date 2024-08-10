@@ -19,6 +19,9 @@ export RUST_LOG := "info"
 @just:
     just --list
 
+circom-build-ghash:
+    circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
+
 build:
     cargo build -r
 
