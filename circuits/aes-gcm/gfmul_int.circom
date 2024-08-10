@@ -10,7 +10,11 @@ template GFMULInt()
     signal output res[2][64];
 
     var tmp[5][2][64];
-    var XMMMASK[2] = [0x1, 0xc200000000000000];
+
+    // XMMMask is x^128 + x^7 + x^2 + x + 1
+    // GHASH is big endian, polyval is little endian
+    // bitwise: 11100001 .... 00000001
+    var XMMMASK[2] = [0x87, 0x1];
 
     var i, j, k;
 

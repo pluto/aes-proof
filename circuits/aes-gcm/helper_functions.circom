@@ -248,3 +248,12 @@ template IndexSelector(total) {
 
     out <== calcTotal.sum;
 }
+
+template ReverseBitsArray(n) {
+    signal input in[n];
+    signal output out[n];
+
+    for (var i = 0; i < n; i++) {
+        out[i] <== in[n-1-i];
+    }
+}
