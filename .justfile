@@ -19,15 +19,30 @@ export RUST_LOG := "info"
 @just:
     just --list
 
+# install js dependencies and circom
 install:
     npm install
 
+
+# You can test that the witnesses in `inputs` are valid by using 
+# the `build/**/generate_witness.js` circom artifact. 
+# generate witnesses and run the `generate_witness.js` script:
+witness:
+    mkdir build
+    cargo run --release
+
+    # generate the `wtns` file from the json witnesses generated in rust
+    # also checks that the json witness has the right number of bytes
+    # and the json keys match the circom `signal` inputs
+    node build/gcm_siv_dec_2_keys_test_js/generate_witness.js build/gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm inputs/witness.json build/witness.wtns
+
+# circom test all tests
 circom-test:
     npx mocha
 
-# commented out when test flow added, remove soon 2024-08-10 
-# circom-build-ghash:
-#    circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
+# circom test a named test
+circom-testg testname:
+    npx mocha -g {{testname}}
 
 @versions:
     rustc --version

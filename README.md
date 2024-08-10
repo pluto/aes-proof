@@ -8,53 +8,51 @@ A (WIP) implementation of [AES-GCM](https://web.cs.ucdavis.edu/~rogaway/ocb/gcm.
 - [Miro board](https://miro.com/app/board/uXjVKs-YCfM=/)
 - [AES-GCM deep dive](https://gist.github.com/thor314/53cdab54aaf16bdafd5ac936d5447eb8)
 
-## Generate AES witnsess values
-Generate json witnesses and an AES proof to populate the `inputs` dir:
-`cargo run --release`
+## Install tooling
+To use this repo, install the `just` command runner:
+```sh
+cargo install just
+# or use cargo binstall for fast install:
+cargo binstall -y just
 
-## Testing
+# install dependencies
+just install
+```
 
-### end-2-end testing
+## Do the things:
+
+### Generate AES witnsess values
+Generate json witnesses and an AES proof to populate the `inputs` dir: `just witness`.
+
+### Testing
+
+#### end-2-end testing
 You can test that the witnesses in `inputs` are valid by using the `build/**/generate_witness.js` circom artifact. Run the `generate_witness.js` script:
 
-```sh 
-cd build 
-# generate the `wtns` file from the json witnesses generated in rust
-# also checks that the json witness has the right number of bytes
-# and the json keys match the circom `signal` inputs
-node gcm_siv_dec_2_keys_test_js/generate_witness.js gcm_siv_dec_2_keys_test_js/gcm_siv_dec_2_keys_test.wasm ../inputs/witness.json witness.wtns
-```
-
 ### unit testing with circomkit
-Alternatively, you can test witnesses are valid by writing tests in circomkit by running:
-
-```sh
-npm install
-npx test
-```
+Test witnesses are valid by writing tests in circomkit by running:
+`just circom-test`
 
 ## Testing Circom
-
 Example commands for using circom-kit
+```
+just circom-test # test all circom tests 
+just circom-testg TESTNAME # test a named test
 
-`npm install`
-
-`npx mocha`: Run all test
-
-`npx mocha -g <target>`: grep a test
-
-`npx circomkit`: circom kit commands
-
+# also see:
+`npx circomkit`: circomkit commands
 `npx circomkit compile <circuit>`: equiv to `circom --wasm ...`
 `npx circomkit witness <circuit> <witness.json>`: equiv to call generate_witness.js
+```
 
 The tests run by `circomkit` are are specified in `circuits.json` and `.mocharc.json`.
-
 
 ## Browser Execution Demo
 To prove an AES execution with the witness files generated above:
 
 Install node, circom, and set up the directory:
+
+TODO(TK 2024-08-10): Move this to justfile
 
 ```sh
 # install node
