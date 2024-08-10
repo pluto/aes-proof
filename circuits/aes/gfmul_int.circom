@@ -11,9 +11,12 @@ template GFMULInt()
     signal output res[2][64];
 
     var tmp[5][2][64];
+    // XMMMMASK encodes the polynomial x^128 + x^127 + x^126 + x^121 + 1
+    // 0x1 =  0b0000_0001 => encode x^0
+    // 0xc2 = 0b1100_0010 => encode x^{127,126,121}
     var XMMMASK[2] = [0x1, 0xc200000000000000];
 
-        var i, j, k;
+    var i, j, k;
 
     component num2bits_1[2];
     var XMMMASK_bits[2][64];

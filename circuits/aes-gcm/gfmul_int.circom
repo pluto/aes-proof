@@ -21,12 +21,15 @@ template GFMULInt()
     signal input b[2][64];
     signal output res[2][64];
 
+    // TODO(TK 2024-08-10): note about magic nuhmebr
     var tmp[5][2][64];
 
     // XMMMask is x^128 + x^7 + x^2 + x + 1
     // GHASH is big endian, polyval is little endian
     // bitwise: 11100001 .... 00000001
-    var XMMMASK[2] = [0x87, 0x1];
+    //
+    // 0x87 = 0b1000_0111 => encode x^7 + x^2 + x + 1
+    var XMMMASK[2] = [0x87, 0x0];
 
     var i, j, k;
 
