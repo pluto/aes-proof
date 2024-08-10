@@ -3,6 +3,18 @@ pragma circom 2.0.0;
 include "vclmul_emulator.circom";
 include "helper_functions.circom";
 
+// GFMULInt multiplies two 128-bit numbers in GF(2^128) and returns the result.
+//
+// Inputs:
+// - `a` the first 128-bit number, encoded as a polynomial over GF(2^128)
+// - `b` the second 128-bit number, encoded as a polynomial over GF(2^128)
+//
+// Outputs:
+// - `res` the result of the multiplication
+//
+// Computes:
+// res = a * b mod p
+// where p = x^128 + x^7 + x^2 + x + 1
 template GFMULInt()
 {
     signal input a[2][64];
