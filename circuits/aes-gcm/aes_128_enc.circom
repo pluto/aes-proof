@@ -19,7 +19,7 @@ template AES128Encrypt()
     var ROUNDS = 10 - 1;
     
     // Key schedule for initial, final, and between each full round
-    var key_size = (1 + 1 + ROUNDS) * 4 * 32;
+    varkey_size = (1 + 1 + ROUNDS) * 4 * 32;
 
     signal input ks[key_size];
     

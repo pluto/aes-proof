@@ -3,7 +3,7 @@
 pub(crate) const KEY_ASCII: &str = "1111111111111111"; // 16 bytes
 pub(crate) const IV_ASCII: &str = "111111111111"; // 12 bytes
 pub(crate) const MESSAGE: &str = "test000000000000";
-pub(crate) const KEY_BYTES: [u8; 16] = [
+pub(crate) const KEY_BYTES_128: [u8; 16] = [
     0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
 ];
 pub(crate) const KEY_BYTES_256: [u8; 32] = [

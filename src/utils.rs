@@ -5,9 +5,10 @@ use anyhow::Result;
 use ark_bn254::Fr;
 use ark_circom::CircomBuilder;
 use ark_ec::pairing::Pairing;
+use serde::Serialize;
 
 use crate::{
-    witness::{AesGcmSivInputs, Witness},
+    witness::{AesGcmSivInputs, CipherMode, Witness},
     Ctr32BE, Nonce, AAD,
 };
 
@@ -74,36 +75,58 @@ pub(crate) fn parse_bit_from_field(j: &Fr) -> u8 {
         panic!("results should be bits")
     }
 }
-
+#[derive(Serialize)]
+pub(crate) struct AESInputs {
+    k1: Vec<u8>,
+    r#in: Vec<u8>,
+}
 ///     Input signals for the AES-GCM-SIV circuit:
 ///     signal input K1[256];
 ///     signal input N[128];
 ///     signal input AAD[n_bits_aad];
 ///     signal input CT[(msg_len+16)*8];
-pub(crate) fn make_json_witness(witness: &Witness) -> Result<()> {
+pub(crate) fn make_json_witness(witness: &Witness, mode: CipherMode) -> Result<()> {
     let aad = [0; 16];
+    match mode {
+        CipherMode::GcmSiv => {
+            let data = AesGcmSivInputs {
+                K1:  bytes_to_bits(&witness.key),
+                N:   bytes_to_bits(&witness.iv),
+                AAD: bytes_to_bits(&aad),
+                CT:  bytes_to_bits(&witness.ct),
+            };
 
-    let data = AesGcmSivInputs {
-        K1:  bytes_to_bits(&witness.key),
-        N:   bytes_to_bits(&witness.iv),
-        AAD: bytes_to_bits(&aad),
-        CT:  bytes_to_bits(&witness.ct),
-    };
+            // Assert that K1 is 256 bits
+            assert_eq!(data.K1.len(), 256, "K1 must be 256 bits");
 
-    // Assert that K1 is 256 bits
-    assert_eq!(data.K1.len(), 256, "K1 must be 256 bits");
+            // Assert that N is 128 bits
+            assert_eq!(data.N.len(), 128, "N must be 128 bits");
 
-    // Assert that N is 128 bits
-    assert_eq!(data.N.len(), 128, "N must be 128 bits");
+            // Assert that AAD is 128 bits
+            assert_eq!(data.AAD.len(), 128, "AAD must be 128 bits");
 
-    // Assert that AAD is 128 bits
-    assert_eq!(data.AAD.len(), 128, "AAD must be 128 bits");
+            // Assert that CT is 256 bits
+            assert_eq!(data.CT.len(), 256, "CT must be 256 bits");
+            let mut file = std::fs::File::create("inputs/aes_gcm_siv_witness.json").unwrap();
+            file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
 
-    // Assert that CT is 256 bits
-    assert_eq!(data.CT.len(), 256, "CT must be 256 bits");
+        }
+        CipherMode::Ctr256 => { }
+        CipherMode::Vanilla => {
+            let data = AESInputs {
+                k1:  bytes_to_bits(&witness.key),
+                r#in:  bytes_to_bits(&witness.pt),
+            };
+            assert_eq!(data.k1.len(), 128, "k1 must be 128 bits");
 
-    let mut file = std::fs::File::create("inputs/witness.json").unwrap();
-    file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
+            let mut file = std::fs::File::create("inputs/aes_128_enc_witness.json").unwrap();
+            file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
+
+        },
+        CipherMode::GCM256 => { },
+        CipherMode::Ctr128 => { },
+        CipherMode::GCM128 => { },
+    }
 
     Ok(())
 }

@@ -52,7 +52,7 @@ impl Witness {
 
 /// AES cipher modes.
 #[derive(Default)]
-pub enum CipherMode {
+pub(crate) enum CipherMode {
     Vanilla, // no IV Here
     Ctr256,
     GcmSiv,
@@ -95,7 +95,7 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     let ct = encrypt_tls(MESSAGE.as_bytes(), KEY_ASCII.as_bytes(), IV_ASCII.as_bytes(), 1).unwrap();
     println!("ENC: cipher_text={:?}, cipher_len={:?}", hex::encode(ct.clone()), ct.len());
 
-    let key = GenericArray::from(KEY_BYTES);
+    let key = GenericArray::from(KEY_BYTES_128);
     let key_256 = GenericArray::from(KEY_BYTES_256);
     let iv = GenericArray::from(IV_BYTES);
     let mut block = GenericArray::from(MESSAGE_BYTES);
@@ -173,7 +173,7 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     apply_keystream(ctr, &mut buffer);
 
     // WORKING! The aes-ctr and aes-gcm now match.
-    println!("INPUT iv={:?}, key={:?}", hex::encode(IV_BYTES), hex::encode(KEY_BYTES));
+    println!("INPUT iv={:?}, key={:?}", hex::encode(IV_BYTES), hex::encode(KEY_BYTES_128));
     println!(
         "AES GCM IV={:?}, tm={:?}, ct={:?}",
         hex::encode(ghash_iv),
@@ -184,5 +184,5 @@ pub fn aes_witnesses(cipher_mode: CipherMode) -> Result<Witness> {
     println!("AES CTR 256, 96 IV: ct={:?}", hex::encode(block));
     println!("AES GCM 256: ct={:?}", hex::encode(ct.clone()));
 
-    Ok(Witness::new(&key_256, &IV_BYTES_SHORT_256, &ct, &ZERO_MESSAGE_BYTES_256))
+    Ok(Witness::new(&KEY_BYTES_128, &IV_BYTES_SHORT_256, &ct, &ZERO_MESSAGE_BYTES_256))
 }
