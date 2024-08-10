@@ -11,12 +11,18 @@ include "helper_functions.circom";
 /// Which means we will need to change the key size to 128
 /// And the number of rounds to 10
 
+// The number of full rounds for this key size (Not the last partial round)
+const ROUNDS = 10 - 1
+
 template AES128Encrypt()
 {
     /// Input is 128 bit of plaintext
     signal input in[128]; // ciphertext
-    /// Key schedule is 1920 bits
-    signal input ks[1920]; // key bits Not sure why it's 1920 (240 bytes)
+    
+    // Key schedule for initial, final, and between each full round
+    key_size <== (4 + 4 + ROUNDS * 4) * 32
+    signal input ks[key_size];
+    
     /// Output is 128 bit of ciphertext
     signal output out[128]; // plaintext
 
@@ -39,6 +45,11 @@ template AES128Encrypt()
             /// i see so they are 32 bit chunks
             /// Then XOR each chuck with parts of the keys 
             xor_1[i][j].a <== in[i*32+j]; // plaintext
+            
+            
+            
+            /// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            // (i+ks_index)*32+j
             xor_1[i][j].b <== ks[(i+ks_index)*32+j]; // key schedule
 
             s[i][j] = xor_1[i][j].out;
