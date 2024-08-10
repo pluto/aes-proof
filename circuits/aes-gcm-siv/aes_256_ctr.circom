@@ -20,14 +20,16 @@ template AES256CTR(n_bits)
     /// output is amount of input bits
     signal output out[n_bits];
 
-    /// 
+    /// What is EK?
     var EK[128];
     var p_index = 0, c_index = 0;
     var ctr_t[128] = ctr;
     var out_t[msg_len][8];
 
+    /// iterator varirables 
     var i, j, k, l;
 
+    /// components for 16 bit blocks
     component aes_256_encrypt_1[msg_len/16];
     component xor_1[msg_len/16][4][4][32];
     component num2bits_1[msg_len/16];
@@ -35,6 +37,7 @@ template AES256CTR(n_bits)
 
     for(i=0; i<msg_len/16; i++)
     {
+        /// for each block encrypt with aes;
         aes_256_encrypt_1[i] = AES256Encrypt();
         for(j=0; j<128; j++) aes_256_encrypt_1[i].in[j] <== ctr_t[j];
         
