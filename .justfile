@@ -19,6 +19,10 @@ export RUST_LOG := "info"
 @just:
     just --list
 
+# build 
+circom-build:
+    circom --wasm --sym --r1cs --output build ./ghash.circom
+
 build:
     cargo build -r
 
