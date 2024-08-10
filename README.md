@@ -1,4 +1,7 @@
 # AES-GCM circom circuits
+
+These circuits fork the underconstrained AES-GCM-SIV circuits from electron labs. 
+
 A (WIP) implementation of [AES-GCM](https://web.cs.ucdavis.edu/~rogaway/ocb/gcm.pdf) in Circom.
 
 ## Design documents
