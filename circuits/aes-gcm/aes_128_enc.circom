@@ -6,10 +6,8 @@ include "aes_emulation.circom";
 include "helper_functions.circom";
 
 
-/// AES-256 Encrypt template
-/// We will need to change this to AES-128 Encrypt
-/// Which means we will need to change the key size to 128
-/// And the number of rounds to 10
+/// AES-128 Encrypt template
+/// AES-128 has 10 rounds, 9 partial rounds, and 1 final round
 
 // The number of full rounds for this key size (Not the last partial round)
 const ROUNDS = 10 - 1
@@ -28,21 +26,17 @@ template AES128Encrypt()
 
     var ks_index = 0;
     
-    /// TODO(WJ 2024-08-09): what are these?
-    /// 4 x 32 mattrix of field elements
+    /// STATE: 4 x 32 mattrix of field elements
     var s[4][32], t[4][32];
     
     var i,j,k,l,m;
     
     component xor_1[4][32];
-    /// state initialization, might have to do with key size being 240byte rather 256byte
     for(i=0; i<4; i++) // adding round key
     {
         for(j=0; j<32; j++)
         {
             xor_1[i][j] = XOR();
-            /// example sequece [[0..31],[33..64]
-            /// i see so they are 32 bit chunks
             /// Then XOR each chuck with parts of the keys 
             xor_1[i][j].a <== in[i*32+j]; // plaintext
             xor_1[i][j].b <== ks[(i+ks_index)*32+j]; // key schedule
@@ -52,26 +46,24 @@ template AES128Encrypt()
     }
     ks_index += 4;
 
-    component xor_2[13][4][3][32];
-    component bits2num_1[13][4][4];
-    component num2bits_1[13][4][4];
-    component xor_3[13][4][32];
+    component xor_2[ROUNDS][4][3][32];
+    component bits2num_1[ROUNDS][4][4];
+    component num2bits_1[ROUNDS][4][4];
+    component xor_3[ROUNDS][4][32];
 
 
     /// 14 rounds of encryption TODO(WJ 2024-08-09): Change this to 10 rounds to fit AES-128
-    for(i=0; i<13; i++) // 13 iterations maybe one extra at the end or happened to generate the key above?
+    for(i=0; i<ROUNDS; i++) // 9 iterations maybe one extra at the end or happened to generate the key above?
     {
-        /// 5 steps in each round
+        /// 3 steps in each round
         /// Step 1: SubBytes
         /// Step 2: ShiftRows:
         /// Step 3: MixColumns
-        /// Step 4: AddRoundKeys
-        /// 
         for(j=0; j<4; j++) // 4 iterations
         {
             for(k=0; k<4; k++) // 4 iterations // COLUMN MIXING ALGORITHM
             {
-                /// initialize trace space for 13x4x4 uses of bits2num and num2bit
+                /// initialize trace space for 9x4x4 uses of bits2num and num2bit
                 bits2num_1[i][j][k] = Bits2Num(8);
                 num2bits_1[i][j][k] = Num2Bits(32);
                 /// 0 - 3 based on sum of index j and k
@@ -106,7 +98,6 @@ template AES128Encrypt()
                         }
                     }
                 }
-                /// Thought 1: is  this maybe just copying  memory?
                 else
                 {
                     for(l=0; l<4; l++)
@@ -122,6 +113,7 @@ template AES128Encrypt()
                 }
             }
         }
+        /// AddRoundKey
         for(j=0; j<4; j++)
         {
             for(l=0; l<32; l++)
@@ -166,7 +158,7 @@ template AES128Encrypt()
 
     component xor_4[4][32];
 
-    for(i=0; i<4; i++) // final key XOR?
+    for(i=0; i<4; i++) // final key XOR
     {
         for(j=0; j<32; j++)
         {
