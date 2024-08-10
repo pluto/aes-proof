@@ -1,4 +1,6 @@
 pragma circom 2.0.0;
+
+include "vclmul_emulator.circom";
 include "helper_functions.circom";
 
 template GFMULInt()
