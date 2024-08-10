@@ -29,11 +29,27 @@ node gcm_siv_dec_2_keys_test_js/generate_witness.js gcm_siv_dec_2_keys_test_js/g
 Alternatively, you can test witnesses are valid by writing tests in circomkit by running:
 
 ```sh
-yarn install
-yarn test
+npm install
+npx test
 ```
 
+## Testing Circom
+
+Example commands for using circom-kit
+
+`npm install`
+
+`npx mocha`: Run all test
+
+`npx mocha -g <target>`: grep a test
+
+`npx circomkit`: circom kit commands
+
+`npx circomkit compile <circuit>`: equiv to `circom --wasm ...`
+`npx circomkit witness <circuit> <witness.json>`: equiv to call generate_witness.js
+
 The tests run by `circomkit` are are specified in `circuits.json` and `.mocharc.json`.
+
 
 ## Browser Execution Demo
 To prove an AES execution with the witness files generated above:

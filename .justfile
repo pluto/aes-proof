@@ -19,30 +19,16 @@ export RUST_LOG := "info"
 @just:
     just --list
 
+
+install:
+    npm install
+
+circom-test:
+    npx mocha
+
 circom-build-ghash:
     circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
 
-build:
-    cargo build -r
-
-check:
-    cargo check --all --tests
-    cargo fmt --all --check
-
-format:
-    cargo fmt --all
-
-fix:
-    cargo clippy --all --tests --fix
-
-lint:
-    cargo clippy --all --tests -- -D warnings
-
-run:
-    cargo run -r
-
-test:
-    RUST_MIN_STACK=8388608 cargo test --all -- --nocapture
 
 @versions:
     rustc --version

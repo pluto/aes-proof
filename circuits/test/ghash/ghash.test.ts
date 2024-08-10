@@ -10,9 +10,10 @@ describe("ghash", () => {
       template: "POLYVAL",
       params: [128],
     });
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("should have correct number of constraints", async () => {
-    await circuit.expectConstraintCount(1000);
+    await circuit.expectConstraintCount(74754, true);
   });
 });
