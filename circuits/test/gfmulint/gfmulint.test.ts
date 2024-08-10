@@ -21,7 +21,6 @@ describe("gfmulint", () => {
     await circuit.expectConstraintCount(74626, true);
   });
 
-  // TODO(TK 2024-08-10):
   it("should output correct gfmul", async () => {
     const a = 1;
     const b = 1;
@@ -29,13 +28,13 @@ describe("gfmulint", () => {
     const input = { a: pad_num_to_arr128(a), b: pad_num_to_arr128(b) };
 
     let _res = await circuit.compute(input, ["res"]);
+    console.log(`res: ${_res}`);
     let result = parse_arr128_to_number(_res.res as Arr128);
     console.log(`${a} x ${b} = ${result}`);
     assert.equal(result, expected);
   });
 });
 
-// parse `value` to two 64-bit little-endian arrays
 function pad_num_to_arr128(value: number): Arr128 {
   let tmp = value
     .toString(2)
