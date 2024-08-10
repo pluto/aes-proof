@@ -6,35 +6,36 @@ include "helper_functions.circom";
 // GHASH computes the authentication tag for AES-GCM.
 // Inputs:
 // - `H` the hash key
-// - AAD authenticated additional data
-// - M the message to authenticate
+// - `AAD` authenticated additional data
+// - `msg` the message to authenticate
 // 
 // Outputs:
 // - `result` the authentication tag
-// TODO(TK 2024-08-10): rename - n_bits -> msg bytes?
-template GHASH(n_bits)
+template GHASH(n_msg_bits)
 {
-    signal input in[n_bits]; // n-bit message input
-    signal input H[128]; // hash key
-    signal input T[2][64]; // TODO(TK 2024-08-10): doc
-    signal output result[2][64]; // tag
+    signal input msg[n_msg_bits]; 
+    signal input H[128]; 
+    signal input AAD[2][64];
+    signal output result[2][64];
 
-    var msg_len = n_bits/8; // TODO(TK 2024-08-10): doc
-    var current_res[2][64] = T, in_t[2][64]; // result intermediate state
+    var n_msg_bytes = n_msg_bits/8; 
+    var current_res[2][64] = AAD, in_t[2][64]; // result intermediate state
     var i, j, k;
-    var blocks = msg_len/16; 
+    var n_msg_blocks = n_msg_bytes/16; 
 
-    component xor_1[blocks][2][64];
-    component gfmul_int_1[blocks];
+    component xor_1[n_msg_blocks][2][64];
+    component gfmul_int_1[n_msg_blocks];
     
-    if(blocks != 0)
+    if(n_msg_blocks != 0)
     {
-        for(i=0; i<blocks; i++)
+        // for each bit in the message
+        for(i=0; i<n_msg_blocks; i++)
         {
+            // 
             for(j=0; j<64; j++)
             {
-                in_t[0][j] = in[2*i*64+j];
-                in_t[1][j] = in[(2*i+1)*64+j];
+                in_t[0][j] = msg[2*i*64+j];
+                in_t[1][j] = msg[(2*i+1)*64+j];
             }
 
             for(j=0; j<2; j++)
