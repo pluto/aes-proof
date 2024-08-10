@@ -20,7 +20,7 @@ template AES128Encrypt()
     signal input in[128]; // ciphertext
     
     // Key schedule for initial, final, and between each full round
-    key_size <== (4 + 4 + ROUNDS * 4) * 32
+    key_size <== (1 + 1 + ROUNDS) * 4 * 32
     signal input ks[key_size];
     
     /// Output is 128 bit of ciphertext
