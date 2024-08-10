@@ -18,6 +18,11 @@ template GFMULInt()
 
     var i, j, k;
 
+    log("GFMULInt");
+    log(a[0][0]);
+    // log(b);
+    // log("res", res);
+
     component num2bits_1[2];
     var XMMMASK_bits[2][64];
     for(i=0; i<2; i++)
