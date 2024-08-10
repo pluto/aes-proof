@@ -19,16 +19,15 @@ export RUST_LOG := "info"
 @just:
     just --list
 
-
 install:
     npm install
 
 circom-test:
     npx mocha
 
-circom-build-ghash:
-    circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
-
+# commented out when test flow added, remove soon 2024-08-10 
+# circom-build-ghash:
+#    circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
 
 @versions:
     rustc --version

@@ -1,13 +1,13 @@
 import { WitnessTester } from "circomkit";
 import { circomkit } from "../common";
 
-describe("ghash", () => {
+describe("polyval", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
 
   before(async () => {
-    circuit = await circomkit.WitnessTester(`ghash`, {
-      file: "aes-gcm/ghash",
-      template: "GHASH",
+    circuit = await circomkit.WitnessTester(`polyval`, {
+      file: "aes/polyval",
+      template: "POLYVAL",
       params: [128],
     });
     console.log("#constraints:", await circuit.getConstraintCount());
