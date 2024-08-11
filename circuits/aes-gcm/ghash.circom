@@ -11,6 +11,12 @@ include "helper_functions.circom";
 // 
 // Outputs:
 // - `result` the authentication tag
+//
+// Computes:
+// let M = pad(AAD) || pad(msg) || len_64(AAD) || let_64(msg)
+// X_0 = 0^128
+// X_{i+1} = (X_i xor M_{i+1}) * H
+// output: X_{n+1} where n is the number of blocks.
 template GHASH(n_msg_bits)
 {
     signal input msg[n_msg_bits]; 
@@ -69,5 +75,4 @@ template GHASH(n_msg_bits)
         for(j=0; j<64; j++) result[i][j] <== current_res[i][j];
     }
 }
-
 component main = GHASH(128);

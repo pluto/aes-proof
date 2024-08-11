@@ -8,5 +8,6 @@ build/*
 ptau/*
 client/node_modules
 client/static/build
+circuits/test/**/*.circom
 circuits/test/*.circom
 circuits/main/*
