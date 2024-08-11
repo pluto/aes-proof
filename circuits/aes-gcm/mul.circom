@@ -1,5 +1,4 @@
-// Copyright © 2022, Electron Labs
-pragma circom 2.0.0;
+pragma circom 2.1.9
 
 include "helper_functions.circom";
 
