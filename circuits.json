@@ -3,5 +3,10 @@
     "file": "aes/polyval",
     "template": "POLYVAL",
     "params": [128]
+  },
+  "cipher_4": {
+    "file": "cipher",
+    "template": "Cipher",
+    "params": [4]
   }
 }
