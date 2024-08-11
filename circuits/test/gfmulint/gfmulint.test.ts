@@ -22,13 +22,13 @@ describe("gfmulint", () => {
   });
 
   it("should output correct gfmul", async () => {
-    const a = 1;
-    const b = 1;
+    const a = 128;
+    const b = 128;
     const expected = a * b;
     const input = { a: pad_num_to_arr128(a), b: pad_num_to_arr128(b) };
 
     let _res = await circuit.compute(input, ["res"]);
-    console.log(`res: ${_res}`);
+    console.log(`res: ${_res.res}`);
     let result = parse_arr128_to_number(_res.res as Arr128);
     console.log(`${a} x ${b} = ${result}`);
     assert.equal(result, expected);
