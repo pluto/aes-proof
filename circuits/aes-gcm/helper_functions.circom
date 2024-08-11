@@ -1,4 +1,4 @@
-pragma circom 2.1.9
+pragma circom 2.1.9;
 
 include "../lib_circuits/bitify.circom";
 include "../lib_circuits/gates.circom";

@@ -6,7 +6,7 @@ describe("polyval", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`polyval`, {
-      file: "aes/polyval",
+      file: "aes-gcm/polyval",
       template: "POLYVAL",
       params: [128],
     });
