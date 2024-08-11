@@ -77,9 +77,9 @@ pub(crate) fn parse_bit_from_field(j: &Fr) -> u8 {
 }
 #[derive(Serialize)]
 pub(crate) struct AESInputs {
-    k1: Vec<u8>,
+    k1:   Vec<u8>,
     r#in: Vec<u8>,
-    out: Vec<u8>,
+    out:  Vec<u8>,
 }
 ///     Input signals for the AES-GCM-SIV circuit:
 ///     signal input K1[256];
@@ -110,24 +110,22 @@ pub(crate) fn make_json_witness(witness: &Witness, mode: CipherMode) -> Result<(
             assert_eq!(data.CT.len(), 256, "CT must be 256 bits");
             let mut file = std::fs::File::create("inputs/aes_gcm_siv_witness.json").unwrap();
             file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
-
-        }
-        CipherMode::Ctr256 => { }
+        },
+        CipherMode::Ctr256 => {},
         CipherMode::Vanilla => {
             let data = AESInputs {
-                k1:  bytes_to_bits(&witness.key),
-                r#in:  bytes_to_bits(&witness.pt),
-                out: bytes_to_bits(&witness.ct),
+                k1:   bytes_to_bits(&witness.key),
+                r#in: bytes_to_bits(&witness.pt),
+                out:  bytes_to_bits(&witness.ct),
             };
             assert_eq!(data.k1.len(), 1408, "k1 must be 1408 bits");
 
             let mut file = std::fs::File::create("inputs/aes_128_enc_witness.json").unwrap();
             file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
-
         },
-        CipherMode::GCM256 => { },
-        CipherMode::Ctr128 => { },
-        CipherMode::GCM128 => { },
+        CipherMode::GCM256 => {},
+        CipherMode::Ctr128 => {},
+        CipherMode::GCM128 => {},
     }
 
     Ok(())
