@@ -4,7 +4,7 @@ import { circomkit } from "./common";
 
 
 describe("AES 128 Enc", () => {
-    let circuit: WitnessTester<["in"], ["out"]>;
+    let circuit: WitnessTester<["in", "ks"], ["out"]>;
 
     const witness_data = parseJsonFile("inputs/aes_128_enc_witness.json");
 
@@ -19,7 +19,7 @@ describe("AES 128 Enc", () => {
 
     // TODO: Do we actually understand this?
     it("should have correct number of constraints", async () => {
-        await circuit.expectConstraintCount(9920, true); /// should fail
+        await circuit.expectConstraintCount(9920, true);
     });
 
     // non-linear constraints: 9600 Where does the extra 320 constraints come from?
@@ -32,11 +32,11 @@ describe("AES 128 Enc", () => {
 
     let key1 = witness_data["k1"];
     let inputs = witness_data["in"];
-    // let outputs = witness_data["out"];
+    let outputs = witness_data["out"];
     it("witness: in = [0,...]", async () => {
         await circuit.expectPass(
-            { ks: key1 },
-            { in: inputs },
+            { in: inputs , ks: key1 },
+            { out: outputs }
         );
     });
 });

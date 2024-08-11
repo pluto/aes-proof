@@ -119,7 +119,7 @@ pub(crate) fn make_json_witness(witness: &Witness, mode: CipherMode) -> Result<(
                 r#in:  bytes_to_bits(&witness.pt),
                 out: bytes_to_bits(&witness.ct),
             };
-            assert_eq!(data.k1.len(), 128, "k1 must be 128 bits");
+            assert_eq!(data.k1.len(), 1408, "k1 must be 1408 bits");
 
             let mut file = std::fs::File::create("inputs/aes_128_enc_witness.json").unwrap();
             file.write_all(serde_json::to_string_pretty(&data).unwrap().as_bytes()).unwrap();
