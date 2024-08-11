@@ -1,4 +1,4 @@
-pragma circom 2.1.9
+pragma circom 2.1.9;
 
 include "vclmul_emulator.circom";
 include "helper_functions.circom";

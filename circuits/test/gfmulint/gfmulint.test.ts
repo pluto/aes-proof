@@ -1,7 +1,6 @@
+import { assert } from "chai";
 import { WitnessTester } from "circomkit";
 import { circomkit } from "../common";
-import { assert } from "chai";
-import { parse } from "path";
 
 // input and output type of GFMULInt
 type Arr128 = number[][];
@@ -11,7 +10,7 @@ describe("gfmulint", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester("gfmulint", {
-      file: "aes/gfmul_int",
+      file: "aes-gcm/gfmul_int",
       template: "GFMULInt",
     });
     console.log("#constraints:", await circuit.getConstraintCount());
