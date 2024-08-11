@@ -22,6 +22,11 @@ export RUST_LOG := "info"
 # install js dependencies and circom
 install:
     npm install
+circom-build-ghash:
+    circom --wasm --sym --r1cs --output build circuits/aes-gcm/ghash.circom
+
+build:
+    cargo build -r
 
 
 # You can test that the witnesses in `inputs` are valid by using 

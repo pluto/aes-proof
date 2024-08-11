@@ -4,7 +4,6 @@ include "gfmul_int.circom";
 include "helper_functions.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
-//
 // Inputs:
 // - `H` the hash key
 // - `AAD` authenticated additional data
@@ -76,3 +75,4 @@ template GHASH(n_msg_bits)
         for(j=0; j<64; j++) result[i][j] <== current_res[i][j];
     }
 }
+component main = GHASH(128);

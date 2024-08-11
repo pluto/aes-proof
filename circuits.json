@@ -4,9 +4,9 @@
     "template": "POLYVAL",
     "params": [128]
   },
-  "multiplier_3": {
-    "file": "multiplier",
-    "template": "Multiplier",
-    "params": [3]
+  "cipher_4": {
+    "file": "cipher",
+    "template": "Cipher",
+    "params": [4]
   }
 }
