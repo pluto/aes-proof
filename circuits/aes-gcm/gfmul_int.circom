@@ -21,6 +21,7 @@ template GFMULInt()
     signal input b[2][64];
     signal output res[2][64];
 
+
     // TODO(TK 2024-08-10): note about magic nuhmebr
     var tmp[5][2][64];
 
