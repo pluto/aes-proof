@@ -10,7 +10,7 @@ describe("gfmulint", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester("gfmulint", {
-      file: "aes-gcm/gfmul_int",
+      file: "aes-gcm/polyval_gfmul_int",
       template: "GFMULInt",
     });
     console.log("#constraints:", await circuit.getConstraintCount());

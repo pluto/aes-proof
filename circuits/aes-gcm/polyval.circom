@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-include "gfmul_int.circom";
+include "polyval_gfmul_int.circom";
 include "helper_functions.circom";
 
 template POLYVAL(n_bits)
