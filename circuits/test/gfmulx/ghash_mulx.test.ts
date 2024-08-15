@@ -1,6 +1,6 @@
 import chai from "chai";
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit } from "../common";
 
 // Disable truncation of arrays in error messages
 chai.config.truncateThreshold = 0;
