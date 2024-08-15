@@ -2,9 +2,8 @@ pragma circom 2.1.9;
 
 include "circomlib/circuits/gates.circom";
 
-/// Multiplies a by x in GF(2^128) defined by the irreducible polynomial x^128 + x^7 + x^2 + x + 1
-
-/// Small testing polynomial: x^8 + x^4 + x^3 + x + 1
+// Multiplies `in` by x in GF(2^128) defined by the 
+// ghash irreducible polynomial x^128 + x^7 + x^2 + x + 1
 template ghash_GFMULX() {
     var size = 128;
 
