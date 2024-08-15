@@ -4,48 +4,52 @@ import { circomkit } from "../common";
 
 // input and output type of GFMULInt
 type Arr128 = number[][];
+type _Arr128 = number[];
 
-describe("gfmulint", () => {
-  let circuit: WitnessTester<["a", "b"], ["res"]>;
+describe("mulX_polyval", () => {
+  let circuit: WitnessTester<["in"], ["out"]>;
 
   before(async () => {
-    circuit = await circomkit.WitnessTester("gfmulint", {
-      file: "aes-gcm/ghash_gfmul_int",
-      template: "GFMULInt",
+    circuit = await circomkit.WitnessTester("mulX_polyval", {
+      file: "aes-gcm/helper_functions",
+      template: "mulX_polyval",
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
-  it("should have correct number of constraints", async () => {
-    await circuit.expectConstraintCount(74626, true);
+  it("it should compute leftshift of one", async () => {
+    let _res = await circuit.compute({ in: _pad_num_to_arr128(1) }, ["out"]);
+    // console.log(`${_res.out}`);
+    let res = _parse_arr128_to_number(_res.out as _Arr128);
+    assert.equal(res, 2);
   });
 
-  it("should output correct gfmul", async () => {
-    const a = 128;
-    const b = 128;
-    const expected = a * b;
-    const input = { a: pad_num_to_arr128(a), b: pad_num_to_arr128(b) };
+  it("it should compute leftshift of two", async () => {
+    let _res = await circuit.compute({ in: _pad_num_to_arr128(2) }, ["out"]);
+    // console.log(`${_res.out}`);
+    let res = _parse_arr128_to_number(_res.out as _Arr128);
+    assert.equal(res, 4);
+  });
 
-    let _res = await circuit.compute(input, ["res"]);
-    console.log(`res: ${_res.res}`);
-    let result = parse_arr128_to_number(_res.res as Arr128);
-    console.log(`${a} x ${b} = ${result}`);
-    assert.equal(result, expected);
+  it("it should compute leftshift of 127", async () => {
+    let input = [1, ...Array(127).fill(0)];
+    let _res = await circuit.compute({ in: input }, ["out"]);
+    console.log(`${_res.out}`);
+
+    // recall
+    // x^127 + x^126 + x^121 + 1
+    let expected = [1, 1, 0, 0, 0, 0, 0, 1, ...Array(119).fill(0), 1];
+    assert.equal(_res.out, expected);
   });
 });
 
-function pad_num_to_arr128(value: number): Arr128 {
-  let tmp = value
+function _pad_num_to_arr128(value: number): _Arr128 {
+  return value
     .toString(2)
     .padStart(128, "0")
     .split("")
     .map((bit) => parseInt(bit, 10));
-  return [tmp.slice(0, 64), tmp.slice(64, 128)];
 }
 
-function parse_arr128_to_number(res: Arr128): number {
-  let first_64: number[] = res[0];
-  let last_64: number[] = res[1];
-  let all_bits: number[] = first_64.concat(last_64);
-  return parseInt(all_bits.join(""), 2);
+function _parse_arr128_to_number(res: _Arr128): number {
+  return parseInt(res.join(""), 2);
 }

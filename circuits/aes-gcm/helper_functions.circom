@@ -257,3 +257,75 @@ template ReverseBitsArray(n) {
         out[i] <== in[n-i-1];
     }
 }
+
+// todo: check bit settings
+// compute x * n over polyval polynomial
+// if the msb of in is 1, 
+// compute in << 1 and xor with 127, 126, 121, 1
+template mulX_ghash() {
+    signal input in[128];
+    signal output out[128];
+
+    // v = in left-shifted by 1
+    signal v[128];
+    // v_xor = 0 if in[0] is 0, or the irreducible poly if in[0] is 1
+    signal v_xor[128];
+
+    // initialize v and v_xor. 
+    v[127] <== 0;
+    v_xor[127] <== in[0];
+
+    for (var i=126; i>=0; i--) {
+        v[i] <== in[i+1];
+
+        // XOR with polynomial if MSB is 1
+        // v_xor has 1s at positions 127, 126, 121, 1
+        if (i==0 || i == 1 || i == 6) {
+            v_xor[i] <== in[0];
+        } else {
+            v_xor[i] <== 0;
+        }
+    }
+
+    // compute out
+    component xor = BitwiseXor(128);
+    xor.a <== v;
+    xor.b <== v_xor;
+    out <== xor.out;
+}
+
+// todo: check bit settings
+// compute x * n over polyval polynomial
+// if the msb of in is 1, 
+// compute in << 1 and xor with 127, 126, 121, 1
+template mulX_polyval() {
+    signal input in[128];
+    signal output out[128];
+
+    // v = in left-shifted by 1
+    signal v[128];
+    // v_xor = 0 if in[0] is 0, or the irreducible poly if in[0] is 1
+    signal v_xor[128];
+
+    // initialize v and v_xor. 
+    v[127] <== 0;
+    v_xor[127] <== in[0];
+
+    for (var i=126; i>=0; i--) {
+        v[i] <== in[i+1];
+
+        // polyval: v_xor at positions 127, 7, 2, 1
+        if (i == 0 || i == 1 || i == 7) {
+        // ghash: v_xor at positions 127, 126, 121, 1
+        // if (i==121 || i == 126 || i == 127) {
+            v_xor[i] <== in[0];
+        } else {
+            v_xor[i] <== 0;
+        }
+    }
+
+    component xor = BitwiseXor(128);
+    xor.a <== v;
+    xor.b <== v_xor;
+    out <== xor.out;
+}
