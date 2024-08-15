@@ -110,25 +110,29 @@ template polyval_GFMULX() {
     signal output out[block];
 
     // v = in << 1; 
+    // observe that LE makes this less straightforward
+    // since 0x8000 (2^7) 
+    //    => 0x0001 (2^8)
     signal v[block];
     // if `in` MSB set, assign irreducible poly bits, otherwise zero
     signal irreducible_poly[block];
     var msb = in[0]; // endianness: 0 in polyval, 127(?) in ghash
 
-    v[block - 1] <== 0;
+    v[7] <== 0;
     irreducible_poly[block - 1] <== msb;
 
-    for (var i=126; i>=0; i--) {
-        v[i] <== in[i+1];
+    // for (var i=(block-2); i>=0; i--) {
+    //     // not so simple!:
+    //     v[i] <== in[i+1];
 
-        // XOR with polynomial if MSB is 1
-        // irreducible_poly has 1s at positions 127, 126, 121, 1
-        if (i==0 || i == 121 || i == 126) {
-            irreducible_poly[i] <== in[0];
-        } else {
-            irreducible_poly[i] <== 0;
-        }
-    }
+    //     // XOR with polynomial if MSB is 1
+    //     // irreducible_poly has 1s at positions 127, 126, 121, 1
+    //     if (i==0 || i == 121 || i == 126) {
+    //         irreducible_poly[i] <== in[0];
+    //     } else {
+    //         irreducible_poly[i] <== 0;
+    //     }
+    // }
 
     // compute out
     component xor = BitwiseXor(block);
@@ -136,3 +140,62 @@ template polyval_GFMULX() {
     xor.b <== irreducible_poly;
     out <== xor.out;
 }
+
+
+// Left shift a `n`-bit little-endian array by `shift` bits
+//
+// example for 16 bit-array shifted by 1 bit:
+// in  = [h g f e d c b a, p o n m l k j i]
+// mid1= [a b c d e f g h, i j k l m n o p] // swap order of bits in each byte
+// mid2= [0 a b c d e f g, h i j k l m n o] // shift bits right by 1
+// out = [g f e d c b a 0, o n m l k j i h] // swap order of bits in each byte
+template LeftShiftLE(shift) {
+    signal input in[128];
+    signal output out[128];
+    signal mid_1[128];
+    signal mid_2[128]; 
+
+    for (var i = 0; i < 16; i++) {
+        for (var j = 0; j < 8; j++) {
+            mid_1[j + 8*i] <== in[7-j + 8*i];
+        }
+    }
+
+    for (var i = 0; i < shift; i++) {
+        mid_2[i] <== 0;
+    }
+    for (var i = shift; i < 128; i++) {
+        mid_2[i] <== mid_1[i - shift];
+    }
+
+    for (var i = 0; i < 16; i++) {
+        for (var j = 0; j < 8; j++) {
+            out[j + 8*i] <== mid_2[7-j + 8*i];
+        }
+    }
+}
+// template LeftShiftLE(shift) {
+//     signal input in[128];
+//     signal output out[128];
+//     signal mid_1[128];
+//     signal mid_2[128]; 
+
+//     for (var i = 0; i < 16; i++) {
+//         for (var j = 0; j < 8; j++) {
+//             mid_1[j + 8*i] <== in[7-j + 8*i];
+//         }
+//     }
+
+//     for (var i = 0; i < shift; i++) {
+//         mid_2[i] <== 0;
+//     }
+//     for (var i = shift; i < 128; i++) {
+//         mid_2[i] <== mid_1[i - shift];
+//     }
+
+//     for (var i = 0; i < 16; i++) {
+//         for (var j = 0; j < 8; j++) {
+//             out[j + 8*i] <== mid_2[7-j + 8*i];
+//         }
+//     }
+// }

@@ -155,7 +155,7 @@ describe("polyval_GFMulX", () => {
       console.log("#constraints:", await circuit.getConstraintCount());
     });
 
-    it("test all values", async () => {
+    it("test polyval at all bits set", async () => {
       let bits = hexToBitArray("01000000000000000000000000000000");
       // for (vector in mulXTestVectors) {
       for (let i = 0; i < mulXTestVectors.length; i++) {
@@ -244,17 +244,50 @@ function bitArrayToHex(bits: number[]): string {
     .join("");
 }
 
-// function bitArrayToHex(bits: (number | bigint)[]): string {
-//   if (bits.length % 8 !== 0) {
-//     throw new Error("Input length must be a multiple of 8 bits");
-//   }
-//   return bits
-//     .reduce((acc, bit, index) => {
-//       const byteIndex = Math.floor(index / 8);
-//       const bitPosition = 7 - (index % 8);
-//       acc[byteIndex] = (acc[byteIndex] || BigInt(0)) | (BigInt(bit) << BigInt(bitPosition));
-//       return acc;
-//     }, new Array(bits.length / 8).fill(BigInt(0)))
-//     .map((byte) => byte.toString(16).padStart(2, "0"))
-//     .join("");
-// }
+describe("LeftShiftLE", () => {
+  const shift_1 = 1;
+  const shift_2 = 2;
+  let circuit: WitnessTester<["in"], ["out"]>;
+
+  describe("leftshiftLE", () => {
+    before(async () => {
+      circuit = await circomkit.WitnessTester(`LeftShiftLE`, {
+        file: "aes-gcm/gfmulx",
+        template: "LeftShiftLE",
+        params: [shift_1],
+      });
+    });
+
+    it("tests leftshiftLE", async () => {
+      let bits = [1].concat(Array(127).fill(0));
+      let expect = Array(15).fill(0).concat([1]).concat(Array(112).fill(0));
+      let _res = await circuit.compute({ in: bits }, ["out"]);
+      let result = (_res.out as (number | bigint)[]).map((bit) => Number(bit));
+      assert.deepEqual(result, expect);
+
+      bits = [0, 1].concat(Array(126).fill(0));
+      expect = [1].concat(Array(127).fill(0));
+      _res = await circuit.compute({ in: bits }, ["out"]);
+      result = (_res.out as (number | bigint)[]).map((bit) => Number(bit));
+      assert.deepEqual(result, expect);
+    });
+  });
+
+  describe("leftshiftLE shift 2", () => {
+    before(async () => {
+      circuit = await circomkit.WitnessTester(`LeftShiftLE`, {
+        file: "aes-gcm/gfmulx",
+        template: "LeftShiftLE",
+        params: [shift_2],
+      });
+    });
+
+    it("tests leftshiftLE", async () => {
+      let bits = [1].concat(Array(127).fill(0));
+      let expect = Array(14).fill(0).concat([1]).concat(Array(113).fill(0));
+      let _res = await circuit.compute({ in: bits }, ["out"]);
+      let result = (_res.out as (number | bigint)[]).map((bit) => Number(bit));
+      assert.deepEqual(result, expect);
+    });
+  });
+});
