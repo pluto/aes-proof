@@ -257,3 +257,15 @@ template ReverseBitsArray(n) {
         out[i] <== in[n-i-1];
     }
 }
+
+// reverse the byte order in a 16 byte array
+template ReverseByteArray() {
+    signal input in[128];
+    signal output out[128];
+
+    for (var i = 0; i < 16; i++) {
+        for (var j = 0; j < 8; j++) {
+            out[j + 8*i] <== in[(15-i)*8 +j];
+        }
+    }
+}
