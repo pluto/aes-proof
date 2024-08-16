@@ -108,31 +108,28 @@ template polyval_GFMULX() {
     var block = 128;
     signal input in[block];
     signal output out[block];
-
-    // v = in << 1; 
-    // observe that LE makes this less straightforward
-    // since 0x8000 (2^7) 
-    //    => 0x0001 (2^8)
+    // v = in << 1;  observe that LE makes this less straightforward
     signal v[block];
     // if `in` MSB set, assign irreducible poly bits, otherwise zero
     signal irreducible_poly[block];
     var msb = in[0]; // endianness: 0 in polyval, 127(?) in ghash
 
-    v[7] <== 0;
-    irreducible_poly[block - 1] <== msb;
+    component left_shift = LeftShiftLE(1);
+    for (var i = 0; i < block; i++) {
+        left_shift.in[i] <== in[i];
+    }
+    for (var i = 0; i < block; i++) {
+        v[i] <== left_shift.out[i];
+    }
 
-    // for (var i=(block-2); i>=0; i--) {
-    //     // not so simple!:
-    //     v[i] <== in[i+1];
-
-    //     // XOR with polynomial if MSB is 1
-    //     // irreducible_poly has 1s at positions 127, 126, 121, 1
-    //     if (i==0 || i == 121 || i == 126) {
-    //         irreducible_poly[i] <== in[0];
-    //     } else {
-    //         irreducible_poly[i] <== 0;
-    //     }
-    // }
+    for (var i = 0; i < 128; i++) {
+        // irreducible_poly has 1s at positions 127, 126, 121, 1
+        if (i==0 || i == 121 || i == 126 || i==127) {
+            irreducible_poly[i] <== msb;
+        } else {
+            irreducible_poly[i] <== 0;
+        }
+    }
 
     // compute out
     component xor = BitwiseXor(block);
@@ -142,7 +139,7 @@ template polyval_GFMULX() {
 }
 
 
-// Left shift a `n`-bit little-endian array by `shift` bits
+// Left shift a 128-bit little-endian array by `shift` bits
 //
 // example for 16 bit-array shifted by 1 bit:
 // in  = [h g f e d c b a, p o n m l k j i]
@@ -174,28 +171,3 @@ template LeftShiftLE(shift) {
         }
     }
 }
-// template LeftShiftLE(shift) {
-//     signal input in[128];
-//     signal output out[128];
-//     signal mid_1[128];
-//     signal mid_2[128]; 
-
-//     for (var i = 0; i < 16; i++) {
-//         for (var j = 0; j < 8; j++) {
-//             mid_1[j + 8*i] <== in[7-j + 8*i];
-//         }
-//     }
-
-//     for (var i = 0; i < shift; i++) {
-//         mid_2[i] <== 0;
-//     }
-//     for (var i = shift; i < 128; i++) {
-//         mid_2[i] <== mid_1[i - shift];
-//     }
-
-//     for (var i = 0; i < 16; i++) {
-//         for (var j = 0; j < 8; j++) {
-//             out[j + 8*i] <== mid_2[7-j + 8*i];
-//         }
-//     }
-// }
