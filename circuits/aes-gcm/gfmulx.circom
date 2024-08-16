@@ -11,35 +11,29 @@ include "helper_functions.circom";
 //
 // rust-crypto reference implementation: todo
 template ghash_GFMULX() {
-    var block = 128;
-    signal input in[block];
-    signal output out[block];
+    signal input in[128];
+    signal output out[128];
+    var msb = in[127];
 
-    // v = in left-shifted by 1
-    signal v[block];
-    // v_xor = 0 if in[0] is 0, or the irreducible poly if in[0] is 1
-    signal v_xor[block];
+    // v = in right-shifted by 1
+    signal v[128];
+    v[0] <== 0;
+    for (var i = 1; i < 128; i++) { v[i] <== in[i-1]; }
 
-    // initialize v and v_xor. 
-    v[block - 1] <== 0;
-    v_xor[block - 1] <== in[0];
-
-    for (var i=126; i>=0; i--) {
-        v[i] <== in[i+1];
-
-        // XOR with polynomial if MSB is 1
-        // v_xor has 1s at positions 127, 126, 121, 1
-        if (i==0 || i == 121 || i == 126) {
-            v_xor[i] <== in[0];
+    // irreducible_poly has 1s at positions 1, 2, 7, 127
+    signal irreducible_poly[128];
+    for (var i = 0; i < 128; i++) {
+        if (i==0 || i == 1 || i==6 || i==127) { // passes rust-crypto
+        // // if (i==7 || i==121 || i==126) { // passes ietf spec?
+            irreducible_poly[i] <== msb;
         } else {
-            v_xor[i] <== 0;
+            irreducible_poly[i] <== 0;
         }
     }
 
-    // compute out
-    component xor = BitwiseXor(block);
+    component xor = BitwiseXor(128);
     xor.a <== v;
-    xor.b <== v_xor;
+    xor.b <== irreducible_poly;
     out <== xor.out;
 }
 

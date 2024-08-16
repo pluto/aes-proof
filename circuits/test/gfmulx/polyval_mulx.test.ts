@@ -145,7 +145,7 @@ describe("polyval_GFMulX", () => {
         file: "aes-gcm/gfmulx",
         template: "polyval_GFMULX",
       });
-      console.log("#constraints:", await circuit.getConstraintCount());
+      // console.log("#constraints:", await circuit.getConstraintCount());
     });
 
     it("test polyval at all bits set", async () => {
@@ -170,7 +170,6 @@ describe("polyval_GFMulX", () => {
       const result = bitArrayToHex(
         (_res.out as (number | bigint)[]).map((bit) => Number(bit))
       );
-      console.log("2");
       console.log("expect: ", expect, "\nresult: ", result);
       assert.equal(expect, result);
     });
