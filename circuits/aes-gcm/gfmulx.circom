@@ -65,8 +65,7 @@ template polyval_GFMULX() {
     // ...1100 0010 <== encodes 121, 126, 127
     // ...0100 0010 <== encodes 121, 126
     for (var i = 0; i < 128; i++) {
-        // if (i==7 || i == 120 || i==121 || i==126) { // passes rust-crypto
-        if (i==7 || i==121 || i==126) { // passes ietf spec?
+        if (i==7 || i == 120 || i==121 || i==126) { 
             irreducible_poly[i] <== msb;
         } else {
             irreducible_poly[i] <== 0;
