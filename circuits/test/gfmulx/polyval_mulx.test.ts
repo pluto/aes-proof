@@ -136,13 +136,6 @@ const mulXTestVectors = [
   "010000000000000000000000000000c2",
 ];
 
-// polyval irreducible polynomial: x^128 + x^127 + x^126 + x^121 + 1
-// note that polyval uses LE encoding.
-const polyvalIrreduciblePolynomial: number[] = Array(120)
-  .fill(0)
-  .concat([1, 0, 0, 0, 0, 1, 1, 1])
-  .reverse();
-
 describe("polyval_GFMulX", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
 
@@ -157,7 +150,6 @@ describe("polyval_GFMulX", () => {
 
     it("test polyval at all bits set", async () => {
       let bits = hexToBitArray("01000000000000000000000000000000");
-      // for (vector in mulXTestVectors) {
       for (let i = 0; i < mulXTestVectors.length; i++) {
         const expect = mulXTestVectors[i];
         const _res = await circuit.compute({ in: bits }, ["out"]);
@@ -170,14 +162,18 @@ describe("polyval_GFMulX", () => {
       }
     });
 
-    // // ref: https://datatracker.ietf.org/doc/html/rfc8452#appendix-A
-    // it("compute IETF test 2", async () => {
-    //   let bits = hexToBitArray("9c98c04df9387ded828175a92ba652d8");
-    //   let expected_output = hexToBitArray("3931819bf271fada0503eb52574ca5f2");
-    //   // console.log(bits);
-    //   // console.log(expected_output);
-    //   await circuit.expectPass({ in: bits }, { out: expected_output });
-    // });
+    // ref: https://datatracker.ietf.org/doc/html/rfc8452#appendix-A
+    it("compute IETF test 2", async () => {
+      let bits = hexToBitArray("9c98c04df9387ded828175a92ba652d8");
+      let expect = "3931819bf271fada0503eb52574ca5f2";
+      const _res = await circuit.compute({ in: bits }, ["out"]);
+      const result = bitArrayToHex(
+        (_res.out as (number | bigint)[]).map((bit) => Number(bit))
+      );
+      console.log("2");
+      console.log("expect: ", expect, "\nresult: ", result);
+      assert.equal(expect, result);
+    });
 
     it("tests hexToBitArray", async () => {
       let hex = "0F";

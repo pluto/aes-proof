@@ -3,61 +3,8 @@ pragma circom 2.1.9;
 // include "circomlib/circuits/gates.circom";
 include "helper_functions.circom";
 
-
-// // Multiplies `in` by x in GF(2^128) defined by the 
-// // ghash irreducible polynomial x^128 + x^7 + x^2 + x + 1
-// template ghash_GFMULX() {
-//     var size = 128;
-
-//     signal input in[size];
-//     signal output out[size];
-//     signal temp[size];
-
-
-//     // Get the most significant bit of the input signal
-//     var msb;
-//     msb = in[0]; /// [>1<,0,0,0,0,0,0,0]
-
-//     // Left shift input by 1 into temp
-//     for (var i = 0; i < size - 1; i++) {
-//         temp[i] <== in[i+1];
-//     }
-//     temp[size - 1] <== 0;
-
-//     component xor1 = XOR();
-//     component xor2 = XOR();
-//     component xor3 = XOR();
-//     component xor4 = XOR();
-
-//     // x^128 = x^7 + x^2 + x + 1
-//     // XOR the input with msb * (x^7 + x^2 + x + 1)
-//     for (var i = 0; i < size; i++) {
-//         if (i == size - 1) {
-//             // x^0 term
-//             xor1.a <== temp[i];
-//             xor1.b <== msb;
-//             out[i] <== xor1.out;
-//         } else if (i == size - 2) {
-//             // x^1 term
-//             xor2.a <== temp[i];
-//             xor2.b <== msb;
-//             out[i] <== xor2.out;
-//         } else if (i == size - 3) {
-//             // x^2 term
-//             xor3.a <== temp[i];
-//             xor3.b <== msb;
-//             out[i] <== xor3.out;
-//         } else if (i == size - 8) {
-//             // x^7 term
-//             xor4.a <== temp[i];
-//             xor4.b <== msb;
-//             out[i] <== xor4.out;
-//         } 
-//     }   
-// }
-
 // compute x * `in` over ghash polynomial
-// ghash irreducible polynomial x^128 + x^7 + x^2 + x + 1
+// ghash irreducible polynomial x^128 = x^7 + x^2 + x + 1
 //
 // spec: 
 // https://tools.ietf.org/html/rfc8452#appendix-A
@@ -97,7 +44,7 @@ template ghash_GFMULX() {
 }
 
 // compute x * `in` over polyval polynomial
-// polyval irreducible polynomial x^128 + x^127 + x^126 + x^121 + 1
+// polyval irreducible polynomial x^128 = x^127 + x^126 + x^121 + 1
 //
 // spec: 
 // https://tools.ietf.org/html/rfc8452#appendix-A
@@ -105,36 +52,36 @@ template ghash_GFMULX() {
 // rust-crypto reference implementation: 
 // https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/mulx.rs#L11
 template polyval_GFMULX() {
-    var block = 128;
-    signal input in[block];
-    signal output out[block];
+    signal input in[128];
+    signal output out[128];
     // v = in << 1;  observe that LE makes this less straightforward
-    signal v[block];
-    // if `in` MSB set, assign irreducible poly bits, otherwise zero
-    signal irreducible_poly[block];
-    var msb = in[block - 8]; // endianness: 0 in polyval, 127(?) in ghash
+    signal v[128];
+    // if MSB set, assign irreducible poly bits, otherwise zero
+    signal irreducible_poly[128];
+    var msb = in[128 - 8];
 
     component left_shift = LeftShiftLE(1);
-    for (var i = 0; i < block; i++) {
+    for (var i = 0; i < 128; i++) {
         left_shift.in[i] <== in[i];
     }
-    for (var i = 0; i < block; i++) {
+    for (var i = 0; i < 128; i++) {
         v[i] <== left_shift.out[i];
     }
 
+    // irreducible_poly has 1s at positions 1, 121, 126, 127
+    // 0000 0001... <== encodes 1
+    // ...1100 0010 <== encodes 121, 126, 127
+    // ...0100 0010 <== encodes 121, 126
     for (var i = 0; i < 128; i++) {
-        // irreducible_poly has 1s at positions 1, 121, 126, 127
-        // 0000 0001... <== encodes 1
-        // ...1100 0010 <== encodes 121, 126, 127
-        if (i==7 || i == 120 || i==121 || i==126) {
+        // if (i==7 || i == 120 || i==121 || i==126) { // passes rust-crypto
+        if (i==7 || i==121 || i==126) { // passes ietf spec?
             irreducible_poly[i] <== msb;
         } else {
             irreducible_poly[i] <== 0;
         }
     }
 
-    // compute out
-    component xor = BitwiseXor(block);
+    component xor = BitwiseXor(128);
     xor.a <== v;
     xor.b <== irreducible_poly;
     out <== xor.out;
