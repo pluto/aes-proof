@@ -18,7 +18,10 @@ include "helper_functions.circom";
 // X_{i+1} = (X_i xor M_{i+1}) * H
 // output: X_{n+1} where n is the number of blocks.
 template GHASH(n_msg_bits) {
-
+    signal input msg[n_msg_bits]; 
+    signal input H[128]; 
+    // signal input AAD[128]; // included in msg
+    signal output out[128];
 
 }
 
