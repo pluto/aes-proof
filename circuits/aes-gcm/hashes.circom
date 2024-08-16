@@ -23,6 +23,10 @@ template GHASH(n_msg_bits) {
     // signal input AAD[128]; // included in msg
     signal output out[128];
 
+    for (var i = 0; i < 128; i++) {
+        out[i] <== 1;
+    }
+
 }
 
 // {
