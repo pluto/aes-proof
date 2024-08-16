@@ -8,8 +8,6 @@ include "helper_functions.circom";
 //
 // spec: 
 // https://tools.ietf.org/html/rfc8452#appendix-A
-//
-// rust-crypto reference implementation: todo
 template ghash_GFMULX() {
     signal input in[128];
     signal output out[128];
@@ -20,11 +18,11 @@ template ghash_GFMULX() {
     v[0] <== 0;
     for (var i = 1; i < 128; i++) { v[i] <== in[i-1]; }
 
+    // if MSB set, assign irreducible poly bits, otherwise zero
     // irreducible_poly has 1s at positions 1, 2, 7, 127
     signal irreducible_poly[128];
     for (var i = 0; i < 128; i++) {
-        if (i==0 || i == 1 || i==6 || i==127) { // passes rust-crypto
-        // // if (i==7 || i==121 || i==126) { // passes ietf spec?
+        if (i==0 || i == 1 || i==6 || i==127) { 
             irreducible_poly[i] <== msb;
         } else {
             irreducible_poly[i] <== 0;
