@@ -112,7 +112,7 @@ template polyval_GFMULX() {
     signal v[block];
     // if `in` MSB set, assign irreducible poly bits, otherwise zero
     signal irreducible_poly[block];
-    var msb = in[0]; // endianness: 0 in polyval, 127(?) in ghash
+    var msb = in[block - 8]; // endianness: 0 in polyval, 127(?) in ghash
 
     component left_shift = LeftShiftLE(1);
     for (var i = 0; i < block; i++) {
@@ -123,8 +123,10 @@ template polyval_GFMULX() {
     }
 
     for (var i = 0; i < 128; i++) {
-        // irreducible_poly has 1s at positions 127, 126, 121, 1
-        if (i==0 || i == 121 || i == 126 || i==127) {
+        // irreducible_poly has 1s at positions 1, 121, 126, 127
+        // 0000 0001... <== encodes 1
+        // ...1100 0010 <== encodes 121, 126, 127
+        if (i==7 || i == 120 || i==121 || i==126) {
             irreducible_poly[i] <== msb;
         } else {
             irreducible_poly[i] <== 0;
@@ -146,6 +148,7 @@ template polyval_GFMULX() {
 // mid1= [a b c d e f g h, i j k l m n o p] // swap order of bits in each byte
 // mid2= [0 a b c d e f g, h i j k l m n o] // shift bits right by 1
 // out = [g f e d c b a 0, o n m l k j i h] // swap order of bits in each byte
+// TODO(TK 2024-08-15): optimize
 template LeftShiftLE(shift) {
     signal input in[128];
     signal output out[128];
