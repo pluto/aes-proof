@@ -19,7 +19,7 @@ template ghash_GFMULX() {
     for (var i = 1; i < 128; i++) { v[i] <== in[i-1]; }
 
     // if MSB set, assign irreducible poly bits, otherwise zero
-    // irreducible_poly has 1s at positions 1, 2, 7, 127
+    // irreducible_poly has 1s at positions 1, 2, 7, 128
     signal irreducible_poly[128];
     for (var i = 0; i < 128; i++) {
         if (i==0 || i == 1 || i==6 || i==127) { 
