@@ -165,7 +165,9 @@ describe("polyval_GFMulX", () => {
     // ref: https://datatracker.ietf.org/doc/html/rfc8452#appendix-A
     it("compute IETF test 2", async () => {
       let bits = hexToBitArray("9c98c04df9387ded828175a92ba652d8");
-      let expect = "3931819bf271fada0503eb52574ca5f2";
+      // NB: the expected value in the IETF spec has a typo. This value is correct.
+      // source: https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/mulx.rs#L27
+      let expect = "3931819bf271fada0503eb52574ca572";
       const _res = await circuit.compute({ in: bits }, ["out"]);
       const result = bitArrayToHex(
         (_res.out as (number | bigint)[]).map((bit) => Number(bit))
