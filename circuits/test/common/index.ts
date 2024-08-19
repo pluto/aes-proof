@@ -30,6 +30,23 @@ export function hexToBitArray(hex: string): number[] {
   );
 }
 
+
+export function pad_num_to_arr128(value: number): number[][] {
+  let tmp = value
+    .toString(2)
+    .padStart(128, "0")
+    .split("")
+    .map((bit) => parseInt(bit, 10));
+  return [tmp.slice(0, 64), tmp.slice(64, 128)];
+}
+
+export function parse_arr128_to_number(res: number[][]): number {
+  let first_64: number[] = res[0];
+  let last_64: number[] = res[1];
+  let all_bits: number[] = first_64.concat(last_64);
+  return parseInt(all_bits.join(""), 2);
+}
+
 export function bitArrayToHex(bits: number[]): string {
   // console.log(bits);
   if (bits.length % 8 !== 0) {
