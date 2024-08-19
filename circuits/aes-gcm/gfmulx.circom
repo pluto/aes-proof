@@ -19,7 +19,7 @@ template ghash_GFMULX() {
     for (var i = 1; i < 128; i++) { v[i] <== in[i-1]; }
 
     // if MSB set, assign irreducible poly bits, otherwise zero
-    // irreducible_poly has 1s at positions 1, 2, 7, 127
+    // irreducible_poly has 1s at positions 0, 1, 6, 127
     signal irreducible_poly[128];
     for (var i = 0; i < 128; i++) {
         if (i==0 || i == 1 || i==6 || i==127) { 
@@ -60,10 +60,10 @@ template polyval_GFMULX() {
         v[i] <== left_shift.out[i];
     }
 
+    // NOTE: LE logic explaining:
     // irreducible_poly has 1s at positions 1, 121, 126, 127
-    // 0000 0001... <== encodes 1
-    // ...1100 0010 <== encodes 121, 126, 127
-    // ...0100 0010 <== encodes 121, 126
+    // 0000 0001... <== bit at pos 7 encodes x^0
+    // ...1100 0010 <== bits at pos 121, 122, 126 encode 127, 126, 121 respectively
     for (var i = 0; i < 128; i++) {
         if (i==7 || i == 120 || i==121 || i==126) { 
             irreducible_poly[i] <== msb;
