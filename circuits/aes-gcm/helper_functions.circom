@@ -117,6 +117,16 @@ template BitwiseAnd(n) {
     }
 }
 
+template BitwiseOr(n) {
+    signal input a[n];
+    signal input b[n];
+    signal output out[n];
+
+    for (var i=0; i<n; i++) {
+        out[i] <== a[i] + b[i] - a[i]*b[i];
+    }
+}
+
 template IntAnd(n)
 {
     signal input a;
@@ -229,6 +239,47 @@ template SumMultiple(n) {
     sum <== sums[n-1];
 }
 
+// compute the OR of n inputs, each m bits wide
+template OrMultiple(n, m) {
+    signal input inputs[n][m];
+    signal output out[m];
+
+    signal mids[n][m];
+    mids[0] <== inputs[0];
+
+    component ors[n-1];
+    for(var i=0; i<n-1; i++) {
+        ors[i] = BitwiseOr(m);
+        ors[i].a <== mids[i];
+        ors[i].b <== inputs[i+1];
+        mids[i+1] <== ors[i].out;
+    }
+
+    out <== mids[n-1];
+}
+
+// compute the XOR of n inputs, each m bits wide
+template XorMultiple(n, m) {
+    signal input inputs[n][m];
+    signal output out[m];
+
+    signal mids[n][m];
+    mids[0] <== inputs[0];
+
+    component xors[n-1];
+    for(var i=0; i<n-1; i++) {
+        xors[i] = BitwiseXor(m);
+        xors[i].a <== mids[i];
+        xors[i].b <== inputs[i+1];
+        mids[i+1] <== xors[i].out;
+    }
+
+    out <== mids[n-1];
+}
+
+// select the index-th element from an array of total elements
+// via the argument:
+// Sum_0^n (IsEqual(index, i) * in[i])
 template IndexSelector(total) {
     signal input in[total];
     signal input index;
@@ -249,6 +300,7 @@ template IndexSelector(total) {
     out <== calcTotal.sum;
 }
 
+// reverse the bit order in an n-bit array
 template ReverseBitsArray(n) {
     signal input in[n];
     signal output out[n];
