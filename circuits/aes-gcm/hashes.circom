@@ -99,18 +99,6 @@ template POLYVAL(n_msg_bits) {
     }
 
 }
-
-// test re-implementation of POLYVAL avoiding 128-bit arrays for a possible speed-up
-template POLYVAL_2_64(blocks) {
-    signal input msg[blocks][64]; 
-    // Hash Key
-    signal input H[2][64];
-    signal output out[2][64];
-
-    // for (var i = 0; i < 128; i++) {
-    //     out[i] <== 1;
-    // }
-}
 // {
 //     var msg_len = n_bits/8;
 //     signal input in[n_bits];
