@@ -28,3 +28,26 @@ describe("BMUL64", () => {
     // assert.equal(result, EXPECT);
   });
 });
+
+describe("MUL", () => {
+  let circuit: WitnessTester<["h", "rhs"], ["out"]>;
+
+  before(async () => {
+    circuit = await circomkit.WitnessTester(`MUL64`, {
+      file: "aes-gcm/gfmul",
+      template: "MUL",
+      // params: [8],
+    });
+  });
+
+  // let bit_array = [1,0,0,0,0,0,0,0];
+  // let expected_output = [0,0,0,0,0,0,0,1].map((x) => BigInt(x));
+  it("mul", async () => {
+    const _res = await circuit.compute({ h: X, rhs: Y }, ["out"]);
+    // const result = bitArrayToHex(
+    //   (_res.out as number[]).map((bit) => Number(bit))
+    // ).slice(0, 32);
+    // console.log("expect: ", EXPECT, "\nresult: ", result);
+    // assert.equal(result, EXPECT);
+  });
+});
