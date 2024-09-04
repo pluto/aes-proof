@@ -14,7 +14,7 @@ describe("ghash-hash", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`ghash`, {
-      file: "aes-gcm/hashes",
+      file: "aes-gcm/ghash",
       template: "GHASH",
       params: [128 * 2],
     });

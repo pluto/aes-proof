@@ -10,6 +10,7 @@ include "gfmul.circom";
 // Outputs:
 // - `tag` the authentication tag
 //
+// TODO(WJ 2024-09-04): maybe move the below comment to the aes-gcm.circom file when it's ready
 // Computes:
 // let M = pad(AAD) || pad(msg) || len_64(AAD) || let_64(msg)
 // X_0 = 0^128
@@ -35,51 +36,58 @@ include "gfmul.circom";
 //                              └─────────┘              └─────────┘
 // 
 
-
 template GHASH(NUM_BLOCKS) {
     signal input HashKey[2][64]; // Hash subkey (128 bits)
-    // Note: the input x here includes the aad and the ciphertext
     signal input X[NUM_BLOCKS][2][64]; // Input blocks (each 128 bits)
     signal output tag[2][64]; // Output tag (128 bits)
 
-    // Initialize tag to zero
-    signal Y[2][64];
-    for (var i = 0; i < 64; i++) {
-        Y[0][i] <== 0;
-        Y[1][i] <== 0;
+    // Intermediate tags
+    signal intermediate[NUM_BLOCKS-1][2][64];
+
+    // Initialize first intermediate to zero
+    for (var j = 0; j < 64; j++) {
+        intermediate[0][0][j] <== 0;
+        intermediate[0][1][j] <== 0;
     }
+
+    // Initialize components
+    component xor[NUM_BLOCKS][2];
+    component gfmul[NUM_BLOCKS];
 
     // Accumulate each block using GHASH multiplication
     for (var i = 0; i < NUM_BLOCKS; i++) {
-        // XOR current block with the tag using BitwiseXor
-        component xor0 = BitwiseXor(64);
-        component xor1 = BitwiseXor(64);
-        xor0.a <== Y[0];
-        xor0.b <== X[i][0];
-        xor1.a <== Y[1];
-        xor1.b <== X[i][1];
+        xor[i][0] = BitwiseXor(64);
+        xor[i][1] = BitwiseXor(64);
+        gfmul[i] = MUL();
 
-        signal temp[2][64];
+        // XOR current block with the previous intermediate result
+        // note: intermediate[0] is initialized to zero, so all rounds are valid
+        xor[i][0].a <== intermediate[i][0];
+        xor[i][0].b <== X[i][0];
+        xor[i][1].a <== intermediate[i][1];
+        xor[i][1].b <== X[i][1];
+
+        // Multiply the XOR result with the hash subkey H
         for (var j = 0; j < 64; j++) {
-            temp[0][j] <== xor0.out[j];
-            temp[1][j] <== xor1.out[j];
+            gfmul[i].a[0][j] <== xor[i][0].out[j];
+            gfmul[i].a[1][j] <== xor[i][1].out[j];
         }
+        gfmul[i].b <== HashKey;
 
-        // Multiply the accumulated tag with the hash subkey H
-        component gfmul = MUL();
-        gfmul.a <== temp;
-        gfmul.b <== HashKey;
-
-        // Update tag with the multiplication result
-        for (var j = 0; j < 64; j++) {
-            Y[0][j] <== gfmul.out[0][j];
-            Y[1][j] <== gfmul.out[1][j];
+        // Store the result in the next intermediate tag
+        // TODO(WJ 2024-09-04): this is erroring on out of bounds even with this check 
+        // i need to think about this more
+         if (i < NUM_BLOCKS - 1) { 
+            for (var j = 0; j < 64; j++) {
+                intermediate[i+1][0][j] <== gfmul[i].out[0][j];
+                intermediate[i+1][1][j] <== gfmul[i].out[1][j];
+            }
         }
     }
 
     // Assign the final tag
-    for (var i = 0; i < 64; i++) {
-        tag[0][i] <== Y[0][i];
-        tag[1][i] <== Y[1][i];
+    for (var j = 0; j < 64; j++) {
+        tag[0][j] <== intermediate[NUM_BLOCKS][0][j];
+        tag[1][j] <== intermediate[NUM_BLOCKS][1][j];
     }
 }
