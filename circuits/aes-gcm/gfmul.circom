@@ -139,12 +139,55 @@ template MUL() {
     signal _v1[64];
     signal _v3[64];
     signal __v2[64];
-    component XorMultiples_v[4];
-    component LeftShifts_v[6];
-    component RightShifts_v[6];
+    component RS_v[6];
+    component LS_v[6];
+
+    component XorMultiples_R[2];
+    component XorMultiples_L[2];
+    for (var i=0; i<2; i++) {
+        XorMultiples_R[i] = XorMultiple(5, 64);
+        XorMultiples_L[i] = XorMultiple(4, 64);
+    }
+
+    RS_v[0] = BitwiseRightShift(64, 1);
+    RS_v[0].in <== v[0];
+    RS_v[1] = BitwiseRightShift(64, 2);
+    RS_v[1].in <== v[0];
+    RS_v[2] = BitwiseRightShift(64, 7);
+    RS_v[2].in <== v[0];
+   
+    LS_v[0] = BitwiseLeftShift(64, 63);
+    LS_v[0].in <== v[0];
+    LS_v[1] = BitwiseLeftShift(64, 62);
+    LS_v[1].in <== v[0];
+    LS_v[2] = BitwiseLeftShift(64, 57);
+    LS_v[2].in <== v[0];
+
+    XorMultiples_R[0].inputs <== [v[2], v[0], RS_v[0].out, RS_v[1].out, RS_v[2].out];
+    _v2 <== XorMultiples_R[0].out;
+    XorMultiples_L[0].inputs <== [v[1], LS_v[0].out, LS_v[1].out, LS_v[2].out];
+    _v1 <== XorMultiples_L[0].out;
+
+    RS_v[3] = BitwiseRightShift(64, 1);
+    RS_v[3].in <== _v1;
+    RS_v[4] = BitwiseRightShift(64, 2);
+    RS_v[4].in <== _v1;
+    RS_v[5] = BitwiseRightShift(64, 7);
+    RS_v[5].in <== _v1;
+
+    LS_v[3] = BitwiseLeftShift(64, 63);
+    LS_v[3].in <== _v1;
+    LS_v[4] = BitwiseLeftShift(64, 62);
+    LS_v[4].in <== _v1;
+    LS_v[5] = BitwiseLeftShift(64, 57);
+    LS_v[5].in <== _v1;
+
+    XorMultiples_R[1].inputs <== [v[3], _v1, RS_v[3].out, RS_v[4].out, RS_v[5].out];
+    _v3 <== XorMultiples_R[1].out;
+    XorMultiples_L[1].inputs <== [_v2, LS_v[0].out, LS_v[1].out, LS_v[2].out];
+    __v2 <== XorMultiples_L[1].out;
 
     out <== [__v2, _v3];
-
 }
 
 // Multiplication in GF(2)[X], truncated to the low 64-bits, with “holes”
