@@ -37,7 +37,7 @@ include "gfmul.circom";
 template GHASH(NUM_BLOCKS) {
     signal input HashKey[2][64]; // Hash subkey (128 bits)
     signal input msg[NUM_BLOCKS][2][64]; // Input blocks (each 128 bits)
-    signal output tag[2][64]; // Output tag (128 bits)
+    signal output tag[128]; // Output tag (128 bits)
 
     // Intermediate tags
     signal intermediate[NUM_BLOCKS][2][64];
@@ -77,6 +77,8 @@ template GHASH(NUM_BLOCKS) {
         intermediate[i][1] <== gfmul[i].out[1];
     }
     // Assign the final tag
-    tag[0] <== intermediate[NUM_BLOCKS-1][0];
-    tag[1] <== intermediate[NUM_BLOCKS-1][1];
+    for (var j = 0; j < 64; j++) {
+        tag[j] <== intermediate[NUM_BLOCKS-1][0][j];
+        tag[j+64] <== intermediate[NUM_BLOCKS-1][1][j];
+    }
 }

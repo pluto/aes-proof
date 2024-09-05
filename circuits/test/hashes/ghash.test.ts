@@ -6,8 +6,8 @@ import { assert } from "chai";
 const H = hexToBitArray("25629347589242761d31f826ba4b757b");
 const X1 = "4f4f95668c83dfb6401762bb2d01a262";
 const X2 = "d1a24ddd2721d006bbe45f20d3c9f362";
-const M = [hexToBitArray(X1), hexToBitArray(X2)];
-const EXPECT = "bd9b3997046731fb96251b91f9c99d7a";
+const M = hexToBitArray(X1.concat(X2));
+const EXPECT = hexToBitArray("bd9b3997046731fb96251b91f9c99d7a");
 
 describe("ghash-hash", () => {
   let circuit: WitnessTester<["HashKey", "msg"], ["tag"]>;
@@ -22,16 +22,11 @@ describe("ghash-hash", () => {
   });
 
   it("test ghash", async () => {
-    const input = { msg: M, HashKey: H };
+    const input = { HashKey: H, msg: M };
     console.log("input message length: ", input.msg.length);
-    console.log("input message length: ", input.HashKey.length);
-    const _res = await circuit.compute(input, ["out"]);
-    // take the first 32 bytes
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 32);
-    console.log("expect: ", EXPECT, "\nresult: ", result);
-    assert.equal(result, EXPECT);
+    console.log("input hash key length: ", input.HashKey.length);
+    console.log("input message: ", EXPECT);
+    const _res = await circuit.expectPass(input, { tag: EXPECT });
   });
 });
 
