@@ -238,8 +238,8 @@ template BMUL64() {
         for (var j = 0; j < 4; j++) {
             var Y_INDEX = (i - j) % 4;
             muls[i][j] = WrappingMul64();
-            muls[i][j].src1 <== xs[j];
-            muls[i][j].src2 <== ys[Y_INDEX];
+            muls[i][j].a <== xs[j];
+            muls[i][j].b <== ys[Y_INDEX];
             z_mid[i][j] <== muls[i][j].out;
         }
 

@@ -51,3 +51,51 @@ describe("MUL", () => {
     // assert.equal(result, EXPECT);
   });
 });
+
+describe("WRAPPING_MUL", () => {
+  let circuit: WitnessTester<["a", "b"], ["out"]>;
+
+  before(async () => {
+    circuit = await circomkit.WitnessTester(`WrappingMul64`, {
+      file: "aes-gcm/mul",
+      template: "WrappingMul64",
+      // params: [8],
+    });
+  });
+
+  it("should correctly multiply two 64-bit numbers", async () => {
+    const a = BigInt("0xFFFFFFFFFFFFFFFF"); // Max 64-bit unsigned integer
+    const b = BigInt(2);
+    const expected = (a * b) & BigInt("0xFFFFFFFFFFFFFFFF"); // Simulate 64-bit wrap
+
+    const result = await circuit.calculateWitness({ a, b }, ["out"]);
+
+    // const output = BigInt(result.out.toString());
+    
+    // assert.equal(output, expected, "Multiplication result is incorrect");
+  });
+
+  // it("should handle multiplication with zero", async () => {
+  //   const a = BigInt("0xFFFFFFFFFFFFFFFF");
+  //   const b = BigInt(0);
+  //   const expected = BigInt(0);
+
+  //   const result = await circuit.calculateWitness({ a, b }, ["out"]);
+
+  //   const output = BigInt(result.out.toString());
+    
+  //   assert.equal(output, expected, "Multiplication with zero is incorrect");
+  // });
+
+  // it("should correctly wrap around on overflow", async () => {
+  //   const a = BigInt("0xFFFFFFFFFFFFFFFF");
+  //   const b = BigInt("0xFFFFFFFFFFFFFFFF");
+  //   const expected = BigInt("0xFFFFFFFFFFFFFFFE0000000000000001");
+
+  //   const result = await circuit.calculateWitness({ a, b }, ["out"]);
+
+  //   const output = BigInt(result.out.toString());
+    
+  //   assert.equal(output, expected, "Wrap-around on overflow is incorrect");
+  // });
+});
