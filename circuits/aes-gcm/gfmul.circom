@@ -237,7 +237,7 @@ template BMUL64() {
     for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
             var Y_INDEX = (i - j) % 4;
-            muls[i][j] = Mul64();
+            muls[i][j] = WrappingMul64();
             muls[i][j].src1 <== xs[j];
             muls[i][j].src2 <== ys[Y_INDEX];
             z_mid[i][j] <== muls[i][j].out;
@@ -263,7 +263,10 @@ template BMUL64() {
     out <== or_multiple.out;
 }
 
-// todo: verify this is what was actually meant
+// Reverse the order of 64 bits. 
+// 
+// Potential optimization:
+// https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/backend/soft64.rs#L230
 template REV64(){
     signal input in[64];
     signal output out[64];

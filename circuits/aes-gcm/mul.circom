@@ -2,14 +2,16 @@ pragma circom 2.1.9;
 
 include "helper_functions.circom";
 
-template Mul64()
-{
+// 64-bit wrapping multiplication
+template WrappingMul64() {
     signal input src1[64];
     signal input src2[64];
     signal output out[64];
+    // todo
 
 }
 
+// todo: deprecate
 template Mul()
 {
     signal input src1[64];
