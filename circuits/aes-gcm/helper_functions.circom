@@ -1,8 +1,8 @@
 pragma circom 2.1.9;
 
-include "../lib_circuits/bitify.circom";
-include "../lib_circuits/gates.circom";
-include "../lib_circuits/comparators.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/gates.circom";
+include "circomlib/circuits/comparators.circom";
 
 template ParseLEBytes64() {
     signal input in[64];
