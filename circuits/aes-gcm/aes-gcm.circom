@@ -4,6 +4,7 @@ include "../aes-ctr/ctr.circom";
 include "../ghash/ghash.circom";
 include "../aes-ctr/cipher.circom";
 include "circomlib/circuits/bitify.circom";
+include "helper_functions.circom";
 
 
 /// AES-GCM with 128 bit key according to: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
@@ -58,6 +59,8 @@ template AESGCM(l) {
     // Step 3: Let C = GCTRK(inc32(J0), P)
     component incJ0 = Increment32();
     incJ0.in <== J0;
+
+    // TODO(WJ 2024-09-09): stopping point
     component gctr = GCTR(l, nk);
     gctr.key <== key;
     gctr.iv <== incJ0.out;
