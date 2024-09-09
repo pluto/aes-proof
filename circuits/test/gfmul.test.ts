@@ -52,7 +52,7 @@ describe("MUL", () => {
   });
 });
 
-describe("WRAPPING_MUL", () => {
+describe("WRAPPING", () => {
   let circuit: WitnessTester<["a", "b"], ["out"]>;
 
   before(async () => {
@@ -63,7 +63,37 @@ describe("WRAPPING_MUL", () => {
   });
 
   // todo: choose a better test case, the expected value is wrong
-  it("should correctly multiply two 64-bit numbers", async () => {
+  it("should correctly multiply two 64-bit numbers non-overflow", async () => {
+    const a = hexToBitArray("0x0000000000000002");
+    const b = hexToBitArray("0x0000000000000004");
+    const expected = "0000000000000008"; 
+
+    // await circuit.expectPass({ a, b }, { out: hexToBitArray(expected) });
+
+    // const _res = await circuit.calculateWitness({ a, b });
+    const _res = await circuit.compute({ a, b }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as (number | bigint)[]).map((bit) => Number(bit))
+    );
+
+    assert.deepEqual(result, expected, "Multiplication result is incorrect");
+  });
+
+  it("should handle multiplication with zero", async () => {
+    const a = hexToBitArray("0xFFFFFFFFFFFFFFFF");
+    const b = hexToBitArray("0x0000000000000000");
+    const expected = "0000000000000000";
+    
+    const _res = await circuit.compute({ a, b }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as (number | bigint)[]).map((bit) => Number(bit))
+    );
+    
+    assert.equal(result, expected, "Multiplication with zero is incorrect");
+  });
+
+  // todo: choose a better test case, the expected value is wrong
+  it("should correctly multiply two 64-bit numbers with overflow", async () => {
     const a = hexToBitArray("0xFFFFFFFFFFFFFFFF");
     const b = hexToBitArray("0x0000000000000002");
     const expected = "000000000000000F"; 
@@ -79,21 +109,7 @@ describe("WRAPPING_MUL", () => {
     assert.deepEqual(result, expected, "Multiplication result is incorrect");
   });
 
-
-  it("should handle multiplication with zero", async () => {
-    const a = hexToBitArray("0xFFFFFFFFFFFFFFFF");
-    const b = hexToBitArray("0x0000000000000000");
-    const expected = "0000000000000000";
-    
-    const _res = await circuit.compute({ a, b }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as (number | bigint)[]).map((bit) => Number(bit))
-    );
-    
-    assert.equal(result, expected, "Multiplication with zero is incorrect");
-  });
-
-  it("should correctly wrap around on overflow", async () => {
+  it("should correctly wrap on maximum overflow", async () => {
     const a = hexToBitArray("0xFFFFFFFFFFFFFFFF");
     const b = hexToBitArray("0xFFFFFFFFFFFFFFFF");
     const expected = "0000000000000001";

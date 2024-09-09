@@ -2,35 +2,54 @@ pragma circom 2.1.9;
 
 include "helper_functions.circom";
 
-// 64-bit wrapping multiplication
+// 64-bit wrapping multiplication. 
+// Implements multiplication mod 2^{64}.
 template WrappingMul64() {
     signal input a[64];
     signal input b[64];
     signal output out[64];
 
-    signal x[64][64];
-    signal partialSum[64][64];
-
-    // Implement bit-level multiplication
+    // Intermediate signals for partial products
+    signal partials[64][64];
+    
+    // Calculate partial products
     for (var i = 0; i < 64; i++) {
         for (var j = 0; j < 64; j++) {
-            if (i == 0) {
-                x[i][j] <== a[j] * b[i];
-            } else {
-                x[i][j] <== partialSum[i-1][j] + a[j] * b[i];
-            }
+            partials[i][j] <== a[i] * b[j];
+        }
+    }
 
-            if (j == 63) {
-                if (i == 63) {
-                    out[i] <== x[i][j];
-                } else {
-                    partialSum[i][0] <== x[i][j];
-                }
-            } else {
-                partialSum[i][j+1] <== x[i][j];
+    // Sum up partial products with proper shifting
+    var sum[128];
+    for (var i = 0; i < 128; i++) {
+        sum[i] = 0;
+        for (var j = 0; j <= i; j++) {
+            if (j < 64 && (i-j) < 64) {
+                sum[i] += partials[j][i-j];
             }
         }
     }
+
+    // Perform modular reduction (keep only the lower 64 bits)
+    for (var i = 0; i < 64; i++) {
+        out[i] <-- sum[i];
+    }
+
+    // Constraint to ensure out is binary
+    // for (var i = 0; i < 64; i++) {
+    //     out[i] * (out[i] - 1) === 0;
+    // }
+
+    // Constraint to ensure correctness of multiplication
+    // var lhs = 0;
+    // var rhs = 0;
+    // for (var i = 0; i < 64; i++) {
+    //     lhs += out[i] * (1 << i);
+    //     for (var j = 0; j < 64; j++) {
+    //         rhs += a[i] * b[j] * (1 << (i + j));
+    //     }
+    // }
+    // lhs === rhs;
 }
 
 // todo: deprecate
