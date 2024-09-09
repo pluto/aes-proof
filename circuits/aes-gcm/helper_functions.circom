@@ -343,6 +343,7 @@ template Increment32() {
     signal rightBitsValue <== rightBitsInt.out;
 
     // Constraint: Increment rightBitsInt
+    // TODO(WJ 2024-09-09): handle overflow
     signal incremented <== rightBitsValue + 1;
 
     // Convert the incremented integer back to binary
