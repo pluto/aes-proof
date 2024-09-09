@@ -197,3 +197,170 @@ template S3() {
 
     out <== b2n.out;
 }
+
+// InvMixColumns: Applies the inverse equation for each column:
+// [s'0,c]   [14 11 13  9][s0,c]
+// [s'1,c] = [ 9 14 11 13][s1,c]
+// [s'2,c]   [13  9 14 11][s2,c]
+// [s'3,c]   [11 13  9 14][s3,c]
+// Where c is the column number, s are input bytes, s' are output bytes
+template InvMixColumns(){
+    signal input state[4][4];
+    signal output out[4][4];
+
+    component s0[4];
+    component s1[4];
+    component s2[4];
+    component s3[4];
+
+    for (var i = 0; i < 4; i++) {
+        s0[i] = InvS0();
+        s1[i] = InvS1();
+        s2[i] = InvS2();
+        s3[i] = InvS3();
+
+        for(var j = 0; j < 4; j++) {
+            s0[i].in[j] <== state[j][i];
+            s1[i].in[j] <== state[j][i];
+            s2[i].in[j] <== state[j][i];
+            s3[i].in[j] <== state[j][i];
+        }
+
+        out[0][i] <== s0[i].out;
+        out[1][i] <== s1[i].out;
+        out[2][i] <== s2[i].out;
+        out[3][i] <== s3[i].out;
+    }
+}
+
+// InvS0: Implements the inverse equation
+// out = (14 • in[0]) ⊕ (11 • in[1]) ⊕ (13 • in[2]) ⊕ (9 • in[3])
+template InvS0(){
+    signal input in[4];
+    signal output out;
+    component num2bits[4];
+    component xor[3];
+
+    for (var i = 0; i < 4; i++) {
+        num2bits[i] = Num2Bits(8);
+        num2bits[i].in <== in[i];
+    }
+
+    xor[0] = XorBits();
+    xor[0].a <== num2bits[0].out;
+    xor[0].b <== num2bits[1].out;
+
+    xor[1] = XorBits();
+    xor[1].a <== xor[0].out;
+    xor[1].b <== num2bits[2].out;
+
+    xor[2] = XorBits();
+    xor[2].a <== xor[1].out;
+    xor[2].b <== num2bits[3].out;
+
+    component b2n = Bits2Num(8);
+    for (var i = 0; i < 8; i++) {
+        b2n.in[i] <== xor[2].out[i];
+    }
+
+    out <== b2n.out;
+}
+
+// InvS1: Implements the inverse equation
+// out = (9 • in[0]) ⊕ (14 • in[1]) ⊕ (11 • in[2]) ⊕ (13 • in[3])
+template InvS1(){
+    signal input in[4];
+    signal output out;
+    component num2bits[4];
+    component xor[3];
+
+    for (var i = 0; i < 4; i++) {
+        num2bits[i] = Num2Bits(8);
+        num2bits[i].in <== in[i];
+    }
+
+    xor[0] = XorBits();
+    xor[0].a <== num2bits[0].out;
+    xor[0].b <== num2bits[1].out;
+
+    xor[1] = XorBits();
+    xor[1].a <== xor[0].out;
+    xor[1].b <== num2bits[2].out;
+
+    xor[2] = XorBits();
+    xor[2].a <== xor[1].out;
+    xor[2].b <== num2bits[3].out;
+
+    component b2n = Bits2Num(8);
+    for (var i = 0; i < 8; i++) {
+        b2n.in[i] <== xor[2].out[i];
+    }
+
+    out <== b2n.out;
+}
+
+// InvS2: Implements the inverse equation
+// out = (13 • in[0]) ⊕ (9 • in[1]) ⊕ (14 • in[2]) ⊕ (11 • in[3])
+template InvS2(){
+    signal input in[4];
+    signal output out;
+    component num2bits[4];
+    component xor[3];
+
+    for (var i = 0; i < 4; i++) {
+        num2bits[i] = Num2Bits(8);
+        num2bits[i].in <== in[i];
+    }
+
+    xor[0] = XorBits();
+    xor[0].a <== num2bits[0].out;
+    xor[0].b <== num2bits[1].out;
+
+    xor[1] = XorBits();
+    xor[1].a <== xor[0].out;
+    xor[1].b <== num2bits[2].out;
+
+    xor[2] = XorBits();
+    xor[2].a <== xor[1].out;
+    xor[2].b <== num2bits[3].out;
+
+    component b2n = Bits2Num(8);
+    for (var i = 0; i < 8; i++) {
+        b2n.in[i] <== xor[2].out[i];
+    }
+
+    out <== b2n.out;
+}
+
+// InvS3: Implements the inverse equation
+// out = (11 • in[0]) ⊕ (13 • in[1]) ⊕ (9 • in[2]) ⊕ (14 • in[3])
+template InvS3(){
+    signal input in[4];
+    signal output out;
+    component num2bits[4];
+    component xor[3];
+
+    for (var i = 0; i < 4; i++) {
+        num2bits[i] = Num2Bits(8);
+        num2bits[i].in <== in[i];
+    }
+
+    xor[0] = XorBits();
+    xor[0].a <== num2bits[0].out;
+    xor[0].b <== num2bits[1].out;
+
+    xor[1] = XorBits();
+    xor[1].a <== xor[0].out;
+    xor[1].b <== num2bits[2].out;
+
+    xor[2] = XorBits();
+    xor[2].a <== xor[1].out;
+    xor[2].b <== num2bits[3].out;
+
+    component b2n = Bits2Num(8);
+    for (var i = 0; i < 8; i++) {
+        b2n.in[i] <== xor[2].out[i];
+    }
+
+    out <== b2n.out;
+}

@@ -197,6 +197,18 @@ describe("MixColumns", () => {
     await circuit.expectPass({ in: [0xd4, 0xbf, 0x5d, 0x30] }, { out: 0x04 });
   });
 
+  it("invS0 should compute correctly", async () => {
+    let circuit: WitnessTester<["in"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`invS0`, {
+      file: "aes-ctr/cipher",
+      template: "InvS0",
+      params: [],
+    });
+    console.log("@InvS0 #constraints:", await circuit.getConstraintCount());
+
+    await circuit.expectPass({ in: [0x04, 0x66, 0x81, 0xe5] }, { out: 0xd4 });
+  });
+
   it("s1 should compute correctly", async () => {
     let circuit: WitnessTester<["in"], ["out"]>;
     circuit = await circomkit.WitnessTester(`s1`, {
