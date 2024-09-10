@@ -1,7 +1,7 @@
 pragma circom 2.1.9;
-include "aes-ctr/cipher.circom";
+include "../aes-ctr/cipher.circom";
 include "helper_functions.circom";
-include "aes-ctr/ctr.circom";
+include "../aes-ctr/ctr.circom";
 
 // GCTR Process to be used in AES-GCM
 //
@@ -39,12 +39,17 @@ template GCTR(INPUT_LEN, nk) {
     signal output cipherText[INPUT_LEN];
 
     var nBlocks = INPUT_LEN / 128;
-    if (INPUT_LEN % 128 > 0) {
-        nBlocks = nBlocks + 1;
-    }
+    var lastBlockSize = INPUT_LEN % 128;
 
     component toBlocks = ToBlocks(INPUT_LEN);
-    toBlocks.stream <== plainText;
+    for (var i = 0; i < nBlocks * 128; i++) {
+        toBlocks.stream[i] <== plainText[i];
+    }
+
+    signal tempLastBlock[lastBlockSize];
+    for (var i = 0; i < lastBlockSize; i++) {
+        tempLastBlock[i] <== plainText[nBlocks * 128 + i];
+    }
 
     // intermediate signal
     signal cipherBlocks[nBlocks][4][4];
@@ -53,7 +58,7 @@ template GCTR(INPUT_LEN, nk) {
     // Step 1: Generate counter blocks
     signal counterBlocks[nBlocks][128];
     component inc32[nBlocks];
-    counterBlocks[0] <== initialCounterBlock;
+    counterBlocks[1] <== initialCounterBlock;
     // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
     for (var i = 2; i < nBlocks; i++) {
         inc32[i] = Increment32();
@@ -67,7 +72,7 @@ template GCTR(INPUT_LEN, nk) {
         // encrypt counter block
         aes[i] = Cipher(nk);
         aes[i].key <== key;
-        aes[i].block <== counterBlocks.counterBlocks[i];
+        aes[i].block <== counterBlocks[i]; // TODO(WJ 2024-09-10): need to turn these into blocks
 
         // XOR cipher text with input block
         AddCipher[i] = AddCipher();    
@@ -86,19 +91,19 @@ template GCTR(INPUT_LEN, nk) {
     aes[nBlocks].key <== key;
     aes[nBlocks].block <== counterBlocks[nBlocks];
 
-    // XOR the MSB(CIPH) with the last block of plaintext
+    // XOR the cipher with the last chunk of un padded plaintext
+    component addLastCipher = XorMultiple(2, lastBlockSize);
+    for (var i = 0; i < lastBlockSize; i++) {
+        addLastCipher.inputs[0][i] <== aes[nBlocks].cipher[i];
+        addLastCipher.inputs[1][i] <== tempLastBlock[i];
+    }
 
-    // notes: the to blocks template will automatically pad the last block with 1s if necessary
-    // this is not what we want in the algorithm, so i need to store the last bits before toBlocks
-    // then i can use them here.
-
-    addLastCipher.state <== toBlocks.blocks[nBlocks];
-    addLastCipher.cipher <== aes[nBlocks].cipher;
-
-
+    var bitblocks = 128 * nBlocks;
     // Convert blocks to stream
-    component toStream = ToStream(nBlocks, INPUT_LEN);
+    component toStream = ToStream(nBlocks, bitblocks);
     toStream.blocks <== cipherBlocks;
-
-    cipherText <== toStream.stream;
+    for (var i = 0; i < bitblocks; i++) {
+        cipherText[i] <== toStream.stream[i];
+        cipherText[bitblocks + i] <== addLastCipher.out[i];
+    }
 }
