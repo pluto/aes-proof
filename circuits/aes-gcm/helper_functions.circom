@@ -334,8 +334,8 @@ template IndexSelector(total) {
     out <== calcTotal.sum;
 }
 
-// reverse the bit order in an n-bit array
-template ReverseBitsArray(n) {
+// reverse the order in an n-bit array
+template ReverseArray(n) {
     signal input in[n];
     signal output out[n];
 
@@ -389,10 +389,87 @@ template Increment32() {
     }
 
     // TODO(WJ 2024-09-09): Check if this bit-reversal is needed.
-    component reverseBits = ReverseBitsArray(32);
+    component reverseBits = ReverseArray(32);
     reverseBits.in <== incrementedBits;
     // Copy the incremented bits to the output
     for (var i = 0; i < 32; i++) {
         out[96 + i] <== reverseBits.out[i];
     }
 }
+
+/// IncrementingFunction increments the integer represented by the 32 least significant bits of the input 16-byte block
+/// and returns the result.
+template Increment32Block() {
+    signal input in[4][4];
+    signal output out[4][4];
+
+    log("input:");
+    log(in[0][0], in[0][1], in[0][2], in[0][3]);
+    log(in[1][0], in[1][1], in[1][2], in[1][3]);
+    log(in[2][0], in[2][1], in[2][2], in[2][3]);
+    log(in[3][0], in[3][1], in[3][2], in[3][3]);
+    // Copy the left-most 12 bytes unchanged
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 4; j++) {
+            out[i][j] <== in[i][j];
+        }
+    }
+
+    // Convert the last 4 bytes to an 32 bit number
+    // signal bits[32];
+    component bits2num = Bits2Num(32);
+    component byte2bits[4];
+    for (var i = 0; i < 4; i++) {
+        byte2bits[i] = Num2Bits(8);
+        byte2bits[i].in <== in[3][i];
+        for (var j = 0; j < 8; j++) {
+            bits2num.in[i * 8 + j] <== byte2bits[i].out[j];
+        }
+    }
+    // TODO: handle overflow
+    signal incremented <== bits2num.out + 1;
+
+    // Convert the incremented integer back to binary
+    component num2bits = Num2Bits(32);
+    num2bits.in <== incremented;
+    signal incrementedBits[32];
+    for (var i = 0; i < 32; i++) {
+        incrementedBits[i] <== num2bits.out[i];
+    }
+
+
+    // Convert the incremented bits back to four bytes and assign to out
+    component bits2byte[4];
+    signal outBytes[4];
+    for (var i = 0; i < 4; i++) {
+        bits2byte[i] = Bits2Num(8);
+        for (var j = 0; j < 8; j++) {
+            bits2byte[i].in[j] <== incrementedBits[i * 8 + j];
+        }
+        outBytes[i] <== bits2byte[i].out;
+    }
+    log("outBytes:");
+    log(outBytes[0], outBytes[1], outBytes[2], outBytes[3]);
+    out[3][0] <== outBytes[3];
+    out[3][1] <== outBytes[2];
+    out[3][2] <== outBytes[1];
+    out[3][3] <== outBytes[0];
+}
+
+// Idea: try to increment the word by 1
+// template IncrementWord() {
+//     signal input in[4];
+//     signal output out[4];
+
+//     // Convert the 4 bytes to a 32-bit number
+//     signal num <== in[0] * 0x1000000 + in[1] * 0x10000 + in[2] * 0x100 + in[3];
+
+//     // Increment the number
+//     signal incremented <== num + 1;
+
+//     // Convert the incremented number back to 4 bytes
+//     out[0] <== (incremented >> 24) & 0xFF;
+//     out[1] <== (incremented >> 16) & 0xFF;
+//     out[2] <== (incremented >> 8) & 0xFF;
+//     out[3] <== incremented & 0xFF;
+// }
