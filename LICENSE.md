@@ -175,7 +175,7 @@
 
    END OF TERMS AND CONDITIONS
 
-   Copyright [2024] [Pluto Development Inc.]
+   Copyright 2024 Pluto Development Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
