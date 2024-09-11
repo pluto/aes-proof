@@ -86,13 +86,35 @@ describe("IncrementWord", () => {
                 out: [0x00, 0x00, 0x00, 0x01],
             }
         );
-        // let res = await circuit.compute(
-        //     {
-        //         in: [0xFF, 0xFF, 0xFF, 0xFF],
-        //     },
-        //     ["out"]
-        // );
-        // console.log("res.out", res.out);
+
+    });
+    it("should increment the word input on overflow", async () => {
+        circuit = await circomkit.WitnessTester(`IncrementWord`, {
+            file: "aes-gcm/utils",
+            template: "IncrementWord",
+        });
+        await circuit.expectPass(
+            {
+                in: [0x00, 0x00, 0x00, 0xFF],
+            },
+            {
+                out: [0x00, 0x00, 0x01, 0x00],
+            }
+        );
+    });
+    it("should increment the word input on overflow", async () => {
+        circuit = await circomkit.WitnessTester(`IncrementWord`, {
+            file: "aes-gcm/utils",
+            template: "IncrementWord",
+        });
+        await circuit.expectPass(
+            {
+                in: [0xFF, 0xFF, 0xFF, 0xFF],
+            },
+            {
+                out: [0x00, 0x00, 0x00, 0x00],
+            }
+        );
     });
 });
 
