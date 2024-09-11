@@ -417,18 +417,23 @@ template Increment32Block() {
 
     // Convert the last 4 bytes to an 32 bit number
     // signal bits[32];
-    component bits2num = Bits2Num(32);
     component byte2bits[4];
     for (var i = 0; i < 4; i++) {
         byte2bits[i] = Num2Bits(8);
         byte2bits[i].in <== in[3][i];
+    }
+    component bits2num = Bits2Num(32);
+    for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 8; j++) {
             bits2num.in[i * 8 + j] <== byte2bits[i].out[j];
+            log("byte2bits[i].out[j]:", i, j);
+            log(byte2bits[i].out[j]);
         }
     }
     // TODO: handle overflow
     signal incremented <== bits2num.out + 1;
-
+    log("incremented:");
+    log(incremented); // wtf why is this 16777216
     // Convert the incremented integer back to binary
     component num2bits = Num2Bits(32);
     num2bits.in <== incremented;
@@ -436,6 +441,15 @@ template Increment32Block() {
     for (var i = 0; i < 32; i++) {
         incrementedBits[i] <== num2bits.out[i];
     }
+    // log("incrementedBits:");
+    // log(incrementedBits[0], incrementedBits[1], incrementedBits[2], incrementedBits[3]);
+    // log(incrementedBits[4], incrementedBits[5], incrementedBits[6], incrementedBits[7]);
+    // log(incrementedBits[8], incrementedBits[9], incrementedBits[10], incrementedBits[11]);
+    // log(incrementedBits[12], incrementedBits[13], incrementedBits[14], incrementedBits[15]);
+    // log(incrementedBits[16], incrementedBits[17], incrementedBits[18], incrementedBits[19]);
+    // log(incrementedBits[20], incrementedBits[21], incrementedBits[22], incrementedBits[23]);
+    // log(incrementedBits[24], incrementedBits[25], incrementedBits[26], incrementedBits[27]);
+    // log(incrementedBits[28], incrementedBits[29], incrementedBits[30], incrementedBits[31]);
 
 
     // Convert the incremented bits back to four bytes and assign to out

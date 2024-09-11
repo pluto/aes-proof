@@ -71,24 +71,60 @@ describe("Increment32Block", () => {
     });
 });
 
-// describe("IncrementWord", () => {
-//     let circuit: WitnessTester<["in"], ["out"]>;
-//     it("should increment the word input", async () => {
-//         circuit = await circomkit.WitnessTester(`Increment32Block`, {
-//             file: "aes-gcm/helper_functions",
-//             template: "IncrementWord",
-//         });
-//         await circuit.expectPass(
-//             {
-//                 in: [
-//                     [0x00, 0x00, 0x00, 0x00],
-//                 ],
-//             },
-//             {
-//                 out: [
-//                     [0x00, 0x00, 0x00, 0x01]
-//                 ],
-//             }
-//         );
-//     });
-// });
+describe("IncrementWord", () => {
+    let circuit: WitnessTester<["in"], ["out"]>;
+    it("should increment the word input", async () => {
+        circuit = await circomkit.WitnessTester(`IncrementByte`, {
+            file: "aes-gcm/utils",
+            template: "IncrementWord",
+        });
+        await circuit.expectPass(
+            {
+                in: [0x00, 0x00, 0x00, 0x00],
+            },
+            {
+                out: [0x00, 0x00, 0x00, 0x01],
+            }
+        );
+        // let res = await circuit.compute(
+        //     {
+        //         in: [0xFF, 0xFF, 0xFF, 0xFF],
+        //     },
+        //     ["out"]
+        // );
+        // console.log("res.out", res.out);
+    });
+});
+
+describe("IncrementByte", () => {
+    let circuit: WitnessTester<["in"], ["out"]>;
+    it("should increment the byte input", async () => {
+        circuit = await circomkit.WitnessTester(`IncrementByte`, {
+            file: "aes-gcm/utils",
+            template: "IncrementByte",
+        });
+        await circuit.expectPass(
+            {
+                in: 0x00,
+            },
+            {
+                out: 0x01,
+            }
+        );
+    });
+
+    it("should increment the byte input on overflow", async () => {
+        circuit = await circomkit.WitnessTester(`IncrementByte`, {
+            file: "aes-gcm/utils",
+            template: "IncrementByte",
+        });
+        await circuit.expectPass(
+            {
+                in: 0xFF,
+            },
+            {
+                out: 0x00,
+            }
+        );
+    });
+});
