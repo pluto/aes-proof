@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 include "../aes-ctr/cipher.circom";
-include "helper_functions.circom";
+include "utils.circom";
 include "../aes-ctr/ctr.circom";
 
 // GCTR Process to be used in AES-GCM
@@ -58,7 +58,7 @@ template GCTR(INPUT_LEN, nk) {
 
 
     // Step 1: Generate counter blocks
-    // signal incCounterBlocks[nBlocks][128];
+    signal incCounterBlocks[nBlocks][4][4];
     component counterBlocks[nBlocks];
     counterBlocks[1] <== ToBlocks(128);
     counterBlocks[1].stream <== initialCounterBlock;
@@ -66,9 +66,12 @@ template GCTR(INPUT_LEN, nk) {
     component inc32[nBlocks];
     // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
     for (var i = 2; i < nBlocks; i++) {
-        inc32[i] = Increment32();
-        inc32[i].in <== incCounterBlocks[i - 1];
-        incCounterBlocks[i] <== inc32[i].out;
+        inc32[i] = IncrementWord();
+        inc32[i].in <== counterBlocks[i - 1].blocks[0][3];
+        for (var j = 0; j < 3; j++) {
+            incCounterBlocks[i][j] <== counterBlocks[i - 1].blocks[0][j];
+        }
+        incCounterBlocks[i][3] <== inc32[i].out;
     }
 
     // Convert blocks to stream
