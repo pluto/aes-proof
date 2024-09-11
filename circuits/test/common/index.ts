@@ -47,6 +47,51 @@ export function bitArrayToHex(bits: number[]): string {
     .join("");
 }
 
+export function numberToBitArray(num: number): number[] {
+  if (!Number.isInteger(num) || num < 0) {
+    throw new Error('Input must be a non-negative integer');
+  }
+
+  if (num === 0) {
+    return [0];
+  }
+
+  const bitArray: number[] = [];
+
+  while (num > 0) {
+    bitArray.unshift(num & 1);
+    num = num >>> 1;  // Zero-fill right shift
+  }
+
+  return bitArray;
+}
+
+export function padArrayTo64Bits(array: number[]): number[] {
+  if (array.length > 64) {
+    throw new Error('Input array must have at most 64 elements');
+  }
+  return new Array(64 - array.length).fill(0).concat(array);
+}
+
+export function numberTo16Hex(num: number): string {
+  // Convert the number to a hexadecimal string
+  let hexString = num.toString(16);
+
+  // Ensure the string is uppercase
+  hexString = hexString.toLowerCase();
+
+  // Pad with leading zeros if necessary
+  hexString = hexString.padStart(16, '0');
+
+  // If the number is too large and results in a string longer than 16 characters,
+  // we'll take the last 16 characters to maintain the fixed length
+  if (hexString.length > 16) {
+    hexString = hexString.slice(-16);
+  }
+
+  return hexString;
+}
+
 it("tests hexToBitArray", async () => {
   let hex = "0F";
   let expectedBits = [0, 0, 0, 0, 1, 1, 1, 1];
