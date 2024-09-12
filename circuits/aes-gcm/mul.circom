@@ -18,7 +18,6 @@ template WrappingMul64() {
             partials[i][j] <== a[i] * b[j];
         }
     }
-    log(partials[62][63]);
 
     // 65, not 64, to allow for an extra carry without having to fiddle with overflow
     var sum[65];
