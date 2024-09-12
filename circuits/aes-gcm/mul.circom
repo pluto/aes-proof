@@ -2,7 +2,7 @@ pragma circom 2.1.9;
 
 include "helper_functions.circom";
 
-// 64-bit wrapping multiplication. Assumes MSB is first (Big E)
+// 64-bit BE wrapping multiplication.
 // Implements multiplication mod 2^{64}.
 template WrappingMul64() {
     signal input a[64];

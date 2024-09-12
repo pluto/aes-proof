@@ -4,6 +4,45 @@ include "../lib_circuits/bitify.circom";
 include "../lib_circuits/gates.circom";
 include "../lib_circuits/comparators.circom";
 
+template ParseLEBytes64() {
+    signal input in[64];
+    signal output out;
+    var temp = 0;
+
+    // Iterate through the input bits
+    for (var i = 7; i >= 0; i--) {
+        for (var j = 0; j < 8; j++) {
+            // Shift the existing value left by 1 and add the new bit
+            var IDX = i*8+j;
+            temp = temp * 2 + in[IDX];
+        }
+    }
+
+    // Assign the final value to the output signal
+    out <-- temp;
+}
+
+// parse 64-bits to integer value
+template ParseBEBytes64() {
+    signal input in[64];
+    signal output out;
+    var temp = 0;
+
+    // Iterate through the input bits
+    for (var i = 0; i < 64; i++) {
+        // Shift the existing value left by 1 and add the new bit
+        temp = temp * 2 + in[i];
+    }
+
+    // Assign the final value to the output signal
+    out <-- temp;
+
+    // // constrain each input bit to be either 0 or 1
+    // for (var i = 0; i < 64; i++) {
+    //     in[i] * (1 - in[i]) === 0;
+    // }
+}
+
 template BitwiseRightShift(n, r) {
     signal input in[n];
     signal output out[n];
