@@ -52,7 +52,7 @@ describe("MUL", () => {
   });
 });
 
-describe("WRAPPING_LE", () => {
+describe("WRAPPING_BE", () => {
   let circuit: WitnessTester<["a", "b"], ["out"]>;
 
   before(async () => {
