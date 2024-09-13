@@ -132,11 +132,11 @@ describe("GF_MUL", () => {
   });
 
   it("GF_MUL 4", async () => {
-    const A = hexToBitArray("0x00000000000000F1");
-    const B = hexToBitArray("0x000000000000BB00");
+    const f1 = hexToBitArray("0x00000000000000F1");
+    const bb = hexToBitArray("0x000000000000BB00");
     const expected = "006F2B000000000000000000";
 
-    const _res = await circuit.compute({ a: [ZERO, A], b: [B, ZERO] }, ["out"]);
+    const _res = await circuit.compute({ a: [bb, ZERO], b: [ZERO, f1] }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 64);

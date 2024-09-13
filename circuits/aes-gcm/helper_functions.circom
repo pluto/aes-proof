@@ -46,13 +46,11 @@ template ParseBEBytes64() {
 template BitwiseRightShift(n, r) {
     signal input in[n];
     signal output out[n];
-
-    for(var i=0; i<n; i++){
-        if(i+r>=n){
-            out[i] <== 0;
-        } else {
-            out[i] <== in[i+r];
-        }
+    for (var i=0; i<r; i++) {
+        out[i] <== 0;
+    }
+    for (var i=r; i<n; i++) {
+        out[i] <== in[i-r];
     }
 }
 
@@ -77,14 +75,11 @@ template IntRightShift(n, x)
 template BitwiseLeftShift(n, r) {
     signal input in[n];
     signal output out[n];
-    var j=0;
-    for (var i=0; i<n; i++) {
-        if (i < r) {
-            out[i] <== 0;
-        } else {
-            out[i] <== in[j];
-            j++;
-        }
+    for (var i=0; i<n-r; i++) {
+        out[i] <== in[i+r];
+    }
+    for (var i=n-r; i<n; i++) {
+        out[i] <== 0;
     }
 }
 
