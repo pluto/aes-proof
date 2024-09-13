@@ -2,6 +2,10 @@ import { assert } from "chai";
 import { WitnessTester } from "circomkit";
 import { padArrayTo64Bits, bitArrayToHex, circomkit, hexToBitArray, numberTo16Hex, numberToBitArray } from "./common";
 
+const ZERO = hexToBitArray("0x000000000000000");
+const ONE = hexToBitArray("0x0000000000000001");
+const MAX = hexToBitArray("0xFFFFFFFFFFFFFFFF");
+
 describe("BMUL64", () => {
   let circuit: WitnessTester<["x", "y"], ["out"]>;
 
@@ -13,10 +17,8 @@ describe("BMUL64", () => {
   });
 
   it("bmul64 multiplies 1", async () => {
-    const X = hexToBitArray("0x0000000000000001");
-    const Y = hexToBitArray("0x0000000000000001");
     const expected = "0000000000000001";
-    const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
+    const _res = await circuit.compute({ x: ONE, y: ONE }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 32);
@@ -25,10 +27,8 @@ describe("BMUL64", () => {
   });
 
   it("bmul64 multiplies 0", async () => {
-    const X = hexToBitArray("0x0000000000000000");
-    const Y = hexToBitArray("0xFFFFFFFFFFFFFFFF");
     const expected = "0000000000000000";
-    const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
+    const _res = await circuit.compute({ x: ZERO, y: MAX }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 32);
@@ -73,25 +73,81 @@ describe("BMUL64", () => {
   });
 });
 
-describe("MUL", () => {
-  let circuit: WitnessTester<["h", "rhs"], ["out"]>;
+describe("GF_MUL", () => {
+  let circuit: WitnessTester<["a", "b"], ["out"]>;
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`MUL64`, {
       file: "aes-gcm/gfmul",
       template: "MUL",
-      // params: [8],
     });
   });
 
-  // let bit_array = [1,0,0,0,0,0,0,0];
-  // let expected_output = [0,0,0,0,0,0,0,1].map((x) => BigInt(x));
-  it("mul", async () => {
-    // const _res = await circuit.compute({ h: X, rhs: Y }, ["out"]);
-    // const result = bitArrayToHex(
-    //   (_res.out as number[]).map((bit) => Number(bit))
-    // ).slice(0, 32);
-    // console.log("expect: ", EXPECT, "\nresult: ", result);
-    // assert.equal(result, EXPECT);
+  it("GF_MUL 0", async () => {
+    const expected = "0000000000000000";
+    const _res = await circuit.compute({ a: [MAX, MAX], b: [ZERO, ZERO] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.deepEqual(result, expected, "parse incorrect");
+  });
+
+  it("GF_MUL 1", async () => {
+    const expected = "0000000000000001";
+
+    const _res = await circuit.compute({ a: [ZERO, ONE], b: [ZERO, ONE] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.equal(result, expected, "parse incorrect");
+  });
+
+  it("GF_MUL 2", async () => {
+    const expected = "C323456789ABCDEF0000000000000001";
+    const _res = await circuit.compute({ a: [ZERO, ONE], b: [ONE, ZERO] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.equal(result, expected, "parse incorrect");
+  });
+
+  it("GF_MUL 3", async () => {
+    const A = hexToBitArray("0x00000000000000F1");
+    const B = hexToBitArray("0x000000000000BB00");
+    const expected = "006F2B000000000000000000";
+
+    const _res = await circuit.compute({ a: [ZERO, A], b: [ZERO, B] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.equal(result, expected, "parse incorrect");
+  });
+
+  it("GF_MUL 4", async () => {
+    const A = hexToBitArray("0x00000000000000F1");
+    const B = hexToBitArray("0x000000000000BB00");
+    const expected = "006F2B000000000000000000";
+
+    const _res = await circuit.compute({ a: [ZERO, A], b: [B, ZERO] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.equal(result, expected, "parse incorrect");
+  });
+
+  it("GF_MUL 5", async () => {
+    const expected = "55555555555555557A01555555555555";
+
+    const _res = await circuit.compute({ a: [MAX, MAX], b: [MAX, MAX] }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 64);
+
+    assert.equal(result, expected, "parse incorrect");
   });
 });
