@@ -4,16 +4,53 @@ include "../lib_circuits/bitify.circom";
 include "../lib_circuits/gates.circom";
 include "../lib_circuits/comparators.circom";
 
+template ParseLEBytes64() {
+    signal input in[64];
+    signal output out;
+    var temp = 0;
+
+    // Iterate through the input bits
+    for (var i = 7; i >= 0; i--) {
+        for (var j = 0; j < 8; j++) {
+            // Shift the existing value left by 1 and add the new bit
+            var IDX = i*8+j;
+            temp = temp * 2 + in[IDX];
+        }
+    }
+
+    // Assign the final value to the output signal
+    out <-- temp;
+}
+
+// parse 64-bits to integer value
+template ParseBEBytes64() {
+    signal input in[64];
+    signal output out;
+    var temp = 0;
+
+    // Iterate through the input bits
+    for (var i = 0; i < 64; i++) {
+        // Shift the existing value left by 1 and add the new bit
+        temp = temp * 2 + in[i];
+    }
+
+    // Assign the final value to the output signal
+    out <-- temp;
+
+    // // constrain each input bit to be either 0 or 1
+    // for (var i = 0; i < 64; i++) {
+    //     in[i] * (1 - in[i]) === 0;
+    // }
+}
+
 template BitwiseRightShift(n, r) {
     signal input in[n];
     signal output out[n];
-
-    for(var i=0; i<n; i++){
-        if(i+r>=n){
-            out[i] <== 0;
-        } else {
-            out[i] <== in[i+r];
-        }
+    for (var i=0; i<r; i++) {
+        out[i] <== 0;
+    }
+    for (var i=r; i<n; i++) {
+        out[i] <== in[i-r];
     }
 }
 
@@ -38,14 +75,11 @@ template IntRightShift(n, x)
 template BitwiseLeftShift(n, r) {
     signal input in[n];
     signal output out[n];
-    var j=0;
-    for (var i=0; i<n; i++) {
-        if (i < r) {
-            out[i] <== 0;
-        } else {
-            out[i] <== in[j];
-            j++;
-        }
+    for (var i=0; i<n-r; i++) {
+        out[i] <== in[i+r];
+    }
+    for (var i=n-r; i<n; i++) {
+        out[i] <== 0;
     }
 }
 
@@ -114,6 +148,16 @@ template BitwiseAnd(n) {
 
     for (var k=0; k<n; k++) {
         out[k] <== a[k]*b[k];
+    }
+}
+
+template BitwiseOr(n) {
+    signal input a[n];
+    signal input b[n];
+    signal output out[n];
+
+    for (var i=0; i<n; i++) {
+        out[i] <== a[i] + b[i] - a[i]*b[i];
     }
 }
 
@@ -229,6 +273,47 @@ template SumMultiple(n) {
     sum <== sums[n-1];
 }
 
+// compute the OR of n inputs, each m bits wide
+template OrMultiple(n, m) {
+    signal input inputs[n][m];
+    signal output out[m];
+
+    signal mids[n][m];
+    mids[0] <== inputs[0];
+
+    component ors[n-1];
+    for(var i=0; i<n-1; i++) {
+        ors[i] = BitwiseOr(m);
+        ors[i].a <== mids[i];
+        ors[i].b <== inputs[i+1];
+        mids[i+1] <== ors[i].out;
+    }
+
+    out <== mids[n-1];
+}
+
+// compute the XOR of n inputs, each m bits wide
+template XorMultiple(n, m) {
+    signal input inputs[n][m];
+    signal output out[m];
+
+    signal mids[n][m];
+    mids[0] <== inputs[0];
+
+    component xors[n-1];
+    for(var i=0; i<n-1; i++) {
+        xors[i] = BitwiseXor(m);
+        xors[i].a <== mids[i];
+        xors[i].b <== inputs[i+1];
+        mids[i+1] <== xors[i].out;
+    }
+
+    out <== mids[n-1];
+}
+
+// select the index-th element from an array of total elements
+// via the argument:
+// Sum_0^n (IsEqual(index, i) * in[i])
 template IndexSelector(total) {
     signal input in[total];
     signal input index;
@@ -249,6 +334,7 @@ template IndexSelector(total) {
     out <== calcTotal.sum;
 }
 
+// reverse the bit order in an n-bit array
 template ReverseBitsArray(n) {
     signal input in[n];
     signal output out[n];
