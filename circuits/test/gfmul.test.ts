@@ -87,58 +87,31 @@ describe("GF_MUL", () => {
     await circuit.expectPass({ a: [MAX, MAX], b: [ZERO, ZERO] }, { out: [ZERO, ZERO] });
   });
 
-  // TODO(TK 2024-09-12): expected is 16 bytes, when it should be 32 bytes. 
-  // How do I obtain all 32 bytes in the `out` field?
   it("GF_MUL 1", async () => {
     await circuit.expectPass({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, { out: [BE_ONE, ZERO] });
   });
 
   it("GF_MUL 2", async () => {
-    // const P1 = hexToBitArray("C323456789ABCDEF");
-    // const P2 = hexToBitArray("0000000000000001");
     const E1 = hexToBitArray("C200000000000000");
     const E2 = hexToBitArray("0000000000000001");
-    await circuit.expectPass({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, { out: [E2, E1] });
-    // await circuit.expectPass({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, { out: [E1, E2] });
+    await circuit.expectPass({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, { out: [E1, E2] });
   });
 
   it("GF_MUL 3", async () => {
-    const A = hexToBitArray("0x00000000000000F1");
-    const B = hexToBitArray("0x000000000000BB00");
-    const expected = "00000000006F2B000000000000000000";
-
-    const _res = await circuit.compute({ a: [ZERO, A], b: [ZERO, B] }, ["out"]);
-    // console.log(_res.out);
-    console.log(_res.out as number[]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
-    console.log(result);
-
-    assert.equal(result, expected, "parse incorrect");
+    const E1 = hexToBitArray("0x00000000006F2B00");
+    await circuit.expectPass({ a: [ZERO, hexToBitArray("0x00000000000000F1")], b: [ZERO, hexToBitArray("0x000000000000BB00")] }, { out: [E1, ZERO] });
   });
 
   it("GF_MUL 4", async () => {
+    const E1 = hexToBitArray("0x000000000043AA16");
     const f1 = hexToBitArray("0x00000000000000F1");
     const bb = hexToBitArray("0x000000000000BB00");
-    const expected = "0000000000000000000000000043AA16";
-
-    const _res = await circuit.compute({ a: [bb, ZERO], b: [ZERO, f1] }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
-
-    assert.equal(result, expected, "parse incorrect");
+    await circuit.expectPass({ a: [bb, ZERO], b: [ZERO, f1] }, { out: [ZERO, E1] });
   });
 
   it("GF_MUL 5", async () => {
-    const expected = "55555555555555557A01555555555555";
-
-    const _res = await circuit.compute({ a: [MAX, MAX], b: [MAX, MAX] }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
-
-    assert.equal(result, expected, "parse incorrect");
+    const fives = hexToBitArray("0x5555555555555555");
+    const rest = hexToBitArray("0x7A01555555555555");
+    await circuit.expectPass({ a: [MAX, MAX], b: [MAX, MAX] }, { out: [fives, rest] });
   });
 });
