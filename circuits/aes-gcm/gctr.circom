@@ -2,7 +2,7 @@ pragma circom 2.1.9;
 include "../aes-ctr/cipher.circom";
 include "utils.circom";
 include "../aes-ctr/ctr.circom";
-
+include "helper_functions.circom";
 // GCTR Process to be used in AES-GCM
 //
 //            ┌───────────┐           inc           ┌───────────┐
@@ -53,25 +53,27 @@ template GCTR(INPUT_LEN, nk) {
 
     // generate plaintext blocks
     // note to not use the last block of plaintext
+    // because it will be padded byt the toBlocks components
     component plainTextBlocks = ToBlocks(INPUT_LEN);
     plainTextBlocks.stream <== plainText;
 
-
     // Step 1: Generate counter blocks
-    signal incCounterBlocks[nBlocks][4][4];
-    component counterBlocks[nBlocks];
-    counterBlocks[1] <== ToBlocks(128);
-    counterBlocks[1].stream <== initialCounterBlock;
+    signal CounterBlocks[nBlocks][4][4];
+    // used to convert the counter blocks to blocks type
+    component toBlocksCounterBlocks[nBlocks];
+    toBlocksCounterBlocks[1] = ToBlocks(128);
+    toBlocksCounterBlocks[1].stream <== initialCounterBlock;
 
+    // component to increment the last word of the counter block
     component inc32[nBlocks];
     // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
     for (var i = 2; i < nBlocks; i++) {
         inc32[i] = IncrementWord();
-        inc32[i].in <== counterBlocks[i - 1].blocks[0][3];
+        inc32[i].in <== toBlocksCounterBlocks[i - 1].blocks[0][3];
         for (var j = 0; j < 3; j++) {
-            incCounterBlocks[i][j] <== counterBlocks[i - 1].blocks[0][j];
+            CounterBlocks[i][j] <== toBlocksCounterBlocks[i - 1].blocks[0][j];
         }
-        incCounterBlocks[i][3] <== inc32[i].out;
+        CounterBlocks[i][3] <== inc32[i].out;
     }
 
     // Convert blocks to stream
@@ -80,14 +82,10 @@ template GCTR(INPUT_LEN, nk) {
     component aes[nBlocks];
     component AddCipher[nBlocks];
     for (var i = 1; i < nBlocks -1; i++) {
-        // convert counter block to blocks type
-        counterBlocks[i] = ToBlocks(128);
-        counterBlocks[i].stream <== incCounterBlocks[i];
-
         // encrypt counter block
         aes[i] = Cipher(nk);
         aes[i].key <== key;
-        aes[i].block <== counterBlocks[i].blocks[0];
+        aes[i].block <== CounterBlocks[i];
 
         // XOR cipher text with input block
         AddCipher[i] = AddCipher();    
@@ -100,14 +98,11 @@ template GCTR(INPUT_LEN, nk) {
 
     // Step 3: Handle the last block separately
     // Y* = X* ⊕ MSBlen(X*) (CIPH_K (CB_n*))
-    // convert last counter block to blocks
-    counterBlocks[nBlocks] = ToBlocks(128);
-    counterBlocks[nBlocks].stream <== incCounterBlocks[nBlocks];
 
     // encrypt the last counter block
     aes[nBlocks] = Cipher(nk);
     aes[nBlocks].key <== key;
-    aes[nBlocks].block <== counterBlocks[nBlocks].blocks[0];
+    aes[nBlocks].block <== toBlocksCounterBlocks[nBlocks].blocks[0];
 
     // XOR the cipher with the last chunk of un padded plaintext
     component aesCipherToStream = ToStream(1, 128);
