@@ -82,7 +82,6 @@ template MUL() {
         BMUL64_z[i+3].y <== h_r[i];
         zh[i] <== BMUL64_z[i+3].out;
     }
-
     // _z2 = z0 ^ z1 ^ z2;
     // _z2h = z0h ^ z1h ^ z2h;
     signal _z2[64];
@@ -94,14 +93,13 @@ template MUL() {
 
     XorMultiples[1] = XorMultiple(3, 64);
     XorMultiples[1].inputs <== zh;
-    _zh[0] <== XorMultiples[1].out;
+    _zh[2] <== XorMultiples[1].out;
     _zh[1] <== zh[1];
-    _zh[2] <== zh[2];
+    _zh[0] <== zh[0];
 
-    // z0h = rev64(z0h) >> 1;
-    // z1h = rev64(z1h) >> 1;
-    // _z2h = rev64(_z2h) >> 1;
-    // signal _zh[3][64];
+    // __z0h = rev64(z0h) >> 1;
+    // __z1h = rev64(z1h) >> 1;
+    // __z2h = rev64(_z2h) >> 1;
     signal __zh[3][64];
     component Revs_zh[3];
     component RightShifts_zh[3];
@@ -120,7 +118,6 @@ template MUL() {
     signal v[4][64];
     component Xors_v[2];
     v[0] <== z[0];
-    v[3] <== __zh[1];
     Xors_v[0] = BitwiseXor(64);
     Xors_v[0].a <== __zh[0];
     Xors_v[0].b <== _z2;
@@ -129,16 +126,12 @@ template MUL() {
     Xors_v[1].a <== z[1];
     Xors_v[1].b <== __zh[2];
     v[2] <== Xors_v[1].out;
-
+    v[3] <== __zh[1];
 
     // _v2 = v2 ^ v0 ^ (v0 >> 1) ^ (v0 >> 2) ^ (v0 >> 7);
     // _v1 = v1 ^ (v0 << 63) ^ (v0 << 62) ^ (v0 << 57);
-    // _v3 = v3 ^ _v1 ^ (_v1 >> 1) ^ (_v1 >> 2) ^ (_v1 >> 7);
-    // __v2 = _v2 ^ (_v1 << 63) ^ (_v1 << 62) ^ (_v1 << 57);
     signal _v2[64];
     signal _v1[64];
-    signal _v3[64];
-    signal __v2[64];
     component RS_v[6];
     component LS_v[6];
 
@@ -168,6 +161,10 @@ template MUL() {
     XorMultiples_L[0].inputs <== [v[1], LS_v[0].out, LS_v[1].out, LS_v[2].out];
     _v1 <== XorMultiples_L[0].out;
 
+    // __v3 = v3 ^ _v1 ^ (_v1 >> 1) ^ (_v1 >> 2) ^ (_v1 >> 7);
+    // __v2 = _v2 ^ (_v1 << 63) ^ (_v1 << 62) ^ (_v1 << 57);
+    signal __v3[64];
+    signal __v2[64];
     RS_v[3] = BitwiseRightShift(64, 1);
     RS_v[3].in <== _v1;
     RS_v[4] = BitwiseRightShift(64, 2);
@@ -183,11 +180,11 @@ template MUL() {
     LS_v[5].in <== _v1;
 
     XorMultiples_R[1].inputs <== [v[3], _v1, RS_v[3].out, RS_v[4].out, RS_v[5].out];
-    _v3 <== XorMultiples_R[1].out;
-    XorMultiples_L[1].inputs <== [_v2, LS_v[0].out, LS_v[1].out, LS_v[2].out];
+    __v3 <== XorMultiples_R[1].out;
+    XorMultiples_L[1].inputs <== [_v2, LS_v[3].out, LS_v[4].out, LS_v[5].out];
     __v2 <== XorMultiples_L[1].out;
 
-    out <== [__v2, _v3];
+    out <== [__v2, __v3];
 }
 
 // Multiplication in GF(2)[X], truncated to the low 64-bits, with “holes”
@@ -236,10 +233,10 @@ template BMUL64() {
     signal z[4][64];
     for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
-            var Y_INDEX = (i - j) % 4;
-            muls[i][j] = Mul64();
-            muls[i][j].src1 <== xs[j];
-            muls[i][j].src2 <== ys[Y_INDEX];
+            var Y_INDEX = (4 + i - j) % 4;
+            muls[i][j] = WrappingMul64();
+            muls[i][j].a <== xs[j];
+            muls[i][j].b <== ys[Y_INDEX];
             z_mid[i][j] <== muls[i][j].out;
         }
 
@@ -247,7 +244,6 @@ template BMUL64() {
         xor_multiples[i].inputs <== z_mid[i];
         z[i] <== xor_multiples[i].out;
     }
-
     // z_masked[i] = z[i] & masks[i]
     signal z_masked[4][64];
     for (var i = 0; i < 4; i++) {
@@ -263,7 +259,10 @@ template BMUL64() {
     out <== or_multiple.out;
 }
 
-// todo: verify this is what was actually meant
+// Reverse the order of 64 bits. 
+// 
+// Potential optimization:
+// https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/backend/soft64.rs#L230
 template REV64(){
     signal input in[64];
     signal output out[64];
