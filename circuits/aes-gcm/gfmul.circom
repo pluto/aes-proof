@@ -187,7 +187,11 @@ template MUL() {
     XorMultiples_L[1].inputs <== [_v2, LS_v[0].out, LS_v[1].out, LS_v[2].out];
     __v2 <== XorMultiples_L[1].out;
 
-    out <== [__v2, _v3];
+    log(__v2[0]);  
+    log(_v3[0]);
+    out[0] <== __v2;
+    out[1] <== _v3;
+    // out <== [__v2, _v3];
 }
 
 // Multiplication in GF(2)[X], truncated to the low 64-bits, with “holes”

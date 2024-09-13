@@ -3,7 +3,7 @@ import { WitnessTester } from "circomkit";
 import { padArrayTo64Bits, bitArrayToHex, circomkit, hexToBitArray, numberTo16Hex, numberToBitArray } from "./common";
 
 const ZERO = hexToBitArray("0x000000000000000");
-const ONE = hexToBitArray("0x0000000000000001");
+const BE_ONE = hexToBitArray("0x0000000000000001");
 const MAX = hexToBitArray("0xFFFFFFFFFFFFFFFF");
 
 describe("BMUL64", () => {
@@ -18,7 +18,7 @@ describe("BMUL64", () => {
 
   it("bmul64 multiplies 1", async () => {
     const expected = "0000000000000001";
-    const _res = await circuit.compute({ x: ONE, y: ONE }, ["out"]);
+    const _res = await circuit.compute({ x: BE_ONE, y: BE_ONE }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 32);
@@ -84,29 +84,30 @@ describe("GF_MUL", () => {
   });
 
   it("GF_MUL 0", async () => {
-    const expected = "0000000000000000";
-    const _res = await circuit.compute({ a: [MAX, MAX], b: [ZERO, ZERO] }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
-
-    assert.deepEqual(result, expected, "parse incorrect");
+    const expected = hexToBitArray("0000000000000000");
+    await circuit.expectPass({ a: [MAX, MAX], b: [ZERO, ZERO] }, { out: [expected, expected] });
   });
 
+  // TODO(TK 2024-09-12): expected is 16 bytes, when it should be 32 bytes. 
+  // How do I obtain all 32 bytes in the `out` field?
   it("GF_MUL 1", async () => {
     const expected = "0000000000000001";
+    // const expected = "00000000000000000000000000000001";
 
-    const _res = await circuit.compute({ a: [ZERO, ONE], b: [ZERO, ONE] }, ["out"]);
+    const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, ["out"]);
+    // const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, ["out[0]", "out[1]"]);
+    // console.log(_res.out as number[]);
+
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
+    );
 
     assert.equal(result, expected, "parse incorrect");
   });
 
   it("GF_MUL 2", async () => {
     const expected = "C323456789ABCDEF0000000000000001";
-    const _res = await circuit.compute({ a: [ZERO, ONE], b: [ONE, ZERO] }, ["out"]);
+    const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 64);
@@ -120,9 +121,12 @@ describe("GF_MUL", () => {
     const expected = "006F2B000000000000000000";
 
     const _res = await circuit.compute({ a: [ZERO, A], b: [ZERO, B] }, ["out"]);
+    // console.log(_res.out);
+    console.log(_res.out as number[]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     ).slice(0, 64);
+    console.log(result);
 
     assert.equal(result, expected, "parse incorrect");
   });
