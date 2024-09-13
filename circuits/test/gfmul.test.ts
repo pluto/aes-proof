@@ -77,48 +77,35 @@ describe("GF_MUL", () => {
   let circuit: WitnessTester<["a", "b"], ["out"]>;
 
   before(async () => {
-    circuit = await circomkit.WitnessTester(`MUL64`, {
+    circuit = await circomkit.WitnessTester(`MUL`, {
       file: "aes-gcm/gfmul",
       template: "MUL",
     });
   });
 
   it("GF_MUL 0", async () => {
-    const expected = hexToBitArray("0000000000000000");
-    await circuit.expectPass({ a: [MAX, MAX], b: [ZERO, ZERO] }, { out: [expected, expected] });
+    await circuit.expectPass({ a: [MAX, MAX], b: [ZERO, ZERO] }, { out: [ZERO, ZERO] });
   });
 
   // TODO(TK 2024-09-12): expected is 16 bytes, when it should be 32 bytes. 
   // How do I obtain all 32 bytes in the `out` field?
   it("GF_MUL 1", async () => {
-    const expected = "0000000000000001";
-    // const expected = "00000000000000000000000000000001";
-
-    const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, ["out"]);
-    // const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, ["out[0]", "out[1]"]);
-    // console.log(_res.out as number[]);
-
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    );
-
-    assert.equal(result, expected, "parse incorrect");
+    await circuit.expectPass({ a: [ZERO, BE_ONE], b: [ZERO, BE_ONE] }, { out: [BE_ONE, ZERO] });
   });
 
   it("GF_MUL 2", async () => {
-    const expected = "C323456789ABCDEF0000000000000001";
-    const _res = await circuit.compute({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 64);
-
-    assert.equal(result, expected, "parse incorrect");
+    // const P1 = hexToBitArray("C323456789ABCDEF");
+    // const P2 = hexToBitArray("0000000000000001");
+    const E1 = hexToBitArray("C200000000000000");
+    const E2 = hexToBitArray("0000000000000001");
+    await circuit.expectPass({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, { out: [E2, E1] });
+    // await circuit.expectPass({ a: [ZERO, BE_ONE], b: [BE_ONE, ZERO] }, { out: [E1, E2] });
   });
 
   it("GF_MUL 3", async () => {
     const A = hexToBitArray("0x00000000000000F1");
     const B = hexToBitArray("0x000000000000BB00");
-    const expected = "006F2B000000000000000000";
+    const expected = "00000000006F2B000000000000000000";
 
     const _res = await circuit.compute({ a: [ZERO, A], b: [ZERO, B] }, ["out"]);
     // console.log(_res.out);
@@ -134,7 +121,7 @@ describe("GF_MUL", () => {
   it("GF_MUL 4", async () => {
     const f1 = hexToBitArray("0x00000000000000F1");
     const bb = hexToBitArray("0x000000000000BB00");
-    const expected = "006F2B000000000000000000";
+    const expected = "0000000000000000000000000043AA16";
 
     const _res = await circuit.compute({ a: [bb, ZERO], b: [ZERO, f1] }, ["out"]);
     const result = bitArrayToHex(
