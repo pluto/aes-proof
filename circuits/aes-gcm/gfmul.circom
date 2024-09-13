@@ -236,7 +236,7 @@ template BMUL64() {
     signal z[4][64];
     for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
-            var Y_INDEX = (i - j) % 4;
+            var Y_INDEX = (4 + i - j) % 4;
             muls[i][j] = WrappingMul64();
             muls[i][j].a <== xs[j];
             muls[i][j].b <== ys[Y_INDEX];
@@ -247,7 +247,7 @@ template BMUL64() {
         xor_multiples[i].inputs <== z_mid[i];
         z[i] <== xor_multiples[i].out;
     }
-
+    
     // z_masked[i] = z[i] & masks[i]
     signal z_masked[4][64];
     for (var i = 0; i < 4; i++) {

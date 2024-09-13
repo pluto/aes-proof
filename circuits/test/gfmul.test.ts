@@ -39,7 +39,7 @@ describe("BMUL64", () => {
   it("bmul64 multiplies large number", async () => {
     const X = hexToBitArray("0x1111111111111111");
     const Y = hexToBitArray("0x1111111111111111");
-    const expected = "101010101010101";
+    const expected = "0101010101010101";
     const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
@@ -48,17 +48,29 @@ describe("BMUL64", () => {
     assert.equal(result, expected, "parse incorrect");
   });
 
-  // it("bmul64 multiplies large number 2", async () => {
-  //   const X = hexToBitArray("0x1111222211118888");
-  //   const Y = hexToBitArray("0x1111222211118888");
-  //   const expected = "101010140404040";
-  //   const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
-  //   const result = bitArrayToHex(
-  //     (_res.out as number[]).map((bit) => Number(bit))
-  //   ).slice(0, 32);
+  it("bmul64 multiplies large number 2", async () => {
+    const X = hexToBitArray("0x1111222211118888");
+    const Y = hexToBitArray("0x1111222211118888");
+    const expected = "0101010140404040";
+    const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 32);
 
-  //   assert.equal(result, expected, "parse incorrect");
-  // });
+    assert.equal(result, expected, "parse incorrect");
+  });
+
+  it("bmul64 multiplies large number 3", async () => {
+    const X = hexToBitArray("0xCFAF222D1A198287");
+    const Y = hexToBitArray("0xFBFF2C2218118182");
+    const expected = "40468c9202c4418e";
+    const _res = await circuit.compute({ x: X, y: Y }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as number[]).map((bit) => Number(bit))
+    ).slice(0, 32);
+
+    assert.equal(result, expected, "parse incorrect");
+  });
 });
 
 describe("MUL", () => {

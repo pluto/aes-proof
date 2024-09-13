@@ -9,7 +9,6 @@ template WrappingMul64() {
     signal input b[64];
     signal output out[64];
 
-
     // Intermediate signals for partial products
     // partial[i,j corresponds to AND(a[i], b[j])
     signal partials[64][64];

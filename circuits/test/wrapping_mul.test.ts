@@ -103,4 +103,17 @@ describe("WRAPPING_BE", () => {
 
     assert.equal(result, expected, "Wrap-around on overflow is incorrect");
   });
+
+  it("should correctly multiply this one particular case", async () => {
+    const a = hexToBitArray("0x0000000000008888");
+    const b = hexToBitArray("0x0000000000008888");
+    const expected = "0000000048d0c840";
+
+    const _res = await circuit.compute({ a, b }, ["out"]);
+    const result = bitArrayToHex(
+      (_res.out as (number | bigint)[]).map((bit) => Number(bit))
+    );
+
+    assert.equal(result, expected, "Wrap-around on overflow is incorrect");
+  });
 });
