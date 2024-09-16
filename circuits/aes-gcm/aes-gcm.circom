@@ -1,9 +1,10 @@
 pragma circom 2.1.9;
 
 include "../aes-ctr/ctr.circom";
-include "../ghash/ghash.circom";
+include "ghash.circom";
 include "../aes-ctr/cipher.circom";
 include "circomlib/circuits/bitify.circom";
+include "gctr.circom";
 include "helper_functions.circom";
 
 
@@ -34,12 +35,12 @@ template AESGCM(l) {
     signal output authTag[16]; // Authentication tag length is 128 bits (16 bytes)
 
     // Step 1: Let H = CIPHK(0128)
-    component zeroBlock = Num2Bits(128);
+    component zeroBlock = Num2Bits(128); // bit stuff
     zeroBlock.in <== 0;
     component cipherH = Cipher(4); // 128-bit key -> 4 32-bit words -> 10 rounds
     cipherH.key <== key;
     cipherH.block <== zeroBlock.out;
-    signal H[128];
+    signal H[128]; // bit stuff
     H <== cipherH.cipher;
 
     // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
@@ -61,17 +62,19 @@ template AESGCM(l) {
     incJ0.in <== J0;
 
     // TODO(WJ 2024-09-09): stopping point
-    component gctr = GCTR(l, nk);
+    component gctr = GCTR(l, 4);
     gctr.key <== key;
     gctr.iv <== incJ0.out;
     gctr.plainText <== plainText;
     cipherText <== gctr.cipherText;
 
     // Step 4: Let u and v
-    var u = 128 * Math.ceil(cipherText.length / 128) - cipherText.length;
-    var v = 128 * Math.ceil(additionalData.length / 128) - additionalData.length;
+    var u = 128 * (l \ 128) - l;
+    // 16 = len(AAD)
+    var v = 128 * (16 \ 128) - 16;
 
     // Step 5: Define a block, S
+    // needs to take in the number of blocks
     component ghash = GHASH();
     ghash.H <== H;
     ghash.A <== additionalData;
@@ -82,10 +85,9 @@ template AESGCM(l) {
     S <== ghash.out;
 
     // Step 6: Let T = MSBt(GCTRK(J0, S))
-    component gctrT = GCTR(16, nk);
+    component gctrT = GCTR(16, 4);
     gctrT.key <== key;
     gctrT.iv <== J0;
     gctrT.plainText <== S;
     authTag <== gctrT.cipherText;
-
 }
