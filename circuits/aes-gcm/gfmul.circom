@@ -36,7 +36,6 @@ template MUL() {
     h[1] <== a[1];
     y[0] <== b[0];
     y[1] <== b[1];
-
     component Revs[4];
     for (var i = 0; i < 2; i++) {
         Revs[i] = REV64();
@@ -83,7 +82,6 @@ template MUL() {
         BMUL64_z[i+3].y <== h_r[i];
         zh[i] <== BMUL64_z[i+3].out;
     }
-    
     // _z2 = z0 ^ z1 ^ z2;
     // _z2h = z0h ^ z1h ^ z2h;
     signal _z2[64];
@@ -246,7 +244,6 @@ template BMUL64() {
         xor_multiples[i].inputs <== z_mid[i];
         z[i] <== xor_multiples[i].out;
     }
-    
     // z_masked[i] = z[i] & masks[i]
     signal z_masked[4][64];
     for (var i = 0; i < 4; i++) {
