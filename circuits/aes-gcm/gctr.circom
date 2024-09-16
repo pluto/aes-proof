@@ -32,30 +32,31 @@ include "helper_functions.circom";
 // GCTR_K (ICB, X1 || X2 || ... || X_n*) = Y1 || Y2 || ... || Y_n*.
 
 
+// We are opperating on 128 bit blocks represented as 16 bytes
+
 template GCTR(INPUT_LEN, nk) {
     signal input key[nk * 4];
-    signal input initialCounterBlock[128];
+    signal input initialCounterBlock[16];
     signal input plainText[INPUT_LEN];
     signal output cipherText[INPUT_LEN];
 
-    // number of 128 bit blocks in the plaintext
-    // +1 because we want the cieling to match the nist spec. "\" will give the floor
-    var nBlocks = (INPUT_LEN \ 128) + 1;
+    // number of 16 byte blocks in the plaintext
+    var nBlocks = (INPUT_LEN \ 16); // "\" is floored integer division
     // size of the last block
-    var lastBlockSize = INPUT_LEN % 128;
+    var lastBlockSize = INPUT_LEN % 16;
     // total number of bits in the plaintext blocks
-    var bitblocks = 128 * nBlocks;
+    var bytesExcludingLastBlock = 16 * (nBlocks);
 
     log(nBlocks);
     log(lastBlockSize);
-    log(bitblocks);
+    log(bytesExcludingLastBlock);
     // TODO(WJ 2024-09-16): Get this assert to pass
-    // assert(INPUT_LEN == nBlocks * 128 + lastBlockSize);
+    assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
 
     // last block of plaintext
     signal tempLastBlock[lastBlockSize];
-    for (var i = 0; i < lastBlockSize -1; i++) {
-        tempLastBlock[i] <== plainText[nBlocks * 128 + i];
+    for (var i = 0; i < lastBlockSize; i++) {
+        tempLastBlock[i] <== plainText[bytesExcludingLastBlock + i];
     }
 
     // generate plaintext blocks
@@ -67,28 +68,36 @@ template GCTR(INPUT_LEN, nk) {
     // Step 1: Generate counter blocks
     signal CounterBlocks[nBlocks][4][4];
     // used to convert the counter blocks to blocks type
-    component toBlocksCounterBlocks[nBlocks];
-    toBlocksCounterBlocks[1] = ToBlocks(128);
-    toBlocksCounterBlocks[1].stream <== initialCounterBlock;
+    component toBlocksCounterBlocks = ToBlocks(16); // TODO(WJ 2024-09-16): check this is the right size
+    toBlocksCounterBlocks.stream <== initialCounterBlock;
+    CounterBlocks[0] <== toBlocksCounterBlocks.blocks[0];
 
+    // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
+    // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
+    //
     // component to increment the last word of the counter block
     component inc32[nBlocks];
     // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
-    for (var i = 2; i < nBlocks; i++) {
+    for (var i = 1; i < nBlocks; i++) {
         inc32[i] = IncrementWord();
-        inc32[i].in <== toBlocksCounterBlocks[i - 1].blocks[0][3];
+        inc32[i].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
+
+        // copy the previous 12 bytes of the counter block
         for (var j = 0; j < 3; j++) {
-            CounterBlocks[i][j] <== toBlocksCounterBlocks[i - 1].blocks[0][j];
+            CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
         }
+        // should write the last 4 bytes of the incremented word
         CounterBlocks[i][3] <== inc32[i].out;
     }
 
+
     // Convert blocks of 16 bytes to stream
-    component toStream = ToStream(nBlocks, 16);
+    component toStream = ToStream(nBlocks, bytesExcludingLastBlock);
     // Step 2: Encrypt each counter block with the key
     component aes[nBlocks+1]; // +1 for the last block
     component AddCipher[nBlocks];
-    for (var i = 1; i < nBlocks -1; i++) {
+
+    for (var i = 0; i < nBlocks; i++) {
         // encrypt counter block
         aes[i] = Cipher(nk);
         aes[i].key <== key;
@@ -109,10 +118,10 @@ template GCTR(INPUT_LEN, nk) {
     // encrypt the last counter block
     aes[nBlocks] = Cipher(nk);
     aes[nBlocks].key <== key;
-    aes[nBlocks].block <== CounterBlocks[nBlocks];
+    aes[nBlocks].block <== CounterBlocks[nBlocks-1];
 
-    // XOR the cipher with the last chunk of un padded plaintext
-    component aesCipherToStream = ToStream(1, 128);
+    // XOR the cipher with the last chunk of unpadded plaintext
+    component aesCipherToStream = ToStream(1, 16);
     component addLastCipher = XorMultiple(2, lastBlockSize);
     for (var i = 0; i < lastBlockSize; i++) {
         // convert cipher to stream
@@ -121,9 +130,18 @@ template GCTR(INPUT_LEN, nk) {
         addLastCipher.inputs[1][i] <== tempLastBlock[i];
     }
 
-
-    for (var i = 0; i < bitblocks; i++) {
-        cipherText[i] <== toStream.stream[i];
-        cipherText[bitblocks + i] <== addLastCipher.out[i];
+    /// set the last block in the toStream component
+    
+    
+    for (var i = 0; i < bytesExcludingLastBlock; i++) {
+        // cipher text is of size inpute  lenght 
+        // bitblock = 128 * nblocks
+        // input length = (nblocks-1) * 128 + lastBlockSize
+        // setting all but the last block
+        cipherText[i] <== toStream.stream[i]; // out of bounds error
+    }
+     
+    for (var i = 0; i < lastBlockSize; i++) {
+        cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
     }
 }
