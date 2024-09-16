@@ -3,7 +3,7 @@ include "../aes-ctr/cipher.circom";
 include "utils.circom";
 include "../aes-ctr/ctr.circom";
 include "helper_functions.circom";
-// GCTR Process to be used in AES-GCM
+// GCTR Process to be used in AES-GCM as in https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
 //
 //            ┌───────────┐           inc           ┌───────────┐
 //            │    ICB    │ ──────────────────────▶ │    CB2    │
