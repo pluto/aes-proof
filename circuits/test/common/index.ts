@@ -8,6 +8,11 @@ export const circomkit = new Circomkit({
 
 export { WitnessTester };
 
+
+export function hexToBytes(hex: any) {
+  return hex.match(/.{1,2}/g).map((byte: any) => parseInt(byte, 16));
+}
+
 export function hexBytesToBigInt(hexBytes: number[]): any[] {
   return hexBytes.map(byte => {
       let n = BigInt(byte);

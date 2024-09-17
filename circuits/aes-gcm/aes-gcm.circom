@@ -36,7 +36,7 @@ template AESGCM(l) {
     signal output authTag[16]; //   Authentication tag length is 128 bits (16 bytes)
 
     component zeroBlock = ToBlocks(16);
-    for (var i = 0; i < l; i++) {
+    for (var i = 0; i < 16; i++) {
         zeroBlock.stream[i] <== 0;
     }
 

@@ -44,6 +44,7 @@ async fn main() -> io::Result<()> {
     witness.iv.extend_from_slice(&[0, 0, 0, 0]);
 
     make_json_witness(&witness, witness::CipherMode::Vanilla).unwrap();
+
     Ok(())
 }
 
@@ -68,5 +69,33 @@ mod tests {
 
         // generate proof
         proof::gen_proof_aes_gcm_siv(&witness, SIV_WTNS, SIV_R1CS);
+    }
+
+    // AES GCM multiple blocks of data
+    // cargo test test_aes_gcm_blocks -- --show-output
+    #[tokio::test]
+    async fn test_aes_gcm_blocks() {
+        use aes_gcm::{
+            aead::{generic_array::GenericArray, Aead, NewAead, Payload},
+            Aes128Gcm,
+        };
+
+        let test_key = [
+            0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
+            0x31, 0x31,
+        ];
+        let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+
+        let message = String::from("testhello0000000testhello0000000");
+        let aes_payload = Payload { msg: &message.as_bytes(), aad: &[] };
+
+        let cipher = Aes128Gcm::new_from_slice(&test_key).unwrap();
+        let nonce = GenericArray::from_slice(&test_iv);
+        let ct = cipher.encrypt(nonce, aes_payload).expect("error generating ct");
+
+        println!("key={}", hex::encode(test_key));
+        println!("iv={}", hex::encode(test_iv));
+        println!("msg={}", hex::encode(message));
+        println!("ct={}", hex::encode(ct));
     }
 }
