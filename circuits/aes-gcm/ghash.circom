@@ -45,11 +45,19 @@ template GHASH(NUM_BLOCKS) {
     signal hashBits[2][64];
     for(var i = 0; i < 4; i++) {
         for(var j = 0; j < 4; j++) {
+            var bit = 1;
+            var lc = 0;
             for(var k = 0; k < 8; k++) {
                 var bitIndex = (i*4*8)+(j*8)+k;
-                hashBits[bitIndex\64][bitIndex%64] <== (HashKey[i][j] >> k) & 1;
-                hashBits[bitIndex\64][bitIndex%64] * (hashBits[bitIndex\64][bitIndex%64] - 1) === 0;
+                var bitValue = (HashKey[i][j] >> k) & 1;
+                var rowIndex = bitIndex\64;
+                var colIndex = bitIndex%64;
+                hashBits[rowIndex][colIndex] <-- bitValue;
+                hashBits[rowIndex][colIndex] * (hashBits[rowIndex][colIndex] - 1) === 0;
+                lc += hashBits[rowIndex][colIndex] * bit;
+                bit = bit+bit;
             }
+            HashKey[i][j] === lc;
         }
     }
 
@@ -57,11 +65,19 @@ template GHASH(NUM_BLOCKS) {
     for(var i = 0; i < NUM_BLOCKS; i++) {
         for(var j = 0; j < 4; j++) {
             for(var k=0; k < 4; k++) {
+                var bit = 1;
+                var lc = 0;
                 for(var l = 0; l < 8; l++) {
                     var bitIndex = (j*4*8)+(k*8)+l;
-                    msgBits[i][bitIndex\64][bitIndex%64] <== (msg[i][j][k] >> l) & 1;
-                    msgBits[i][bitIndex\64][bitIndex%64] * (msgBits[i][bitIndex\64][bitIndex%64] - 1) === 0;
+                    var bitValue = (msg[i][j][k] >> l) & 1;
+                    var rowIndex = bitIndex\64;
+                    var colIndex = bitIndex%64;
+                    msgBits[i][rowIndex][colIndex] <-- bitValue;
+                    msgBits[i][rowIndex][colIndex] * (msgBits[i][rowIndex][colIndex] - 1) === 0;
+                    lc += msgBits[i][rowIndex][colIndex] * bit;
+                    bit = bit+bit;
                 }
+                msg[i][j][k] === lc;
             }
         }
     }
@@ -91,8 +107,8 @@ template GHASH(NUM_BLOCKS) {
         // note: intermediate[0] is initialized to zero, so all rounds are valid
         xor[i][0].a <== intermediate[i-1][0];
         xor[i][1].a <== intermediate[i-1][1];
-        xor[i][0].b <== msg[i][0];
-        xor[i][1].b <== msg[i][1];
+        xor[i][0].b <== msgBits[i][0];
+        xor[i][1].b <== msgBits[i][1];
 
         // Multiply the XOR result with the hash subkey H
         gfmul[i].a[0] <== xor[i][0].out;
