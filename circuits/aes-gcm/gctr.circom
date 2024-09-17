@@ -36,7 +36,7 @@ include "helper_functions.circom";
 
 template GCTR(INPUT_LEN, nk) {
     signal input key[nk * 4];
-    signal input initialCounterBlock[16];
+    signal input initialCounterBlock[4][4];
     signal input plainText[INPUT_LEN];
     signal output cipherText[INPUT_LEN];
 
@@ -67,10 +67,7 @@ template GCTR(INPUT_LEN, nk) {
 
     // Step 1: Generate counter blocks
     signal CounterBlocks[nBlocks][4][4];
-    // used to convert the counter blocks to blocks type
-    component toBlocksCounterBlocks = ToBlocks(16); // TODO(WJ 2024-09-16): check this is the right size
-    toBlocksCounterBlocks.stream <== initialCounterBlock;
-    CounterBlocks[0] <== toBlocksCounterBlocks.blocks[0];
+    CounterBlocks[0] <== initialCounterBlock;
 
     // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
     // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
@@ -123,9 +120,9 @@ template GCTR(INPUT_LEN, nk) {
     // XOR the cipher with the last chunk of unpadded plaintext
     component aesCipherToStream = ToStream(1, 16);
     component addLastCipher = XorMultiple(2, lastBlockSize);
+    aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
     for (var i = 0; i < lastBlockSize; i++) {
         // convert cipher to stream
-        aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
         addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
         addLastCipher.inputs[1][i] <== tempLastBlock[i];
     }
