@@ -37,7 +37,8 @@ include "gfmul.circom";
 template GHASH(NUM_BLOCKS) {
     signal input HashKey[4][4]; // Hash subkey (128 bits)
     signal input msg[NUM_BLOCKS][4][4]; // Input blocks (each 128 bits)
-    signal output tag[128]; // Output tag (128 bits)
+    signal tag[128]; // Output tag (128 bits)
+    signal output tagBytes[16];
     // signal output tag[2][64]; // Output tag (128 bits)
 
     // Janky convert [4][4] block into [2][64] bit lists
@@ -124,6 +125,12 @@ template GHASH(NUM_BLOCKS) {
         tag[j] <== intermediate[NUM_BLOCKS-1][0][j];
         tag[j+64] <== intermediate[NUM_BLOCKS-1][1][j];
     }
-    // tag[0] <== intermediate[NUM_BLOCKS-1][0];
-    // tag[1] <== intermediate[NUM_BLOCKS-1][1];
+// Convert the 64-bit array tags to a single 16-byte array
+    for (var i = 0; i < 16; i++) {
+        var bytes = 0;
+        for (var j = 0; j < 8; j++) {
+            bytes += tag[i * 8 + j] * (1 << j);
+        }
+        tagBytes[i] <== bytes;
+    }
 }

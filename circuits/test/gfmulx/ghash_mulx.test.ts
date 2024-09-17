@@ -128,7 +128,7 @@ const mulXTestVectors = [
   "00000000000000000000000000000001",
 ];
 
-describe("ghash_GFMulX", () => {
+describe("GFMulX", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
 
   describe("ghash GF Mul X test", () => {
