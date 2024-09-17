@@ -47,7 +47,6 @@ template AESGCM(l) {
 
     // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
     // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
-    // TODO(WJ 2024-09-16): make this a block of bytes not bits
     component J0builder = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
         J0builder.stream[i] <== iv[i];
@@ -57,13 +56,15 @@ template AESGCM(l) {
     }
     component J0WordIncrementer = IncrementWord();
     J0WordIncrementer.in <== J0builder.blocks[0][3];
+    
+    component J0WordIncrementer2 = IncrementWord();
+    J0WordIncrementer2.in <== J0WordIncrementer.out;
+
     signal J0[4][4];
     for (var i = 0; i < 3; i++) {
         J0[i] <== J0builder.blocks[0][i];
     }
-    // TODO(WJ 2024-09-16): maybe need to increment this again before passing to gctr. Check section 7.3 of nist spec
-    J0[3] <== J0WordIncrementer.out;
-
+    J0[3] <== J0WordIncrementer2.out;
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
     component gctr = GCTR(l, 4);

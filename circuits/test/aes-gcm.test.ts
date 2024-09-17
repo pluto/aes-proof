@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit, hexBytesToBigInt } from "./common";
 
 describe("aes-gcm", () => {
   let circuit: WitnessTester<["key", "iv", "plainText", "aad"], ["cipherText", "tag"]>;
@@ -23,7 +23,7 @@ describe("aes-gcm", () => {
   it("should have correct output", async () => {
     const witness = await circuit.compute({ key: key, iv: iv, plainText: plainText, aad: aad }, ["cipherText", "authTag"])
 
-    assert.deepEqual(witness.cipherText, expected_output)
+    assert.deepEqual(witness.cipherText, hexBytesToBigInt(expected_output))
   });
 
 });
