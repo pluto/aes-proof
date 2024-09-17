@@ -47,7 +47,6 @@ template AESGCM(l) {
 
     // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
     // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
-    // TODO(WJ 2024-09-16): make this a block of bytes not bits
     component J0builder = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
         J0builder.stream[i] <== iv[i];
