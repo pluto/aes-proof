@@ -35,9 +35,35 @@ include "gfmul.circom";
 // 
 
 template GHASH(NUM_BLOCKS) {
-    signal input HashKey[2][64]; // Hash subkey (128 bits)
-    signal input msg[NUM_BLOCKS][2][64]; // Input blocks (each 128 bits)
+    signal input HashKey[4][4]; // Hash subkey (128 bits)
+    signal input msg[NUM_BLOCKS][4][4]; // Input blocks (each 128 bits)
     signal output tag[128]; // Output tag (128 bits)
+
+    // Janky convert [4][4] block into [2][64] bit lists
+    // TODO: Double check the endianness of this conversion.
+    signal hashBits[2][64];
+    for(var i = 0; i < 4; i++) {
+        for(var j = 0; j < 4; j++) {
+            for(var k = 0; k < 8; k++) {
+                var bitIndex = (i*4*8)+(j*8)+k;
+                hashBits[bitIndex\64][bitIndex%64] <== (HashKey[i][j] >> k) & 1;
+                hashBits[bitIndex\64][bitIndex%64] * (hashBits[bitIndex\64][bitIndex%64] - 1) === 0;
+            }
+        }
+    }
+
+    signal msgBits[NUM_BLOCKS][2][64];
+    for(var i = 0; i < NUM_BLOCKS; i++) {
+        for(var j = 0; j < 4; j++) {
+            for(var k=0; k < 4; k++) {
+                for(var l = 0; l < 8; l++) {
+                    var bitIndex = (j*4*8)+(k*8)+l;
+                    msgBits[i][bitIndex\64][bitIndex%64] <== (msg[i][j][k] >> l) & 1;
+                    msgBits[i][bitIndex\64][bitIndex%64] * (msgBits[i][bitIndex\64][bitIndex%64] - 1) === 0;
+                }
+            }
+        }
+    }
 
     // Intermediate tags
     signal intermediate[NUM_BLOCKS][2][64];
@@ -70,7 +96,7 @@ template GHASH(NUM_BLOCKS) {
         // Multiply the XOR result with the hash subkey H
         gfmul[i].a[0] <== xor[i][0].out;
         gfmul[i].a[1] <== xor[i][1].out;
-        gfmul[i].b <== HashKey;
+        gfmul[i].b <== hashBits;
 
         // Store the result in the next intermediate tag
         intermediate[i][0] <== gfmul[i].out[0];
