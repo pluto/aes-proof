@@ -37,27 +37,6 @@ template EncryptCTR(l,nk){
                 cipherBlocks[i] <== AddCipher[i].newState;
         }
 
-
-        log("counterblocks"); 
-        log("start block");
-        for(var i = 0; i <4; i++) {
-                for(var j=0; j<4; j++) {
-                        log(generateCtrBlocks.counterBlocks[0][i][j]);
-                }
-        }
-        log("end block");
-        log("done counterblocks");
-
-        log("cipher output"); 
-        log("start block");
-        for(var i = 0; i <4; i++) {
-                for(var j=0; j<4; j++) {
-                log(aes[0].cipher[i][j]);
-                }
-        }
-        log("end block");
-        log("done cipher output");
-
         component toStream = ToStream(n,l);
         toStream.blocks <== cipherBlocks;
 
