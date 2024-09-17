@@ -3,7 +3,7 @@ import { bitArrayToHex, circomkit, hexToBitArray } from "../common";
 
 // https://datatracker.ietf.org/doc/html/rfc8452#appendix-A
 
-
+// test vectors from this document: https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf 
 const H = [
   [0x25, 0x62, 0x93, 0x47],
   [0x58, 0x92, 0x42, 0x76],
@@ -24,7 +24,10 @@ const cipher_text = [
   [0x84, 0xb0, 0xf6, 0x00]
 ];
 
-const tag = hexToBitArray("2ff58d80033927ab8ef4d4587514f0fb");
+const tag = [
+  hexToBitArray("2ff58d80033927ab"),
+  hexToBitArray("8ef4d4587514f0fb")
+];
 
 describe("ghash", () => {
   let circuit: WitnessTester<["HashKey", "msg"], ["tag"]>;
