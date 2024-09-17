@@ -8,6 +8,13 @@ export const circomkit = new Circomkit({
 
 export { WitnessTester };
 
+export function hexBytesToBigInt(hexBytes: number[]): any[] {
+  return hexBytes.map(byte => {
+      let n = BigInt(byte);
+      return n;
+  });
+}
+
 export function hexToBitArray(hex: string): number[] {
   // Remove '0x' prefix if present and ensure lowercase
   hex = hex.replace(/^0x/i, "").toLowerCase();
