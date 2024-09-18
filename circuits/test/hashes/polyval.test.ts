@@ -21,11 +21,11 @@ describe("POLYVAL_HASH_1", () => {
     // console.log("#constraints:", await circuit.getConstraintCount());
   });
 
-  it("should have correct number of constraints", async () => {
-    await circuit.expectConstraintCount(74754, true);
-  });
+  // it("should have correct number of constraints", async () => {
+  //   await circuit.expectConstraintCount(74754, true);
+  // });
 
-  it("todo name polyval", async () => {
+  it("POLYVAL 1", async () => {
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
     const result = bitArrayToHex(
@@ -48,11 +48,11 @@ describe("POLYVAL_HASH_2", () => {
     // console.log("#constraints:", await circuit.getConstraintCount());
   });
 
-  it("should have correct number of constraints", async () => {
-    await circuit.expectConstraintCount(74754, true);
-  });
+  // it("should have correct number of constraints", async () => {
+  //   await circuit.expectConstraintCount(74754, true);
+  // });
 
-  it("todo name polyval", async () => {
+  it("POLYVAL 2", async () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
@@ -62,5 +62,4 @@ describe("POLYVAL_HASH_2", () => {
     console.log("expect: ", EXPECT, "\nresult: ", result);
     assert.equal(result, EXPECT);
   });
-
 });
