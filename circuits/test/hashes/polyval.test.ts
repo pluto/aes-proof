@@ -16,7 +16,7 @@ describe("POLYVAL_HASH_1", () => {
     circuit = await circomkit.WitnessTester(`polyval`, {
       file: "aes-gcm/polyval",
       template: "POLYVAL",
-      params: [128 * 2],
+      params: [2],
     });
     // console.log("#constraints:", await circuit.getConstraintCount());
   });
@@ -43,7 +43,7 @@ describe("POLYVAL_HASH_2", () => {
     circuit = await circomkit.WitnessTester(`polyval`, {
       file: "aes-gcm/polyval",
       template: "POLYVAL",
-      params: [128 * 1],
+      params: [1],
     });
     // console.log("#constraints:", await circuit.getConstraintCount());
   });
@@ -57,8 +57,8 @@ describe("POLYVAL_HASH_2", () => {
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
     const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    ).slice(0, 32);
+      (_res.out as number[][])[0].map((bit) => Number(bit))
+    );
     console.log("expect: ", EXPECT, "\nresult: ", result);
     assert.equal(result, EXPECT);
   });
