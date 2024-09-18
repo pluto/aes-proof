@@ -98,4 +98,35 @@ mod tests {
         println!("msg={}", hex::encode(message));
         println!("ct={}", hex::encode(ct));
     }
+
+    #[tokio::test]
+    async fn test_ghash() {
+        use ghash::{
+            universal_hash::{KeyInit, UniversalHash},
+            GHash,
+        };
+        use hex_literal::hex;
+
+        const H: [u8; 16] = hex!("aae06992acbf52a3e8f4a96ec9300bd7");
+        const X_1: [u8; 16] = hex!("98e7247c07f0fe411c267e4384b0f600");
+
+        let mut ghash = GHash::new(&H.into());
+        ghash.update(&[X_1.into()]);
+        let result = ghash.finalize();
+
+        let hash_key = [0xaa, 0xe0, 0x69, 0x92, 0xac, 0xbf, 0x52, 0xa3, 0xe8, 0xf4, 0xa9, 0x6e, 0xc9, 0x30, 0x0b, 0xd7];
+        let ct = [0x98, 0xe7, 0x24, 0x7c, 0x07, 0xf0, 0xfe, 0x41, 0x1c, 0x26, 0x7e, 0x43, 0x84, 0xb0, 0xf6, 0x00];
+        let expected = [0x2f, 0xf5, 0x8d, 0x80, 0x03, 0x39, 0x27, 0xab,0x8e, 0xf4, 0xd4, 0x58, 0x75, 0x14, 0xf0, 0xfb];
+
+        // Alternative.                  
+        let mut ghash2 = GHash::new_with_init_block(&hash_key.into(), 0);
+        let ga_data = GenericArray::from_slice(&ct);
+        ghash2.update(&[*ga_data]);
+        let result2 = ghash2.finalize();
+
+        println!("GHASH NEW result: {:?}", hex::encode(result.as_slice()));
+        println!("GHASH OLD result: {:?}", hex::encode(result2.as_slice()));
+        println!("expected: {:?}", hex::encode(expected));
+
+    }
 }

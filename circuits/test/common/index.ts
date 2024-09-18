@@ -85,6 +85,27 @@ export function padArrayTo64Bits(array: number[]): number[] {
   return new Array(64 - array.length).fill(0).concat(array);
 }
 
+export function hexByteToBigInt(hexByte: string): bigint {
+  if (typeof hexByte !== 'string') {
+      throw new TypeError('Input must be a string');
+  }
+  
+  // Remove '0x' prefix if present and ensure lowercase
+  hexByte = hexByte.replace(/^0x/i, "").toLowerCase();
+  
+  if (hexByte.length !== 2) {
+      throw new Error('Input must be exactly one byte (2 hex characters)');
+  }
+  
+  const byte = parseInt(hexByte, 16);
+  
+  if (isNaN(byte)) {
+      throw new Error('Invalid hex byte');
+  }
+  
+  return BigInt(byte);
+  }
+
 export function numberTo16Hex(num: number): string {
   // Convert the number to a hexadecimal string
   let hexString = num.toString(16);
