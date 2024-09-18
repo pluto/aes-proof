@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { Circomkit, WitnessTester } from "circomkit";
+import { Circomkit, WitnessTester, CircuitSignals} from "circomkit";
 import "mocha";
 
 export const circomkit = new Circomkit({
@@ -7,6 +7,14 @@ export const circomkit = new Circomkit({
 });
 
 export { WitnessTester };
+
+export function bitStringToHex(s: string): string {
+  let bits = s.split(",").map(bit => {
+    return Number(bit);
+  });
+  
+  return bitArrayToHex(bits);
+}
 
 export function hexBytesToBigInt(hexBytes: number[]): any[] {
   return hexBytes.map(byte => {

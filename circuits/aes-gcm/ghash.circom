@@ -36,7 +36,7 @@ include "gfmul.circom";
 
 template GHASH(NUM_BLOCKS) {
     signal input HashKey[4][4]; // Hash subkey (128 bits)
-    signal input msg[NUM_BLOCKS][4][4]; // Input blocks (each 128 bits)
+    signal input ciphertext[NUM_BLOCKS][4][4]; // Input blocks (each 128 bits)
     signal output tag[128]; // Output tag (128 bits)
     // signal output tag[2][64]; // Output tag (128 bits)
 
@@ -69,7 +69,7 @@ template GHASH(NUM_BLOCKS) {
                 var lc = 0;
                 for(var l = 0; l < 8; l++) {
                     var bitIndex = (j*4*8)+(k*8)+l;
-                    var bitValue = (msg[i][j][k] >> l) & 1;
+                    var bitValue = (ciphertext[i][j][k] >> l) & 1;
                     var rowIndex = bitIndex\64;
                     var colIndex = bitIndex%64;
                     msgBits[i][rowIndex][colIndex] <-- bitValue;
@@ -77,13 +77,13 @@ template GHASH(NUM_BLOCKS) {
                     lc += msgBits[i][rowIndex][colIndex] * bit;
                     bit = bit+bit;
                 }
-                msg[i][j][k] === lc;
+                ciphertext[i][j][k] === lc;
             }
         }
     }
 
     // Intermediate tags
-    signal intermediate[NUM_BLOCKS][2][64];
+    signal intermediate[NUM_BLOCKS+1][2][64];
 
     // Initialize first intermediate to zero
     for (var j = 0; j < 64; j++) {
@@ -93,12 +93,12 @@ template GHASH(NUM_BLOCKS) {
 
     // Initialize components
     // two 64bit xor components for each block
-    component xor[NUM_BLOCKS][2];
+    component xor[NUM_BLOCKS+1][2];
     // one gfmul component for each block
-    component gfmul[NUM_BLOCKS];
+    component gfmul[NUM_BLOCKS+1];
 
     // Accumulate each block using GHASH multiplication
-    for (var i = 1; i < NUM_BLOCKS; i++) {
+    for (var i = 1; i < NUM_BLOCKS+1; i++) {
         xor[i][0] = BitwiseXor(64);
         xor[i][1] = BitwiseXor(64);
         gfmul[i] = MUL();
@@ -107,8 +107,8 @@ template GHASH(NUM_BLOCKS) {
         // note: intermediate[0] is initialized to zero, so all rounds are valid
         xor[i][0].a <== intermediate[i-1][0];
         xor[i][1].a <== intermediate[i-1][1];
-        xor[i][0].b <== msgBits[i][0];
-        xor[i][1].b <== msgBits[i][1];
+        xor[i][0].b <== msgBits[i-1][0];
+        xor[i][1].b <== msgBits[i-1][1];
 
         // Multiply the XOR result with the hash subkey H
         gfmul[i].a[0] <== xor[i][0].out;
@@ -119,17 +119,14 @@ template GHASH(NUM_BLOCKS) {
         intermediate[i][0] <== gfmul[i].out[0];
         intermediate[i][1] <== gfmul[i].out[1];
     }
+
     // Assign the final tag
+    log("logging tag");
     for (var j = 0; j < 64; j++) {
-        tag[j] <== intermediate[NUM_BLOCKS-1][0][j];
-        tag[j+64] <== intermediate[NUM_BLOCKS-1][1][j];
+        tag[j] <== intermediate[NUM_BLOCKS][0][j];
+        tag[j+64] <== intermediate[NUM_BLOCKS][1][j];
+        // log(tag[j]);
+        // log(tag[j+64]);
     }
-// // Convert the 64-bit array tags to a single 16-byte array
-//     for (var i = 0; i < 16; i++) {
-//         var bytes = 0;
-//         for (var j = 0; j < 8; j++) {
-//             bytes += tag[i * 8 + j] * (1 << j);
-//         }
-//         tagBytes[i] <== bytes;
-//     }
+    log("done logging tag");
 }

@@ -1,16 +1,10 @@
 import { WitnessTester } from "circomkit";
-import { bitArrayToHex, circomkit, hexToBitArray } from "../common";
+import { bitStringToHex, circomkit, hexToBitArray } from "../common";
+import { assert } from "chai";
 
 // https://datatracker.ietf.org/doc/html/rfc8452#appendix-A
 
 // test vectors from this document: https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf 
-const H = [
-  [0x25, 0x62, 0x93, 0x47],
-  [0x58, 0x92, 0x42, 0x76],
-  [0x1d, 0x31, 0xf8, 0x26],
-  [0xba, 0x4b, 0x75, 0x7b]
-];
-
 const hash_key = [
   [0xaa, 0xe0, 0x69, 0x92],
   [0xac, 0xbf, 0x52, 0xa3],
@@ -21,16 +15,13 @@ const cipher_text = [
   [0x98, 0xe7, 0x24, 0x7c],
   [0x07, 0xf0, 0xfe, 0x41],
   [0x1c, 0x26, 0x7e, 0x43],
-  [0x84, 0xb0, 0xf6, 0x00]
+  [0x84, 0xb0, 0xf6, 0x00],
 ];
 
-const tag = [
-  hexToBitArray("2ff58d80033927ab"),
-  hexToBitArray("8ef4d4587514f0fb")
-];
+const tag = hexToBitArray("90e87315fb7d4e1b4092ec0cbfda5d7d");
 
 describe("ghash", () => {
-  let circuit: WitnessTester<["HashKey", "msg"], ["tag"]>;
+  let circuit: WitnessTester<["HashKey", "ciphertext"], ["tag"]>;
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`ghash`, {
@@ -42,10 +33,15 @@ describe("ghash", () => {
   });
 
   it("test ghash", async () => {
-    const input = { HashKey: hash_key, msg: cipher_text };
-    console.log("input message length: ", input.msg.length);
+    const input = { HashKey: hash_key, ciphertext: cipher_text };
+    console.log("input message length: ", input.ciphertext.length);
     console.log("input hash key length: ", input.HashKey.length);
     console.log("input message: ", tag);
-    const _res = await circuit.expectPass(input, { tag: tag });
+    // const _res = await circuit.expectPass(input, { tag: tag });
+
+    const witness = await circuit.compute({ HashKey: hash_key, ciphertext: cipher_text }, ["tag"])
+    console.log("witness tag", bitStringToHex(witness.tag.toString()));
+    assert.deepEqual(witness.tag, tag);
+
   });
 });
