@@ -334,16 +334,6 @@ template IndexSelector(total) {
     out <== calcTotal.sum;
 }
 
-// reverse the order in an n-bit array
-template ReverseArray(n) {
-    signal input in[n];
-    signal output out[n];
-
-    for (var i = 0; i < n; i++) {
-        out[i] <== in[n-i-1];
-    }
-}
-
 // reverse the byte order in a 16 byte array
 template ReverseByteArray() {
     signal input in[128];

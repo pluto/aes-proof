@@ -8,5 +8,4 @@ template POLYVAL(n_msg_bits)
     for (var i = 0; i < 128; i++) {
         out[i] <== 1;
     }
-
 }

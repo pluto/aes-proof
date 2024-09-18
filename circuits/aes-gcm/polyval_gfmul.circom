@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-include "mul.circom";
+include "wrapping_mul.circom";
 
 // Computes carryless POLYVAL multiplication over GF(2^128) in constant time.
 //
@@ -21,7 +21,7 @@ include "mul.circom";
 // This shift is unnecessary for POLYVAL and has been removed.
 //
 // ref: https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/backend/soft64.rs#L151
-template MUL() {
+template POLYVAL_GFMUL() {
     signal input a[2][64];
     signal input b[2][64];
     signal output out[2][64];

@@ -7,7 +7,7 @@ describe("WRAPPING_BE", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`WrappingMul64`, {
-      file: "aes-gcm/mul",
+      file: "aes-gcm/wrapping_mul",
       template: "WrappingMul64",
     });
   });

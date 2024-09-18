@@ -1,6 +1,5 @@
 pragma circom 2.1.9;
-// include "helper_functions.circom";
-include "gfmul.circom";
+include "polyval_gfmul.circom";
 include "gfmulx.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
@@ -102,7 +101,7 @@ template GHASH(NUM_BLOCKS) {
     for (var i = 1; i < NUM_BLOCKS; i++) {
         xor[i][0] = BitwiseXor(64);
         xor[i][1] = BitwiseXor(64);
-        gfmul[i] = GMUL();
+        gfmul[i] = POLYVAL_GFMUL(); // TODO(TK 2024-09-18): Update this for ghash
 
         // XOR current block with the previous intermediate result
         // note: intermediate[0] is initialized to zero, so all rounds are valid
@@ -129,28 +128,33 @@ template GHASH(NUM_BLOCKS) {
     // tag[1] <== intermediate[NUM_BLOCKS-1][1];
 }
 
-template GMUL() {
-    signal input a[2][64];
-    signal input b[2][64];
-    signal output out[2][64];
-}
 
-// Transform the GHASH hash key to a Polyval hash key
+// Transform the GHASH hash key to a POLYVAL hash key
 // reverse the bits of `in` and multiply `h` by x
-template ghash_to_polyval_hash_key() {
+// 
+// h.reverse();
+// let mut h_polyval = polyval::mulx(&h);
+// let result = GHash(Polyval::new_with_init_block(&h_polyval, init_block)); 
+template TranslateHashkey() {
     signal input in[128]; 
     signal output out[128]; 
 
-    signal mid[128];
-    for (i = 0; i < 128; i++){
-        mid[128-i] <== in[i];
-    }
+//     signal mid[128];
 
-    component MULX;
-    MULX = polyval_GFMULX();
-    for (i = 0; i < 128; i++){
-        MULX.in[i] <== mid[i];
-    }
+//     // reverse bytes
+//     for (i = 0; i < 16; i++) {
+//         for (j = 0; j < 8; j++){
+//             var IDX_FROM = 120-i*8+j;
+//             var IDX_TO = i*8+j;
+//             mid[IDX_TO] <== in[IDX_FROM];
+//         }
+//     }
 
-    out <== MULX.out;
-}
+//     component MULX;
+//     MULX = polyval_GFMULX();
+//     for (i = 0; i < 128; i++){
+//         MULX.in[i] <== mid[i];
+//     }
+
+//     out <== MULX.out;
+// }
