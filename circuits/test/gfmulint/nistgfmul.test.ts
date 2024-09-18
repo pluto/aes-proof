@@ -137,7 +137,7 @@ describe("intrightshift", () => {
   });
 
 
-  describe("BlockRightShift", () => {
+describe("BlockRightShift", () => {
     let circuit: WitnessTester<["in"], ["out", "msb"]>;
   
     before(async () => {
@@ -157,9 +157,23 @@ describe("intrightshift", () => {
         let input = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
         const expected = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         const _res = await circuit.expectPass({ in: input }, { out: expected, msb: 1 });
-        // console.log("res:", _res.out);
-        // assert.deepEqual(_res.out, expected);
-        // console.log("msb:", _res.msb);
-        // assert.deepEqual(_res.msb, 0x01);
+    });
+});
+
+describe("BlockRightShiftModPX", () => {
+    let circuit: WitnessTester<["in"], ["out"]>;
+  
+    before(async () => {
+      circuit = await circomkit.WitnessTester("RightShiftModPX", {
+        file: "aes-gcm/nistgmul",
+        template: "RightShiftModPX",
+      });
+      console.log("#constraints:", await circuit.getConstraintCount());
+    });
+    // msb is 1 so we xor the first byte with 0xE1
+    it("Should Compute BlockRightShift Correctly", async () => {
+        let input = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+        const expected = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        const _res = await circuit.expectPass({ in: input }, { out: expected });
     });
 });

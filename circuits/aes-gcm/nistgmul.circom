@@ -4,6 +4,7 @@ include "utils.circom"; // xor
 include "circomlib/circuits/comparators.circom"; // isZero
 include "helper_functions.circom"; // bitwise right shift
 include "circomlib/circuits/mux1.circom"; // multiplexer
+include "../aes-ctr/utils.circom"; // xorbyte
 
 // Algorithm 1: X •Y
 // Input:
@@ -113,55 +114,93 @@ template ArrayMux(n) {
     }
 }
 
-// template NistGMulByte() {
+template NistGMulByte() {
 
-//     signal input X[16];
-//     signal input Y[16];
-//     signal output out[16];
+    signal input X[16];
+    signal input Y[16];
+    signal output out[16];
 
-//     // Let R be the bit string 11100001 || 0120. Given two blocks X and Y
-//     // byte 0xE1 is 11100001 in binary
-//     var R[16] = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    // Let R be the bit string 11100001 || 0120. Given two blocks X and Y
+    // byte 0xE1 is 11100001 in binary
+    var R[16] = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-//     // 1. Let x0, x1...x127 denote the sequence of bits in X.
-//     // 2. Let Z0 = 0128 and V0 = Y.
-//     signal Z[16] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-//     /// State accumulator. ie. V[i] is V0 holding 16 bytes
-//     signal V[16][16];
-//     V[0] <== Y;
+    // 1. Let x0, x1...x127 denote the sequence of bits in X.
+    // 2. Let Z0 = 0128 and V0 = Y.
+    signal Z[16] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    /// State accumulator. ie. V[i] is V0 holding 16 bytes
+    signal V[16][16];
+    V[0] <== Y;
 
-//     // 3. For i = 0 to 127, calculate blocks Zi+1 and Vi+1 as follows:
-//     //
-//     //       ⎧ Zi               if xi = 0;
-//     //  Zi+1 ⎨ 
-//     //       ⎩ Zi ⊕Vi           if xi =1.
-//     //
-//     //       ⎧ Vi >>1           if LSB1(Vi) = 0;
-//     //  Vi+1 ⎨ 
-//     //       ⎩ (Vi >>1) ⊕ R     if LSB1(Vi) =1.
-//     //  
-//     component XorByte[16];
-//     component IsZero[16];
-//     component Zmux[16];
-//     component Vmux[16];
-//     component BitwiseRightShift[16];
-//     for (var i = 0; i < 15; i++) {
+    // 3. For i = 0 to 127, calculate blocks Zi+1 and Vi+1 as follows:
+    //
+    //       ⎧ Zi               if xi = 0;
+    //  Zi+1 ⎨ 
+    //       ⎩ Zi ⊕Vi           if xi =1.
+    //
+    //       ⎧ Vi >>1           if LSB1(Vi) = 0;
+    //  Vi+1 ⎨ 
+    //       ⎩ (Vi >>1) ⊕ R     if LSB1(Vi) =1.
+    //  
+    component XorByte[16];
+    component IsZero[16];
+    component Zmux[16];
+    component Vmux[16];
+    component RightShift[16];
 
-//         IsZero[i] = IsZero();
-//         IsZero[i].in <== X[i];
-//         if (IsZero[i].out == 0) {
-//             Z[i +1] <== Z[i];
-//             V[i] <== V[i];
-//         } else {
-//             XorByte[i] = XorByte();
-//             XorByte[i].a <== Z[i];
-//             XorByte[i].b <== V[i];
-//             Z[i] <== XorByte[i].out;
-//         }
-//     }
-//     // 4. Return Z128. 
+    for (var i = 0; i < 16; i++) {
 
-// }
+        /// In order to handle this for bytes i should iterate over each bit in the x_i byte
+        // Let 𝑏 = value of the 𝑗-th bit in 𝑥𝑖
+        // Update 𝑍:
+        // If 𝑏 = 1, 𝑍 = 𝑍 ⊕ 𝑉.
+
+
+
+
+        // IsZero[i] = IsZero();
+        // IsZero[i].in <== X[i];
+        // if (IsZero[i].out == 0) {
+        //     Z[i +1] <== Z[i];
+        //     V[i] <== V[i];
+        // } else {
+        //     XorByte[i] = XorByte();
+        //     XorByte[i].a <== Z[i];
+        //     XorByte[i].b <== V[i];
+        //     Z[i] <== XorByte[i].out;
+        // }
+    }
+    // 4. Return Z128. 
+
+}
+
+// right shift by one bit. If msb is 1:
+// then we xor the first byte with 0xE1 (11100001: 1 + X + X^2 + X^7)
+// this is the irreducible polynomial used in AES-GCM
+template RightShiftModPX() {
+    signal input in[16];
+    signal output out[16];
+
+    signal intermediate[16];
+
+    component blockRightShift = BlockRightShift();
+    blockRightShift.in <== in;
+    intermediate <== blockRightShift.out;
+
+    component xorByte = XorByte();
+    xorByte.a <== intermediate[0];
+    xorByte.b <== 0xE1; // 11100001
+
+    // if msb is 1, then we xor the first byte with R[0]
+    component mux = Mux1();
+    mux.s <== blockRightShift.msb;
+    mux.c[0] <== intermediate[0];
+    mux.c[1] <== xorByte.out;
+
+    for (var i = 1; i < 16; i++) {
+        out[i] <== intermediate[i];
+    }
+    out[0] <== mux.out;
+}
 
 // right shifts 16 bytes by one bit and returns the msb before the shift
 template BlockRightShift() {
