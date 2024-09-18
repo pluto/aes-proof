@@ -114,13 +114,13 @@ mod tests {
         let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
 
         // 24 blocks - 1.5 blocks
-        let message = String::from("testhello0000testhello0000"); 
+        let message = String::from("testhello0000testhello0000");
         let aes_payload = Payload { msg: message.as_bytes(), aad: &[] };
         let cipher = Aes128Gcm::new_from_slice(&test_key).unwrap();
         let nonce = GenericArray::from_slice(&test_iv);
 
         // this is 32 bytes which is seemingly not correct
-        let ct = cipher.encrypt(nonce, aes_payload).expect("error generating ct"); 
+        let ct = cipher.encrypt(nonce, aes_payload).expect("error generating ct");
 
         println!("key={}", hex::encode(test_key));
         println!("iv={}", hex::encode(test_iv));
