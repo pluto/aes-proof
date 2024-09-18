@@ -122,11 +122,12 @@ template NistGMulByte() {
 
     // Let R be the bit string 11100001 || 0120. Given two blocks X and Y
     // byte 0xE1 is 11100001 in binary
-    var R[16] = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    // var R[16] = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
     // 1. Let x0, x1...x127 denote the sequence of bits in X.
     // 2. Let Z0 = 0128 and V0 = Y.
-    signal Z[16] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    signal Z[16][16];
+    Z[0] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     /// State accumulator. ie. V[i] is V0 holding 16 bytes
     signal V[16][16];
     V[0] <== Y;
@@ -141,42 +142,51 @@ template NistGMulByte() {
     //  Vi+1 ⎨ 
     //       ⎩ (Vi >>1) ⊕ R     if LSB1(Vi) =1.
     //  
-    component XorByte[16];
-    component IsZero[16];
-    component Zmux[16];
-    component Vmux[16];
-    component RightShift[16];
-
+    component bit[16] = Num2Bits(8);
     for (var i = 0; i < 16; i++) {
 
-        /// In order to handle this for bytes i should iterate over each bit in the x_i byte
-        // Let 𝑏 = value of the 𝑗-th bit in 𝑥𝑖
-        // Update 𝑍:
-        // If 𝑏 = 1, 𝑍 = 𝑍 ⊕ 𝑉.
-
-
-
-
-        // IsZero[i] = IsZero();
-        // IsZero[i].in <== X[i];
-        // if (IsZero[i].out == 0) {
-        //     Z[i +1] <== Z[i];
-        //     V[i] <== V[i];
-        // } else {
-        //     XorByte[i] = XorByte();
-        //     XorByte[i].a <== Z[i];
-        //     XorByte[i].b <== V[i];
-        //     Z[i] <== XorByte[i].out;
-        // }
+        // call z_i_update
+        // do the mulx for v
     }
     // 4. Return Z128. 
 
 }
 
+// TODO: Write a test for this
+template z_i_update(bit_val) {
+    signal input Z[16];
+    signal input V[16];
+    signal output Z_new[16];
+
+    component mulx = Mulx();
+    mulx.s <== bit_val;
+    mulx.c[0] <== Z;
+    component xorBlock = XORBLOCK();
+    xorBlock.a <== Z;
+    xorBlock.b <== V;
+    mulx.c[1] <== xorBlock.out;
+    Z_new <== mulx.out;
+}
+
+// TODO: Write a test for this
+template XORBLOCK(){
+    signal input a[16];
+    signal input b[16];
+    signal output out[16];
+
+    component xorByte[16];
+    for (var i = 0; i < 16; i++) {
+        xorByte[i] = XorByte();
+        xorByte[i].a <== a[i];
+        xorByte[i].b <== b[i];
+        out[i] <== xorByte[i].out;
+    }
+}
+
 // right shift by one bit. If msb is 1:
 // then we xor the first byte with 0xE1 (11100001: 1 + X + X^2 + X^7)
 // this is the irreducible polynomial used in AES-GCM
-template RightShiftModPX() {
+template Mulx() {
     signal input in[16];
     signal output out[16];
 

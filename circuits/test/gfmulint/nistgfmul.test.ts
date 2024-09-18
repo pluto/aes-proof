@@ -3,24 +3,25 @@ import { WitnessTester } from "circomkit";
 import { circomkit, hexToBitArray, hexByteToBigInt } from "../common";
 
 
-describe("nist", () => {
+describe("NistGMulByte", () => {
   let circuit: WitnessTester<["X", "Y"], ["out"]>;
 
   before(async () => {
     circuit = await circomkit.WitnessTester("nistgfmul", {
       file: "aes-gcm/nistgmul",
-      template: "NistGMulBit",
+      template: "NistGMulByte",
     });
     console.log("#constraints:", await circuit.getConstraintCount());
   });
 
-  it("Should Compute NistGMulBit Correctly", async () => {
+  it("Should Compute NistGMulByte Correctly", async () => {
     let X = hexToBitArray("0xaae06992acbf52a3e8f4a96ec9300bd7");   // little endian hex vectors
     let Y = hexToBitArray("0x98e7247c07f0fe411c267e4384b0f600");
   
 
     const expected = hexToBitArray("0x2ff58d80033927ab8ef4d4587514f0fb");
     const _res = await circuit.compute({ X, Y }, ["out"]);
+    console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });
 });
@@ -160,18 +161,18 @@ describe("BlockRightShift", () => {
     });
 });
 
-describe("BlockRightShiftModPX", () => {
+describe("Mulx", () => {
     let circuit: WitnessTester<["in"], ["out"]>;
   
     before(async () => {
-      circuit = await circomkit.WitnessTester("RightShiftModPX", {
+      circuit = await circomkit.WitnessTester("Mulx", {
         file: "aes-gcm/nistgmul",
-        template: "RightShiftModPX",
+        template: "Mulx",
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     });
     // msb is 1 so we xor the first byte with 0xE1
-    it("Should Compute BlockRightShift Correctly", async () => {
+    it("Should Compute Mulx Correctly", async () => {
         let input = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
         const expected = [0xE1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         const _res = await circuit.expectPass({ in: input }, { out: expected });
