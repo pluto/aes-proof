@@ -14,7 +14,7 @@ describe("aes-gcm", () => {
   });
 
   it("should have correct output", async () => {
-    let key = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+    let key = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]; 
     let plainText = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
     let iv = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
     // TODO: Fix hashkey. 
@@ -27,7 +27,7 @@ describe("aes-gcm", () => {
     assert.deepEqual(witness.cipherText, hexBytesToBigInt(expected_output))
   });
 
-  it("should work for self generated test case", async () => {
+  it("should pass with generated test case for 1 block", async () => {
     let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad"], ["cipherText", "tag"]>;
     circuit_one_block = await circomkit.WitnessTester(`aes-gcm`, {
       file: "aes-gcm/aes-gcm",
@@ -47,7 +47,7 @@ describe("aes-gcm", () => {
     assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct))
   });
 
-  it("should work for multiple blocks", async () => {
+  it("should pass with generated test case for 2 blocks", async () => {
     let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad"], ["cipherText", "tag"]>;
     circuit_one_block = await circomkit.WitnessTester(`aes-gcm`, {
       file: "aes-gcm/aes-gcm",
@@ -57,10 +57,32 @@ describe("aes-gcm", () => {
 
     const key = hexToBytes('31313131313131313131313131313131');
     const iv = hexToBytes('313131313131313131313131');
-    const msg = hexToBytes('7465737468656c6c6f303030303030307465737468656c6c6f30303030303030');
+    const msg = hexToBytes('7465737468656c6c6f303030303030307465737468656c6c6f30303030303030'); // 34 bytes -> 2 blocks
     const aad = hexToBytes('00000000000000000000000000000000')
     const ct = hexToBytes('2929d2bb1ae94804402b8e776e0d335626756530713e4c065af1d3c4f56e0204');
     const auth_tag = hexToBytes('438542d7f387568c84d23df60b223ecb');
+
+    const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: msg, aad: aad }, ["cipherText", "authTag"])
+
+    assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct))
+  });
+
+  it("should pass with generated test case for 1.5 blocks", async () => {
+    let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad"], ["cipherText", "tag"]>;
+    circuit_one_block = await circomkit.WitnessTester(`aes-gcm`, {
+      file: "aes-gcm/aes-gcm",
+      template: "AESGCM",
+      params: [32],
+    });
+
+
+    const key = hexToBytes('31313131313131313131313131313131');
+    const iv = hexToBytes('313131313131313131313131');
+    const msg = hexToBytes('7465737468656c6c6f303030307465737468656c6c6f30303030');
+    const aad = hexToBytes('00000000000000000000000000000000')
+    // waylon believes this ciphertext is incorrect because it is bigger than the plain text
+    // it came from `cargo test test_aes_gcm_blocks_1_5 -- --nocapture` 
+    const ct = hexToBytes('2929d2bb1ae94804402b8e776e496615267873287534105a05f1e58a152ccba9a375be97eaab91a269a0');
 
     const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: msg, aad: aad }, ["cipherText", "authTag"])
 
