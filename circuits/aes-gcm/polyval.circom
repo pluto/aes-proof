@@ -14,8 +14,8 @@ template POLYVAL(BLOCKS) {
     component POLYVAL_GFMUL = POLYVAL_GFMUL();
     for (var i=0; i<2; i++){ 
         for (var j=0; j<64; j++){ 
-            POLYVAL_GFMUL.a[i][j] <== msg[0][i*64+j];
-            POLYVAL_GFMUL.b[i][j] <== H[i*64+j];
+            POLYVAL_GFMUL.a[1-i][j] <== msg[0][i*64+j];
+            POLYVAL_GFMUL.b[1-i][j] <== H[i*64+j];
         }
     }
     
