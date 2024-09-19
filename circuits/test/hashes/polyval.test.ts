@@ -49,26 +49,12 @@ describe("POLYVAL_HASH_2", () => {
   it("POLYVAL 2", async () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
-    // mul: self.0: B6DF838C66954F4F, self.1: 62A2012DBB621740
-    // mul: rhs.0: 7642925847936225, rhs.1: 7B754BBA26F8311D
     const _res = await circuit.compute(input, ["out"]);
+    console.log(_res);
     const result = bitArrayToHex(
-      (_res.out as number[][])[0].map((bit) => Number(bit))
+      (_res.out as number[][]).map((bit) => Number(bit))
     );
     console.log("expect: ", EXPECT, "\nresult: ", result);
     assert.equal(result, EXPECT);
   });
 });
-
-// ---- polyval_test_vector_2 stdout ----
-// proc_block: Array([4F, 4F, 95, 66, 8C, 83, DF, B6, 40, 17, 62, BB, 2D, 01, A2, 62])
-// add: self.0: 0000000000000000, self.1: 0000000000000000
-// add: rhs.0: B6DF838C66954F4F, rhs.1: 62A2012DBB621740
-// mul: self.0: B6DF838C66954F4F, self.1: 62A2012DBB621740
-// mul: rhs.0: 7642925847936225, rhs.1: 7B754BBA26F8311D
-// __v2: 9850FF3745C6DACE, __v3: 776D08511501169C
-// finalize block: Array([0000000000000206, 0000000000000218, 0000000000000198, 0000000000000069, 0000000000000055, 0000000000000255, 0000000000000080, 0000000000000152, 0000000000000156, 0000000000000022, 0000000000000001, 0000000000000021, 0000000000000081, 0000000000000008, 0000000000000109, 0000000000000119])
-// [CE, DA, C6, 45, 37, FF, 50, 98, 9C, 16, 01, 15, 51, 08, 6D, 77]
-// thread 'polyval_test_vector_2' panicked at polyval/tests/lib.rs:46:5:
-// explicit panic
-// note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
