@@ -116,8 +116,8 @@ mod tests {
         ghash.update(&[X.into()]);
         let result = ghash.finalize();
 
-        const H_1: [u8; 16] = hex!("81000000000000000000000000000000");
-        const X_1: [u8; 16] = hex!("81000000000000000000000000000000");
+        const H_1: [u8; 16] = hex!("00000000000000000000000000000001");
+        const X_1: [u8; 16] = hex!("00000000000000000000000000000001");
         // Alternative.                  
         let mut ghash2 = GHash::new(&H_1.into());
         ghash2.update(&[X_1.into()]);

@@ -44,40 +44,114 @@ template NistGMulByte() {
     component bit[16];
     component z_i_update[128];
     component mulx[128];
-    for (var i = 0; i < 16; i++) {
-        bit[i] = BytesToBits(1);
-        bit[i].in[0] <== X[i];
-        for (var j = 0; j < 8; j++) {
-            // log("i*8 + j", i*8 + j);
-            // z_i_update
-            z_i_update[i*8 + j] = Z_I_UPDATE();
-            z_i_update[i*8 + j].Z <== Z[i];
-            z_i_update[i*8 + j].V <== V[i];
-            z_i_update[i*8 + j].bit_val <== bit[i].out[j];
-            Z[i*8 + j + 1] <== z_i_update[i*8 + j].Z_new;
+    component bytesToBits = BytesToBits(16);
+    bytesToBits.in <== X;
+    signal bitsX[16*8];
+    bitsX <== bytesToBits.out;
+    for (var i = 0; i < 128; i++) {
+        // log("i*8 + j", i*8 + j);
+        // z_i_update
+        z_i_update[i] = Z_I_UPDATE(16);
+        z_i_update[i].Z <== Z[i];
+        z_i_update[i].V <== V[i];
+        z_i_update[i].bit_val <== bitsX[i];
+        Z[i + 1] <== z_i_update[i].Z_new;
 
-            // mulx to update V
-            mulx[i*8 + j] = Mulx();
-            mulx[i*8 + j].in <== V[i];
-            V[i*8 + j + 1] <== mulx[i*8 + j].out;
-        }
+        // mulx to update V
+        mulx[i] = Mulx(16);
+        mulx[i].in <== V[i];
+        V[i + 1] <== mulx[i].out;
     }
     // 4. Return Z128. 
     out <== Z[128];
 }
 
+// mul on 1 byte to debug by hand
+template debug_1_byte() {
+    signal input X[1];
+    signal input Y[1];
+    signal output out[1];
+
+    signal bitsX[8];
+    signal Z[9][1];
+    signal V[9][1];
+    Z[0] <== [0x00];
+    V[0] <== Y;
+
+    component z_i_update[8];
+    component mulx[8];
+    component bytesToBits = BytesToBits(1);
+    bytesToBits.in <== X;   
+    bitsX <== bytesToBits.out;
+    for (var i = 0; i < 8; i++) {
+        log("i", i);
+        log("bitsX[i]", bitsX[i]);
+        z_i_update[i] = Z_I_UPDATE(1);
+        z_i_update[i].Z <== Z[i];
+        z_i_update[i].V <== V[i];
+        z_i_update[i].bit_val <== bitsX[i];
+        Z[i + 1] <== z_i_update[i].Z_new;
+
+        // mulx to update V
+        mulx[i] = Mulx(1);
+        mulx[i].in <== V[i];
+        V[i + 1] <== mulx[i].out;
+        
+        log("V[i]", V[i][0]);
+    }
+    out <== Z[8];
+}
+
+// mul on 2 bytes to debug by hand
+template debug_2_bytes() {
+    signal input X[2];
+    signal input Y[2];
+    signal output out[2];
+
+    signal bitsX[16];
+    signal Z[17][2];
+    signal V[17][2];
+    Z[0] <== [0x00, 0x00];
+    V[0] <== Y;
+
+    component z_i_update[16];
+    component mulx[16];
+    component bytesToBits = BytesToBits(2);
+    bytesToBits.in <== X;
+    bitsX <== bytesToBits.out;
+    for (var i = 0; i < 16; i++) {
+        log("i", i);
+        log("bitsX[i]", bitsX[i]);
+        z_i_update[i] = Z_I_UPDATE(2);
+        z_i_update[i].Z <== Z[i];
+        z_i_update[i].V <== V[i];
+        z_i_update[i].bit_val <== bitsX[i];
+        Z[i + 1] <== z_i_update[i].Z_new;
+
+        // mulx to update V
+        mulx[i] = Mulx(2);
+        mulx[i].in <== V[i];
+        V[i + 1] <== mulx[i].out;
+        
+        log("V[i][0]", V[i][0]);
+        log("V[i][1]", V[i][1]);
+    }
+    
+    out <== Z[16];
+}
+
 // if bit value is 0, then Z_new = Z
 // if bit value is 1, then Z_new = Z xor V
-template Z_I_UPDATE() {
-    signal input Z[16]; // this is Zero block in first itteration
-    signal input V[16]; // this is Y in first itteration
+template Z_I_UPDATE(n_bytes) {
+    signal input Z[n_bytes]; // this is Zero block in first itteration
+    signal input V[n_bytes]; // this is Y in first itteration
     signal input bit_val;
-    signal output Z_new[16];
+    signal output Z_new[n_bytes];
 
-    component mux = ArrayMux(16);
+    component mux = ArrayMux(n_bytes);
     mux.sel <== bit_val;
     mux.a <== Z;
-    component xorBlock = XORBLOCK();
+    component xorBlock = XORBLOCK(n_bytes);
     xorBlock.a <== Z;
     xorBlock.b <== V;
     mux.b <== xorBlock.out;
@@ -99,13 +173,13 @@ template ArrayMux(n) {
 }
 
 // XOR 16 bytes
-template XORBLOCK(){
-    signal input a[16];
-    signal input b[16];
-    signal output out[16];
+template XORBLOCK(n_bytes){
+    signal input a[n_bytes];
+    signal input b[n_bytes];
+    signal output out[n_bytes];
 
-    component xorByte[16];
-    for (var i = 0; i < 16; i++) {
+    component xorByte[n_bytes];
+    for (var i = 0; i < n_bytes; i++) {
         xorByte[i] = XorByte();
         xorByte[i].a <== a[i];
         xorByte[i].b <== b[i];
@@ -116,13 +190,13 @@ template XORBLOCK(){
 // right shift by one bit. If msb is 1:
 // then we xor the first byte with 0xE1 (11100001: 1 + X + X^2 + X^7)
 // this is the irreducible polynomial used in AES-GCM
-template Mulx() {
-    signal input in[16];
-    signal output out[16];
+template Mulx(n_bytes) {
+    signal input in[n_bytes];
+    signal output out[n_bytes];
 
-    signal intermediate[16];
+    signal intermediate[n_bytes];
 
-    component blockRightShift = BlockRightShift();
+    component blockRightShift = BlockRightShift(n_bytes);
     blockRightShift.in <== in;
     intermediate <== blockRightShift.out;
 
@@ -136,40 +210,40 @@ template Mulx() {
     mux.c[0] <== intermediate[0];
     mux.c[1] <== xorByte.out;
 
-    for (var i = 1; i < 16; i++) {
+    for (var i = 1; i < n_bytes; i++) {
         out[i] <== intermediate[i];
     }
     out[0] <== mux.out;
 }
 
 // right shifts 16 bytes by one bit and returns the msb before the shift
-template BlockRightShift() {
-    signal input in[16];
-    signal output out[16];
+template BlockRightShift(n_bytes) {
+    signal input in[n_bytes];
+    signal output out[n_bytes];
     signal output msb;
     
-    signal shiftedbits[128];
-    component bytesToBits = BytesToBits(16);
-    for (var i = 0; i < 16; i++) {
+    signal shiftedbits[n_bytes*8];
+    component bytesToBits = BytesToBits(n_bytes);
+    for (var i = 0; i < n_bytes; i++) {
         bytesToBits.in[i] <== in[i];
     }
-    msb <== bytesToBits.out[127];
+    msb <== bytesToBits.out[n_bytes*8 - 1];
 
-    component BitwiseRightShift = BitwiseRightShift(128, 1);
+    component BitwiseRightShift = BitwiseRightShift(n_bytes*8, 1);
     BitwiseRightShift.in <== bytesToBits.out;
     shiftedbits <== BitwiseRightShift.out;
 
-    component bitsToBytes = BitsToBytes(16);
+    component bitsToBytes = BitsToBytes(n_bytes);
     bitsToBytes.in <== shiftedbits;
     out <== bitsToBytes.out;
 }
 
 // n is the number of bytes to convert to bits
-template BytesToBits(n) {
-    signal input in[n];
-    signal output out[n*8];
-    component num2bits[n];
-    for (var i = 0; i < n; i++) {
+template BytesToBits(n_bytes) {
+    signal input in[n_bytes];
+    signal output out[n_bytes*8];
+    component num2bits[n_bytes];
+    for (var i = 0; i < n_bytes; i++) {
         num2bits[i] = Num2Bits(8);
         num2bits[i].in <== in[i];
         for (var j = 7; j >=0; j--) {

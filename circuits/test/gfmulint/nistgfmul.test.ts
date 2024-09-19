@@ -16,24 +16,77 @@ describe("NistGMulByte", () => {
 
   it("Should Compute NistGMulByte Correctly", async () => {
 
-    // let h = "aae06992acbf52a3e8f4a96ec9300bd7";
-    // let x = "98e7247c07f0fe411c267e4384b0f600";
-
-    // let h_le = hexStringToByteArray(h).reverse();
-    // let x_le = hexStringToByteArray(x).reverse();
-    // // let X = hexToBitArray("0xaae06992acbf52a3e8f4a96ec9300bd7");   // little endian hex vectors
-    // let X = hexStringToByteArray("aae06992acbf52a3e8f4a96ec9300bd7");
-    // // let Y = hexToBitArray("0x98e7247c07f0fe411c267e4384b0f600");
-    // let Y = hexStringToByteArray("98e7247c07f0fe411c267e4384b0f600");
-    let one  = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    let zero = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let X  = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let Y = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
   
-    // const expected = hexToBitArray("0x2ff58d80033927ab8ef4d4587514f0fb");
     const expected = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    await circuit.expectPass({ X: zero, Y: one }, { out: expected });
-    // console.log("res:", _res.out);
-    // assert.deepEqual(_res.out, expected);
+    await circuit.expectPass({ X: X, Y: Y }, { out: expected });
   });
+
+  it("Should Compute NistGMulByte of LSB=1 Correctly", async () => {
+
+    let X  = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+    let Y = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+  
+    const expected = [0xe6, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03];
+    await circuit.expectPass({ X: X, Y: Y }, { out: expected });
+  });
+});
+
+describe("debug1", () => {
+    let circuit: WitnessTester<["X", "Y"], ["out"]>;
+  
+    before(async () => {
+      circuit = await circomkit.WitnessTester("debug1", {
+        file: "aes-gcm/nistgmul",
+        template: "debug_1_byte",
+      });
+      console.log("#constraints:", await circuit.getConstraintCount());
+    });
+
+    it("Should Compute Correctly", async () => {
+        let inputX = [0x80];
+        let inputY = [0x80];
+        const expected = [0x80];
+        console.log("expected", expected);
+        const _res = await circuit.expectPass({ X: inputX, Y: inputY }, { out: expected });
+    });
+    it("Should Compute Correctly", async () => {
+        let inputX = [0x01];
+        let inputY = [0x01];
+
+        const expected = [0x5E];
+        console.log("expected", expected);
+        await circuit.expectPass({ X: inputX, Y: inputY }, { out: expected });
+    });
+});
+
+describe("debug2", () => {
+    let circuit: WitnessTester<["X", "Y"], ["out"]>;
+  
+    before(async () => {
+      circuit = await circomkit.WitnessTester("debug1", {
+        file: "aes-gcm/nistgmul",
+        template: "debug_2_bytes",
+      });
+      console.log("#constraints:", await circuit.getConstraintCount());
+    });
+
+    it("Should Compute Correctly", async () => {
+        let inputX = [0x80, 0x00];
+        let inputY = [0x80, 0x00];
+        const expected = [0x80, 0x00];
+        console.log("expected", expected);
+        const _res = await circuit.expectPass({ X: inputX, Y: inputY }, { out: expected });
+    });
+    it("Should Compute Correctly", async () => {
+        let inputX = [0x00, 0x01];
+        let inputY = [0x00, 0x01];
+
+        const expected = [0xE6, 0x0B];
+        console.log("expected", expected);
+        await circuit.expectPass({ X: inputX, Y: inputY }, { out: expected });
+    });
 });
 
 describe("ToBits", () => {
@@ -155,6 +208,7 @@ describe("BlockRightShift", () => {
       circuit = await circomkit.WitnessTester("BlockRightShift", {
         file: "aes-gcm/nistgmul",
         template: "BlockRightShift",
+        params: [16]
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     });
@@ -178,6 +232,7 @@ describe("Mulx", () => {
       circuit = await circomkit.WitnessTester("Mulx", {
         file: "aes-gcm/nistgmul",
         template: "Mulx",
+        params: [16]
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     });
@@ -196,6 +251,7 @@ describe("XORBLOCK", () => {
       circuit = await circomkit.WitnessTester("XORBLOCK", {
         file: "aes-gcm/nistgmul",
         template: "XORBLOCK",
+        params: [16]
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     });
@@ -245,6 +301,7 @@ describe("Z_I_UPDATE", () => {
       circuit = await circomkit.WitnessTester("XORBLOCK", {
         file: "aes-gcm/nistgmul",
         template: "Z_I_UPDATE",
+        params: [16]
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     });
