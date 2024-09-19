@@ -43,7 +43,7 @@ template POLYVAL(BLOCKS) {
     ReverseByteHalves[1].in <== _out; 
     out <-- ReverseByteHalves[1].out;
 
-    component Logger3 = ParseAndLogBitsAsBytes(16);
-    log("out");
-    Logger3.in <== out;
+    // component Logger3 = ParseAndLogBitsAsBytes(16);
+    // log("out");
+    // Logger3.in <== out;
 }
