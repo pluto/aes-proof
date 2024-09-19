@@ -8,8 +8,19 @@ template POLYVAL(BLOCKS) {
     signal input H[128]; 
     signal output out[128];
 
+    signal H_bytes[16];
+    component Parser = ParseBEBitsToBytes(16);
+    // load parser with H and log output
+    for (var i=0; i<128; i++){
+        Parser.in[i] <== H[i];
+    }
+    for (var i=0; i<2; i++){
+        log("h[", i, "]=", 
+            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3], 
+            Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]  ); 
+    }
+
     signal tags[BLOCKS][128];
-    signal b; 
     // signal xors[BLOCKS][128];
     component POLYVAL_GFMUL = POLYVAL_GFMUL();
     for (var i=0; i<2; i++){ 

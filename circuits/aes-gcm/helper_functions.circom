@@ -4,6 +4,7 @@ include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
 include "circomlib/circuits/comparators.circom";
 
+// parse LE bits to int
 template ParseLEBytes64() {
     signal input in[64];
     signal output out;
@@ -20,6 +21,39 @@ template ParseLEBytes64() {
 
     // Assign the final value to the output signal
     out <-- temp;
+}
+
+// parse BE bits to BE bytes
+// 
+// Sample calling code for logging:
+// component Parser = ParseBEBitsToBytes(16);
+// // load parser with H and log output
+// for (var i=0; i<128; i++){
+//     Parser.in[i] <== H[i];
+// }
+// for (var i=0; i<2; i++){
+//     log("h[", i, "]=", 
+//         Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3], 
+//         Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]  ); 
+// }
+template ParseBEBitsToBytes(N_BYTES_OUTPUT) {
+    var N_BITS = N_BYTES_OUTPUT * 8;
+    signal input in[N_BITS];
+    signal output out[N_BYTES_OUTPUT];
+    // var temp[8] = [0,0,0,0,0,0,0,0];
+
+    // Iterate through the input bits
+    var temp[N_BYTES_OUTPUT];
+    for (var i = 0; i < N_BYTES_OUTPUT; i++) {
+        temp[i] = 0; 
+        for (var j = 0; j < 8; j++) {
+            temp[i] += 2**j * in[i*8 + j];
+        }
+    }
+
+    for (var i=0; i< N_BYTES_OUTPUT; i++) {
+        out[i] <-- temp[i];
+    }
 }
 
 // parse 64-bits to integer value

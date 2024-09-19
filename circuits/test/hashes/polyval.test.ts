@@ -49,6 +49,8 @@ describe("POLYVAL_HASH_2", () => {
   it("POLYVAL 2", async () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
+    // mul: self.0: B6DF838C66954F4F, self.1: 62A2012DBB621740
+    // mul: rhs.0: 7642925847936225, rhs.1: 7B754BBA26F8311D
     const _res = await circuit.compute(input, ["out"]);
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
