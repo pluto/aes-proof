@@ -108,9 +108,8 @@ mod tests {
         use hex_literal::hex;
 
         // first bit is 1
-        const H: [u8; 16] =   hex!("80000000000000000000000000000000");
+        const H: [u8; 16] = hex!("80000000000000000000000000000000");
         const X: [u8; 16] = hex!("80000000000000000000000000000000");
-
 
         let mut ghash = GHash::new(&H.into());
         ghash.update(&[X.into()]);
@@ -119,7 +118,7 @@ mod tests {
         // last bit is 1
         const H_1: [u8; 16] = hex!("00000000000000000000000000000001");
         const X_1: [u8; 16] = hex!("00000000000000000000000000000001");
-       
+
         let mut ghash2 = GHash::new(&H_1.into());
         ghash2.update(&[X_1.into()]);
         let result2 = ghash2.finalize();
@@ -127,7 +126,7 @@ mod tests {
         // test vector of pain
         const H_2: [u8; 16] = hex!("aae06992acbf52a3e8f4a96ec9300bd7");
         const X_2: [u8; 16] = hex!("98e7247c07f0fe411c267e4384b0f600");
-        
+
         let mut ghash3 = GHash::new(&H_2.into());
         ghash3.update(&[X_2.into()]);
         let result3 = ghash3.finalize();
@@ -137,6 +136,5 @@ mod tests {
         println!("GHASH Test vector 3: {:?}", hex::encode(result3.as_slice()));
 
         // println!("expected: {:?}", hex::encode(expected));
-
     }
 }
