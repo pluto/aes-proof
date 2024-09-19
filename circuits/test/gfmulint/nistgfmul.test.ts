@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { WitnessTester } from "circomkit";
-import { circomkit, hexToBitArray, hexByteToBigInt } from "../common";
+import { circomkit, hexToBitArray, hexByteToBigInt, hexStringToByteArray, byteArrayToHex } from "../common";
 
 
 describe("NistGMulByte", () => {
@@ -15,12 +15,22 @@ describe("NistGMulByte", () => {
   });
 
   it("Should Compute NistGMulByte Correctly", async () => {
-    let X = hexToBitArray("0xaae06992acbf52a3e8f4a96ec9300bd7");   // little endian hex vectors
-    let Y = hexToBitArray("0x98e7247c07f0fe411c267e4384b0f600");
-  
 
-    const expected = hexToBitArray("0x2ff58d80033927ab8ef4d4587514f0fb");
-    const _res = await circuit.compute({ X, Y }, ["out"]);
+    // let h = "aae06992acbf52a3e8f4a96ec9300bd7";
+    // let x = "98e7247c07f0fe411c267e4384b0f600";
+
+    // let h_le = hexStringToByteArray(h).reverse();
+    // let x_le = hexStringToByteArray(x).reverse();
+    // // let X = hexToBitArray("0xaae06992acbf52a3e8f4a96ec9300bd7");   // little endian hex vectors
+    // let X = hexStringToByteArray("aae06992acbf52a3e8f4a96ec9300bd7");
+    // // let Y = hexToBitArray("0x98e7247c07f0fe411c267e4384b0f600");
+    // let Y = hexStringToByteArray("98e7247c07f0fe411c267e4384b0f600");
+    let one  = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+    let zero = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+  
+    // const expected = hexToBitArray("0x2ff58d80033927ab8ef4d4587514f0fb");
+    const expected = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+    const _res = await circuit.compute({ X: zero, Y: one }, ["out"]);
     console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });

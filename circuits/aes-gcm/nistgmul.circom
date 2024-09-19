@@ -13,93 +13,7 @@ include "../aes-ctr/utils.circom"; // xorbyte
 // block X •Y.
 // multiplication of two blocks in the binary extension field defined by the irreducible polynomial
 // 1 + X + X^2 + X^7 + X^128
-// computes a “product” block, denoted X •Y:
-
-template NistGMulBit() {
-
-    signal input X[128];
-    signal input Y[128];
-    signal output out[128];
-
-    // Let R be the bit string 11100001 || 0120. Given two blocks X and Y
-    var R[128] = [
-        1, 1, 1, 0, 0, 0, 0, 1, // 8
-        0, 0, 0, 0, 0, 0, 0, 0, // 16
-        0, 0, 0, 0, 0, 0, 0, 0, // 24
-        0, 0, 0, 0, 0, 0, 0, 0, // 32
-        0, 0, 0, 0, 0, 0, 0, 0, // 40
-        0, 0, 0, 0, 0, 0, 0, 0, // 48
-        0, 0, 0, 0, 0, 0, 0, 0, // 56
-        0, 0, 0, 0, 0, 0, 0, 0, // 64
-        0, 0, 0, 0, 0, 0, 0, 0, // 72
-        0, 0, 0, 0, 0, 0, 0, 0, // 80
-        0, 0, 0, 0, 0, 0, 0, 0, // 88
-        0, 0, 0, 0, 0, 0, 0, 0, // 96
-        0, 0, 0, 0, 0, 0, 0, 0, // 104
-        0, 0, 0, 0, 0, 0, 0, 0, // 112
-        0, 0, 0, 0, 0, 0, 0, 0, // 120
-        0, 0, 0, 0, 0, 0, 0, 0
-    ];
-
-    // 1. Let x0, x1...x127 denote the sequence of bits in X.
-    // 2. Let Z0 = 0128 and V0 = Y.
-    signal Z[128];
-    Z[0] <== 0;
-    /// State accumulator
-    signal V[128][128];
-    V[0] <== Y;
-
-    //
-    // 3. For i = 0 to 127, calculate blocks Zi+1 and Vi+1 as follows:
-    //
-    //       ⎧ Zi               if xi = 0;
-    //  Zi+1 ⎨ 
-    //       ⎩ Zi ⊕Vi           if xi = 1.
-    //
-    //       ⎧ Vi >>1           if LSB1(Vi) = 0; // example 01101010 >> 1 = 00110101 right shift
-    //  Vi+1 ⎨                                   // lsb1(001) = 1 (rightmost bit is 1)
-    //       ⎩ (Vi >>1) ⊕ R     if LSB1(Vi) = 1. 
-    //  
-    component XorBit[128];
-    component XorArr[128];
-    component IsZero[128];
-    component Zmux[128];
-    component Vmux[128];
-    component BitwiseRightShift[128];
-    for (var i = 0; i < 127; i++) {
-        IsZero[i] = IsZero();
-        IsZero[i].in <== X[i];
-        Zmux[i] = Mux1();
-        Zmux[i].s <== IsZero[i].out; // selector if 0, if yes return 1, else return zero
-
-        Zmux[i].c[1] <== Z[i]; // selector 1
-        // if (IsZero[i].out == 0) {
-        //     Z[i +1] <== Z[i];
-        // } else {
-        XorBit[i] = XOR();
-        XorBit[i].a <== Z[i];
-        XorBit[i].b <== V[i][i];
-        Zmux[i].c[0] <==XorBit[i].out; // if selector is 0
-        // }
-        Z[i+1] <== Zmux[i].out;
-
-        BitwiseRightShift[i] = BitwiseRightShift(128, 1);
-        BitwiseRightShift[i].in <== V[i];
-
-        Vmux[i] = ArrayMux(128);
-        Vmux[i].sel <== V[i][127]; // selector is LSB
-        Vmux[i].a <== BitwiseRightShift[i].out; // if selector is 0
-
-        XorArr[i] = BitwiseXor(128);
-        XorArr[i].a <== BitwiseRightShift[i].out;
-        XorArr[i].b <== R;
-        Vmux[i].b <== XorArr[i].out; // if selector is 1
-        V[i+1] <== Vmux[i].out;
-
-    }
-    // 4. Return Z128. 
-    out <== Z;
-}
+// computes a “product” block, denoted X •Y
 
 template NistGMulByte() {
 
@@ -113,10 +27,10 @@ template NistGMulByte() {
 
     // 1. Let x0, x1...x127 denote the sequence of bits in X.
     // 2. Let Z0 = 0128 and V0 = Y.
-    signal Z[16][16];
+    signal Z[129][16];
     Z[0] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     /// State accumulator. ie. V[i] is V0 holding 16 bytes
-    signal V[16][16];
+    signal V[129][16];
     V[0] <== Y;
 
     // 3. For i = 0 to 127, calculate blocks Zi+1 and Vi+1 as follows:
@@ -125,18 +39,35 @@ template NistGMulByte() {
     //  Zi+1 ⎨ 
     //       ⎩ Zi ⊕Vi           if xi =1.
     //
+    // The V update is actually just gmulx (multiply binary polynomial by x)
+    //
     //       ⎧ Vi >>1           if LSB1(Vi) = 0;
     //  Vi+1 ⎨ 
     //       ⎩ (Vi >>1) ⊕ R     if LSB1(Vi) =1.
     //  
-    component bit[16] = Num2Bits(8);
+    component bit[16];
+    component z_i_update[128];
+    component mulx[128];
     for (var i = 0; i < 16; i++) {
+        bit[i] = BytesToBits(1);
+        bit[i].in[0] <== X[i];
+        for (var j = 0; j < 8; j++) {
+            // log("i*8 + j", i*8 + j);
+            // z_i_update
+            z_i_update[i*8 + j] = Z_I_UPDATE();
+            z_i_update[i*8 + j].Z <== Z[i];
+            z_i_update[i*8 + j].V <== V[i];
+            z_i_update[i*8 + j].bit_val <== bit[i].out[j];
+            Z[i*8 + j + 1] <== z_i_update[i*8 + j].Z_new;
 
-        // call z_i_update
-        // do the mulx for v
+            // mulx to update V
+            mulx[i*8 + j] = Mulx();
+            mulx[i*8 + j].in <== V[i];
+            V[i*8 + j + 1] <== mulx[i*8 + j].out;
+        }
     }
     // 4. Return Z128. 
-
+    out <== Z[128];
 }
 
 // if bit value is 0, then Z_new = Z

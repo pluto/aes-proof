@@ -148,3 +148,28 @@ it("tests bitArrayToHexString", async () => {
   result = bitArrayToHex(bits);
   assert.equal(result, expectedHex);
 });
+
+export function hexStringToByteArray(hexString: string): number[] {
+  // Ensure the string has an even number of characters
+  if (hexString.length % 2 !== 0) {
+    throw new Error('Hex string must have an even number of characters');
+  }
+
+  const byteArray: number[] = [];
+
+  for (let i = 0; i < hexString.length; i += 2) {
+    const byteValue = parseInt(hexString.substr(i, 2), 16);
+    if (isNaN(byteValue)) {
+      throw new Error('Invalid hex string');
+    }
+    byteArray.push(byteValue);
+  }
+
+  return byteArray;
+}
+
+export function byteArrayToHex(byteArray: any) {
+  return Array.from(byteArray, (byte: any) => {
+      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+  }).join('');
+}
