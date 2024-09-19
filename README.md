@@ -40,7 +40,7 @@ just install
 
 ## Usage
 
-### Generate AES witnsess values
+### Generate AES witness values
 Generate json witnesses and an AES proof to populate the `inputs` dir: `just witness`.
 
 ### Testing
