@@ -15,8 +15,8 @@ export function hexToBytes(hex: any) {
 
 export function hexBytesToBigInt(hexBytes: number[]): any[] {
   return hexBytes.map(byte => {
-      let n = BigInt(byte);
-      return n;
+    let n = BigInt(byte);
+    return n;
   });
 }
 
