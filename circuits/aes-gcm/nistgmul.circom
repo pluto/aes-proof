@@ -14,7 +14,6 @@ include "../aes-ctr/utils.circom"; // xorbyte
 // multiplication of two blocks in the binary extension field defined by the irreducible polynomial
 // 1 + X + X^2 + X^7 + X^128
 // computes a “product” block, denoted X •Y
-
 template NistGMulByte() {
 
     signal input X[16];
@@ -32,9 +31,6 @@ template NistGMulByte() {
     /// State accumulator. ie. V[i] is V0 holding 16 bytes
     signal V[129][16];
     V[0] <== Y;
-
-    // 3. For i = 0 to 127, calculate blocks Zi+1 and Vi+1 as follows:
-    //
     //       ⎧ Zi               if xi = 0;
     //  Zi+1 ⎨ 
     //       ⎩ Zi ⊕Vi           if xi =1.
@@ -73,8 +69,8 @@ template NistGMulByte() {
 // if bit value is 0, then Z_new = Z
 // if bit value is 1, then Z_new = Z xor V
 template Z_I_UPDATE() {
-    signal input Z[16];
-    signal input V[16];
+    signal input Z[16]; // this is Zero block in first itteration
+    signal input V[16]; // this is Y in first itteration
     signal input bit_val;
     signal output Z_new[16];
 
