@@ -86,8 +86,14 @@ mod tests {
         ];
         let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
 
-        let message = String::from("testhello0000000testhello0000000");
-        let aes_payload = Payload { msg: message.as_bytes(), aad: &[] };
+        let mut payload: Vec<u8> = Vec::new();
+        let mut last_byte = 0;
+        for i in 0..10 {
+            let message = format!("testhello00000{}", last_byte);
+            last_byte += 1;
+            payload.extend(message.as_bytes());
+        }
+        let aes_payload = Payload { msg: &payload, aad: &[] };
 
         let cipher = Aes128Gcm::new_from_slice(&test_key).unwrap();
         let nonce = GenericArray::from_slice(&test_iv);
@@ -95,7 +101,7 @@ mod tests {
 
         println!("key={}", hex::encode(test_key));
         println!("iv={}", hex::encode(test_iv));
-        println!("msg={}", hex::encode(message));
+        println!("msg={}", hex::encode(payload));
         println!("ct={}", hex::encode(ct));
     }
 
