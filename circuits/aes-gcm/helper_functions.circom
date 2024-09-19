@@ -23,7 +23,7 @@ template ParseLEBytes64() {
     out <-- temp;
 }
 
-// parse BE bits as bytes and log them
+// parse BE bits as bytes and log them. Assumes that the number of bytes logged is a multiple of 8.
 template ParseAndLogBitsAsBytes(N_BYTES){
     var N_BITS = N_BYTES * 8;
     signal input in[N_BITS];
@@ -399,5 +399,20 @@ template ReverseByteArrayHalves128() {
             var SWAP_IDX = 56-(i*8)+j+64;
             out[i*8+j+64] <== in[SWAP_IDX]; 
         }
+    }
+}
+
+// in a 128-bit array, reverse the halves.
+template ReverseHalves128() {
+    signal input in[128];
+    signal output out[128];
+
+    for (var i=0; i<64; i++){
+        var SWAP_IDX = 64+i;
+        out[i] <== in[SWAP_IDX]; 
+    }
+    for (var i=64; i<128; i++){
+        var SWAP_IDX = i-64;
+        out[i] <== in[SWAP_IDX]; 
     }
 }

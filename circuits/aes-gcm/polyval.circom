@@ -8,10 +8,9 @@ template POLYVAL(BLOCKS) {
     signal input H[128]; 
     signal output out[128];
 
-
     // reverse msg and H, store in msg_ and H_
     component ReverseBytes[2];
-    ReverseBytes[0]=ReverseByteArrayHalves128(); ReverseBytes[1]=ReverseByteArrayHalves128();
+    ReverseBytes[0]=ReverseHalves128(); ReverseBytes[1]=ReverseHalves128();
     signal msg_[128];
     signal H_[128];
     ReverseBytes[0].in <== msg[0];
