@@ -8,39 +8,41 @@ template POLYVAL(BLOCKS) {
     signal input H[128]; 
     signal output out[128];
 
-    signal H_bytes[16];
-    component Parser = ParseBEBitsToBytes(16);
-    // load parser with H and log output
-    for (var i=0; i<128; i++){
-        Parser.in[i] <== H[i];
-    }
-    for (var i=0; i<2; i++){
-        log("h[", i, "]=", 
-            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3], 
-            Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]  ); 
-    }
 
-    signal tags[BLOCKS][128];
+    // reverse msg and H, store in msg_ and H_
+    component ReverseBytes[2];
+    ReverseBytes[0]=ReverseByteArrayHalves128(); ReverseBytes[1]=ReverseByteArrayHalves128();
+    signal msg_[128];
+    signal H_[128];
+    ReverseBytes[0].in <== msg[0];
+    msg_ <== ReverseBytes[0].out;
+    ReverseBytes[1].in <== H;
+    H_ <== ReverseBytes[1].out;
+
+    // log _H and _m
+    component Logger1 = ParseAndLogBitsAsBytes(16);
+    Logger1.in <== H_;
+    component Logger2 = ParseAndLogBitsAsBytes(16);
+    Logger2.in <== msg_;
+
+    // signal tags[BLOCKS][128];
     // signal xors[BLOCKS][128];
     component POLYVAL_GFMUL = POLYVAL_GFMUL();
     for (var i=0; i<2; i++){ 
         for (var j=0; j<64; j++){ 
-            POLYVAL_GFMUL.a[1-i][j] <== msg[0][i*64+j];
-            POLYVAL_GFMUL.b[1-i][j] <== H[i*64+j];
+            POLYVAL_GFMUL.a[1-i][j] <== msg_[i*64+j];
+            // POLYVAL_GFMUL.a[1-i][j] <== msg_[0][i*64+j];
+            POLYVAL_GFMUL.b[1-i][j] <== H_[i*64+j];
         }
     }
 
-    // for (var i=0; i<2; i++){ 
-    //     for (var j=0; j<64; j++){ 
-    //         log(POLYVAL_GFMUL.b[i][j]);
-    // }}
-
     // for (var i=0; i<128; i++){ xors[0][i] <== 0; }
-
     // for (var i=0; i<128; i++){ out[i] <== 0; }
     for (var i=0; i<2; i++){ 
         for (var j=0; j<64; j++){ 
             out[i*64 + j] <== POLYVAL_GFMUL.out[i][j];
         }
     }
+    component Logger3 = ParseAndLogBitsAsBytes(16);
+    Logger3.in <== out;
 }
