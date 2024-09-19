@@ -101,19 +101,6 @@ template NistGMulBit() {
     out <== Z;
 }
 
-template ArrayMux(n) {
-    signal input a[n];      // First input array
-    signal input b[n];      // Second input array
-    signal input sel;       // Selector signal (0 or 1)
-    signal output out[n];   // Output array
-
-    for (var i = 0; i < n; i++) {
-        // If sel = 0, out[i] = b[i]
-        // If sel = 1, out[i] = a[i]
-        out[i] <== (a[i] - b[i]) * sel + b[i];
-    }
-}
-
 template NistGMulByte() {
 
     signal input X[16];
@@ -152,23 +139,39 @@ template NistGMulByte() {
 
 }
 
-// TODO: Write a test for this
-template z_i_update(bit_val) {
+// if bit value is 0, then Z_new = Z
+// if bit value is 1, then Z_new = Z xor V
+template Z_I_UPDATE() {
     signal input Z[16];
     signal input V[16];
+    signal input bit_val;
     signal output Z_new[16];
 
-    component mulx = Mulx();
-    mulx.s <== bit_val;
-    mulx.c[0] <== Z;
+    component mux = ArrayMux(16);
+    mux.sel <== bit_val;
+    mux.a <== Z;
     component xorBlock = XORBLOCK();
     xorBlock.a <== Z;
     xorBlock.b <== V;
-    mulx.c[1] <== xorBlock.out;
-    Z_new <== mulx.out;
+    mux.b <== xorBlock.out;
+    Z_new <== mux.out;
 }
 
-// TODO: Write a test for this
+// multiplexer for arrays of length n
+template ArrayMux(n) {
+    signal input a[n];      // First input array
+    signal input b[n];      // Second input array
+    signal input sel;       // Selector signal (0 or 1)
+    signal output out[n];   // Output array
+
+    for (var i = 0; i < n; i++) {
+        // If sel = 0, out[i] = a[i]
+        // If sel = 1, out[i] = b[i]
+        out[i] <== (b[i] - a[i]) * sel + a[i];
+    }
+}
+
+// XOR 16 bytes
 template XORBLOCK(){
     signal input a[16];
     signal input b[16];
