@@ -355,3 +355,108 @@ template IncrementWord() {
     }
 }
 
+template IncrementByte() {
+    signal input in;
+    signal output out;
+    signal output carry;
+
+    component IsGreaterThan = GreaterThan(8);
+    component mux = Mux1();
+
+    // check to carry overflow
+    IsGreaterThan.in[0] <== in + 1;
+    IsGreaterThan.in[1] <== 0xFF;
+
+    mux.c[0] <== in + 1;
+    mux.c[1] <== 0x00;
+    mux.s <== IsGreaterThan.out;
+    carry <== IsGreaterThan.out;
+
+    out <== mux.out;
+
+}
+
+template Contains(n) {
+    assert(n > 0);
+    /*
+    If `n = p` for this large `p`, then it could be that this template
+    returns the wrong value if every element in `array` was equal to `in`.
+    This is EXTREMELY unlikely and iterating this high is impossible anyway.
+    But it is better to check than miss something, so we bound it by `2**254` for now.
+    */
+    assert(n < 2**254);
+    signal input in;
+    signal input array[n];
+    signal output out;
+
+    var accum = 0;
+    component equalComponent[n];
+    for(var i = 0; i < n; i++) {
+        equalComponent[i] = IsEqual();
+        equalComponent[i].in[0] <== in;
+        equalComponent[i].in[1] <== array[i];
+        accum = accum + equalComponent[i].out;
+    }
+
+    component someEqual = IsZero();
+    someEqual.in <== accum;
+
+    // Apply `not` to this by 1-x
+    out <== 1 - someEqual.out;
+}
+
+template ArraySelector(m, n) {
+    signal input in[m][n];
+    signal input index;
+    signal output out[n];
+    assert(index >= 0 && index < m);
+
+    signal selector[m];
+    for (var i = 0; i < m; i++) {
+        selector[i] <-- index == i ? 1 : 0;
+        selector[i] * (1 - selector[i]) === 0; 
+    }
+
+    var sum = 0;
+    for (var i = 0; i < m; i++) {
+        sum += selector[i];
+    }
+    sum === 1;
+
+    signal sums[n][m+1];
+    // note: loop order is column-wise, not row-wise
+    for (var j = 0; j < n; j++) {
+        sums[j][0] <== 0;
+        for (var i = 0; i < m; i++) {
+            sums[j][i+1] <== sums[j][i] + in[i][j] * selector[i];
+        }
+        out[j] <== sums[j][m];
+    }
+}
+
+template Selector(n) {
+    signal input in[n];
+    signal input index;
+    signal output out;
+    assert(index >= 0 && index < n);
+
+    signal selector[n];
+    for (var i = 0; i < n; i++) {
+        selector[i] <-- index == i ? 1 : 0;
+        selector[i] * (1 - selector[i]) === 0;
+    }
+
+    var sum = 0;
+    for (var i = 0; i < n; i++) {
+        sum += selector[i];
+    }
+    sum === 1;
+
+    signal sums[n+1];
+    sums[0] <== 0;
+    for (var i = 0; i < n; i++) {
+        sums[i+1] <== sums[i] + in[i] * selector[i];
+    }
+
+    out <== sums[n];
+}
