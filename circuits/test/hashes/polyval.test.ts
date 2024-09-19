@@ -50,11 +50,11 @@ describe("POLYVAL_HASH_2", () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
-    console.log(_res);
+    // console.log(bitArrayToHex((_res.out as number[][])[0]));
     const result = bitArrayToHex(
-      (_res.out as number[][]).map((bit) => Number(bit))
+      (_res.out as number[][])[0].map((bit) => Number(bit))
     );
-    console.log("expect: ", EXPECT, "\nresult: ", result);
-    assert.equal(result, EXPECT);
+    console.log("expect: ", EXPECT_2, "\nresult: ", result);
+    assert.equal(result, EXPECT_2);
   });
 });
