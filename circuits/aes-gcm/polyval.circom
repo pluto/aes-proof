@@ -29,7 +29,7 @@ template POLYVAL(BLOCKS) {
             POLYVAL_GFMUL.b[1-i][j] <== H[i*64+j];
         }
     }
-    
+
     // for (var i=0; i<2; i++){ 
     //     for (var j=0; j<64; j++){ 
     //         log(POLYVAL_GFMUL.b[i][j]);

@@ -46,8 +46,8 @@ template ParseBEBitsToBytes(N_BYTES_OUTPUT) {
     var temp[N_BYTES_OUTPUT];
     for (var i = 0; i < N_BYTES_OUTPUT; i++) {
         temp[i] = 0; 
-        for (var j = 0; j < 8; j++) {
-            temp[i] += 2**j * in[i*8 + j];
+        for (var j = 7; j >= 0; j--) {
+            temp[i] += 2**j * in[i*8 + 7 - j];
         }
     }
 
