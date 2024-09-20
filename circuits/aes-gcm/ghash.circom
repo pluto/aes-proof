@@ -81,9 +81,9 @@ template GHASH(NUM_BLOCKS) {
 // h.reverse();
 // let mut h_polyval = polyval::mulx(&h);
 // let result = GHash(Polyval::new_with_init_block(&h_polyval, init_block)); 
-template TranslateHashkey() {
-    signal input in[128]; 
-    signal output out[128]; 
+// template TranslateHashkey() {
+//     signal input in[128]; 
+//     signal output out[128]; 
 
 //     signal mid[128];
 

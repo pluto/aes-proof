@@ -8,7 +8,7 @@ describe("reverse_byte_array", () => {
   before(async () => {
     circuit = await circomkit.WitnessTester(`reverse_bytes`, {
       file: "aes-gcm/helper_functions",
-      template: "ReverseByteArray",
+      template: "ReverseByteArray128",
     });
   });
 
