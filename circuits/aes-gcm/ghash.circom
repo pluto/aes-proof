@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 include "helper_functions.circom";
-include "gfmul.circom";
+include "nistgmul.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
 // Inputs:
@@ -35,95 +35,42 @@ include "gfmul.circom";
 // 
 
 template GHASH(NUM_BLOCKS) {
-    signal input HashKey[4][4]; // Hash subkey (128 bits)
-    signal input msg[NUM_BLOCKS][4][4]; // Input blocks (each 128 bits)
-    signal output tag[128]; // Output tag (128 bits)
-    // signal output tag[2][64]; // Output tag (128 bits)
-
-    // Janky convert [4][4] block into [2][64] bit lists
-    // TODO: Double check the endianness of this conversion.
-    signal hashBits[2][64];
-    for(var i = 0; i < 4; i++) {
-        for(var j = 0; j < 4; j++) {
-            var bit = 1;
-            var lc = 0;
-            for(var k = 0; k < 8; k++) {
-                var bitIndex = (i*4*8)+(j*8)+k;
-                var bitValue = (HashKey[i][j] >> k) & 1;
-                var rowIndex = bitIndex\64;
-                var colIndex = bitIndex%64;
-                hashBits[rowIndex][colIndex] <-- bitValue;
-                hashBits[rowIndex][colIndex] * (hashBits[rowIndex][colIndex] - 1) === 0;
-                lc += hashBits[rowIndex][colIndex] * bit;
-                bit = bit+bit;
-            }
-            HashKey[i][j] === lc;
-        }
-    }
-
-    signal msgBits[NUM_BLOCKS][2][64];
-    for(var i = 0; i < NUM_BLOCKS; i++) {
-        for(var j = 0; j < 4; j++) {
-            for(var k=0; k < 4; k++) {
-                var bit = 1;
-                var lc = 0;
-                for(var l = 0; l < 8; l++) {
-                    var bitIndex = (j*4*8)+(k*8)+l;
-                    var bitValue = (msg[i][j][k] >> l) & 1;
-                    var rowIndex = bitIndex\64;
-                    var colIndex = bitIndex%64;
-                    msgBits[i][rowIndex][colIndex] <-- bitValue;
-                    msgBits[i][rowIndex][colIndex] * (msgBits[i][rowIndex][colIndex] - 1) === 0;
-                    lc += msgBits[i][rowIndex][colIndex] * bit;
-                    bit = bit+bit;
-                }
-                msg[i][j][k] === lc;
-            }
-        }
-    }
+    signal input HashKey[16]; // Hash subkey (128 bits)
+    signal input msg[NUM_BLOCKS][16]; // Input blocks (each 128 bits)
+    signal output tag[16]; // Output tag (128 bits)
 
     // Intermediate tags
-    signal intermediate[NUM_BLOCKS][2][64];
+    signal intermediate[NUM_BLOCKS+1][16];
 
-    // Initialize first intermediate to zero
-    for (var j = 0; j < 64; j++) {
-        intermediate[0][0][j] <== 0;
-        intermediate[0][1][j] <== 0;
+    // Initialize first intermediate block to zero
+    for (var j = 0; j < 16; j++) {
+        intermediate[0][j] <== 0;
     }
 
     // Initialize components
     // two 64bit xor components for each block
-    component xor[NUM_BLOCKS][2];
+    component xor[NUM_BLOCKS];
     // one gfmul component for each block
     component gfmul[NUM_BLOCKS];
 
     // Accumulate each block using GHASH multiplication
-    for (var i = 1; i < NUM_BLOCKS; i++) {
-        xor[i][0] = BitwiseXor(64);
-        xor[i][1] = BitwiseXor(64);
-        gfmul[i] = MUL();
+    for (var i = 0; i < NUM_BLOCKS; i++) {
+        xor[i] = XORBLOCK(16);
+        gfmul[i] = NistGMulByte();
 
         // XOR current block with the previous intermediate result
-        // note: intermediate[0] is initialized to zero, so all rounds are valid
-        xor[i][0].a <== intermediate[i-1][0];
-        xor[i][1].a <== intermediate[i-1][1];
-        xor[i][0].b <== msgBits[i][0];
-        xor[i][1].b <== msgBits[i][1];
+        xor[i].a <== intermediate[i];
+        xor[i].b <== msg[i];
 
         // Multiply the XOR result with the hash subkey H
-        gfmul[i].a[0] <== xor[i][0].out;
-        gfmul[i].a[1] <== xor[i][1].out;
-        gfmul[i].b <== hashBits;
+        gfmul[i].X <== HashKey;
+        gfmul[i].Y <== xor[i].out;
 
         // Store the result in the next intermediate tag
-        intermediate[i][0] <== gfmul[i].out[0];
-        intermediate[i][1] <== gfmul[i].out[1];
+        intermediate[i+1] <== gfmul[i].out;
     }
-    // Assign the final tag
-    for (var j = 0; j < 64; j++) {
-        tag[j] <== intermediate[NUM_BLOCKS-1][0][j];
-        tag[j+64] <== intermediate[NUM_BLOCKS-1][1][j];
-    }
-    // tag[0] <== intermediate[NUM_BLOCKS-1][0];
-    // tag[1] <== intermediate[NUM_BLOCKS-1][1];
+
+    // Final tag is the last intermediate block
+    tag <== intermediate[NUM_BLOCKS];
+
 }
