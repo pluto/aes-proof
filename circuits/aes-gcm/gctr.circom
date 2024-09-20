@@ -47,14 +47,14 @@ template GCTR(INPUT_LEN, nk) {
     // total number of bits in the plaintext blocks
     var bytesExcludingLastBlock = 16 * (nBlocks);
 
-    log("INPUT_LEN");
-    log(INPUT_LEN);
-    log("nBlocks");
-    log(nBlocks);
-    log("lastBlockSize");
-    log(lastBlockSize);
-    log("bytesExcludingLastBlock");
-    log(bytesExcludingLastBlock);
+    // log("INPUT_LEN");
+    // log(INPUT_LEN);
+    // log("nBlocks");
+    // log(nBlocks);
+    // log("lastBlockSize");
+    // log(lastBlockSize);
+    // log("bytesExcludingLastBlock");
+    // log(bytesExcludingLastBlock);
 
     assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
 

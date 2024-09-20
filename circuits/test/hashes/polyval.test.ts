@@ -29,7 +29,7 @@ describe("POLYVAL_HASH_1", () => {
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
     )
-    console.log("expect: ", EXPECT, "\nresult: ", result);
+    // console.log("expect: ", EXPECT, "\nresult: ", result);
     assert.equal(result, EXPECT);
   });
 });
@@ -54,7 +54,7 @@ describe("POLYVAL_HASH_2", () => {
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
     );
-    console.log("expect: ", EXPECT_2, "\nresult: ", result);
+    // console.log("expect: ", EXPECT_2, "\nresult: ", result);
     assert.equal(result, EXPECT_2);
   });
 });

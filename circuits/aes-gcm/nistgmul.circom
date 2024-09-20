@@ -84,8 +84,8 @@ template debug_1_byte() {
     bytesToBits.in <== X;   
     bitsX <== bytesToBits.out;
     for (var i = 0; i < 8; i++) {
-        log("i", i);
-        log("bitsX[i]", bitsX[i]);
+        // log("i", i);
+        // log("bitsX[i]", bitsX[i]);
         z_i_update[i] = Z_I_UPDATE(1);
         z_i_update[i].Z <== Z[i];
         z_i_update[i].V <== V[i];
@@ -97,7 +97,7 @@ template debug_1_byte() {
         mulx[i].in <== V[i];
         V[i + 1] <== mulx[i].out;
         
-        log("V[i]", V[i][0]);
+        // log("V[i]", V[i][0]);
     }
     out <== Z[8];
 }
@@ -120,8 +120,8 @@ template debug_2_bytes() {
     bytesToBits.in <== X;
     bitsX <== bytesToBits.out;
     for (var i = 0; i < 16; i++) {
-        log("i", i);
-        log("bitsX[i]", bitsX[i]);
+        // log("i", i);
+        // log("bitsX[i]", bitsX[i]);
         z_i_update[i] = Z_I_UPDATE(2);
         z_i_update[i].Z <== Z[i];
         z_i_update[i].V <== V[i];
@@ -133,8 +133,8 @@ template debug_2_bytes() {
         mulx[i].in <== V[i];
         V[i + 1] <== mulx[i].out;
         
-        log("V[i][0]", V[i][0]);
-        log("V[i][1]", V[i][1]);
+        // log("V[i][0]", V[i][0]);
+        // log("V[i][1]", V[i][1]);
     }
     
     out <== Z[16];
