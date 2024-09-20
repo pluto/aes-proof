@@ -1,5 +1,5 @@
 pragma circom 2.1.9;
-include "helper_functions.circom";
+include "utils.circom";
 include "nistgmul.circom";
 
 // GHASH computes the authentication tag for AES-GCM.

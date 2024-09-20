@@ -6,7 +6,7 @@ describe("Cipher", () => {
   let circuit: WitnessTester<["block", "key"], ["cipher"]>;
   it("should perform Cipher#1", async () => {
     circuit = await circomkit.WitnessTester(`Cipher`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "Cipher",
       params: [4],
     });
@@ -38,7 +38,7 @@ describe("Cipher", () => {
   // key : 2b7e151628aed2a6abf7158809cf4f3c
   it("should perform Cipher#2", async () => {
     circuit = await circomkit.WitnessTester(`Cipher`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "Cipher",
       params: [4],
     });

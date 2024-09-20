@@ -1,12 +1,11 @@
 pragma circom 2.1.9;
 
-include "../aes-ctr/ctr.circom";
+include "ctr.circom";
 include "ghash.circom";
-include "../aes-ctr/cipher.circom";
+include "aes/cipher.circom";
 include "circomlib/circuits/bitify.circom";
 include "utils.circom";
 include "gctr.circom";
-include "helper_functions.circom";
 
 
 /// AES-GCM with 128 bit key authenticated encryption according to: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf

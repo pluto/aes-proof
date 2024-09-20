@@ -36,12 +36,6 @@ template POLYVAL_GFMUL() {
     h[1] <== a[1];
     y[0] <== b[0];
     y[1] <== b[1];
-    // component Loggers[4];
-    // for (var i=0; i<4; i++) { Loggers[i] = ParseAndLogBitsAsBytes(8);}
-    // log("h0"); Loggers[0].in <== h[0];
-    // log("h1"); Loggers[1].in <== h[1];
-    // log("y0"); Loggers[2].in <== y[0];
-    // log("y1"); Loggers[3].in <== y[1];
 
     component Revs[4];
     for (var i = 0; i < 2; i++) {
@@ -89,11 +83,6 @@ template POLYVAL_GFMUL() {
         BMUL64_z[i+3].y <== h_r[i];
         zh[i] <== BMUL64_z[i+3].out;
     }
-    // component Loggers_z[3];
-    // for (var i=0; i<3; i++) { Loggers_z[i] = ParseAndLogBitsAsBytes(8);}
-    // log("z0"); Loggers_z[0].in <== z[0];
-    // log("z1"); Loggers_z[1].in <== z[1];
-    // log("z2"); Loggers_z[2].in <== z[2];
 
     // _z2 = z0 ^ z1 ^ z2;
     signal _z[3][64];
@@ -143,11 +132,6 @@ template POLYVAL_GFMUL() {
     v[2] <== Xors_v[1].out;
     v[3] <== __zh[1];
 
-    // component Loggers_v[4];
-    // for (var i=0; i<4; i++) { Loggers_v[i] = ParseAndLogBitsAsBytes(8);}
-    // log("v0"); Loggers_v[0].in <== v[0]; log("v1"); Loggers_v[1].in <== v[1];
-    // log("v2"); Loggers_v[2].in <== v[2]; log("v3"); Loggers_v[3].in <== v[3];
-
     // _v2 = v2 ^ v0 ^ (v0 >> 1) ^ (v0 >> 2) ^ (v0 >> 7);
     // _v1 = v1 ^ (v0 << 63) ^ (v0 << 62) ^ (v0 << 57);
     signal _v2[64];
@@ -181,10 +165,6 @@ template POLYVAL_GFMUL() {
     XorMultiples_L[0].inputs <== [v[1], LS_v[0].out, LS_v[1].out, LS_v[2].out];
     _v1 <== XorMultiples_L[0].out;
 
-    // component Loggers_v2[4];
-    // for (var i=0; i<2; i++) { Loggers_v2[i] = ParseAndLogBitsAsBytes(8);}
-    // log("_v1"); Loggers_v2[0].in <== _v1; log("_v2"); Loggers_v2[1].in <== _v2;
-
     // __v3 = v3 ^ _v1 ^ (_v1 >> 1) ^ (_v1 >> 2) ^ (_v1 >> 7);
     // __v2 = _v2 ^ (_v1 << 63) ^ (_v1 << 62) ^ (_v1 << 57);
     signal __v3[64];
@@ -207,11 +187,6 @@ template POLYVAL_GFMUL() {
     __v3 <== XorMultiples_R[1].out;
     XorMultiples_L[1].inputs <== [_v2, LS_v[3].out, LS_v[4].out, LS_v[5].out];
     __v2 <== XorMultiples_L[1].out;
-
-    // component Loggers__v[2];
-    // for (var i=0; i<2; i++) { Loggers__v[i] = ParseAndLogBitsAsBytes(8);}
-    // log("__v2"); Loggers__v[0].in <== __v2;
-    // log("__v3"); Loggers__v[1].in <== __v3;
 
     out <== [__v2, __v3];
 }

@@ -1,8 +1,6 @@
 pragma circom 2.1.9;
-include "../aes-ctr/cipher.circom";
+include "aes/cipher.circom";
 include "utils.circom";
-include "../aes-ctr/ctr.circom";
-include "helper_functions.circom";
 // GCTR Process to be used in AES-GCM as in https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
 //
 //            ┌───────────┐           inc           ┌───────────┐
@@ -46,16 +44,6 @@ template GCTR(INPUT_LEN, nk) {
     var lastBlockSize = INPUT_LEN % 16;
     // total number of bits in the plaintext blocks
     var bytesExcludingLastBlock = 16 * (nBlocks);
-
-    // log("INPUT_LEN");
-    // log(INPUT_LEN);
-    // log("nBlocks");
-    // log(nBlocks);
-    // log("lastBlockSize");
-    // log(lastBlockSize);
-    // log("bytesExcludingLastBlock");
-    // log(bytesExcludingLastBlock);
-
     assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
 
     // generate plaintext blocks

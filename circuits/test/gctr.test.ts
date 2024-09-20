@@ -2,10 +2,6 @@ import { WitnessTester } from "circomkit";
 import { circomkit, hexBytesToBigInt } from "./common";
 import { assert } from "chai";
 
-// signal input key[nk * 4];
-// signal input initialCounterBlock[128];
-// signal input plainText[INPUT_LEN];
-// signal output cipherText[INPUT_LEN];
 describe("GCTR", () => {
     let circuit: WitnessTester<["plainText", "initialCounterBlock", "key"], ["cipherText"]>;
     it("should encrypt the plaintext", async () => {
