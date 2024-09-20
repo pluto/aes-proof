@@ -1,5 +1,5 @@
 import { WitnessTester } from "circomkit";
-import { circomkit, hexBytesToBigInt } from "./common";
+import { circomkit, hexBytesToBigInt } from "../common";
 import { assert } from "chai";
 
 describe("GCTR", () => {

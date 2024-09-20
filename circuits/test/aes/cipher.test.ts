@@ -1,7 +1,6 @@
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit } from "../common";
 
-// todo: should debug cipher
 describe("Cipher", () => {
   let circuit: WitnessTester<["block", "key"], ["cipher"]>;
   it("should perform Cipher#1", async () => {
@@ -63,5 +62,38 @@ describe("Cipher", () => {
         ],
       }
     );
+  });
+});
+
+describe("NextRound", () => {
+  let circuit: WitnessTester<["key", "round"], ["nextKey"]>;
+
+  describe("NextRound", () => {
+    before(async () => {
+      circuit = await circomkit.WitnessTester(`NextRound_${4}_${4}`, {
+        file: "aes-gcm/aes/key_expansion",
+        template: "NextRound",
+        params: [4, 4],
+      });
+      console.log("#constraints:", await circuit.getConstraintCount());
+    });
+
+    it("should compute correctly", async () => {
+      const key = [
+        [0x2b, 0x7e, 0x15, 0x16],
+        [0x28, 0xae, 0xd2, 0xa6],
+        [0xab, 0xf7, 0x15, 0x88],
+        [0x09, 0xcf, 0x4f, 0x3c],
+      ];
+
+      const expectedNextKey = [
+        [0xa0, 0xfa, 0xfe, 0x17],
+        [0x88, 0x54, 0x2c, 0xb1],
+        [0x23, 0xa3, 0x39, 0x39],
+        [0x2a, 0x6c, 0x76, 0x05],
+      ];
+
+      await circuit.expectPass({ key, round: 1 }, { nextKey: expectedNextKey });
+    });
   });
 });

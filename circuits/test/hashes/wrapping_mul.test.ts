@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { WitnessTester } from "circomkit";
-import { padArrayTo64Bits, bitArrayToHex, circomkit, hexToBitArray, numberTo16Hex, numberToBitArray } from "./common";
+import { padArrayTo64Bits, bitArrayToHex, circomkit, hexToBitArray, numberTo16Hex, numberToBitArray } from "../common";
 
 describe("WRAPPING_BE", () => {
   let circuit: WitnessTester<["a", "b"], ["out"]>;

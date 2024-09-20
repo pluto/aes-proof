@@ -87,7 +87,7 @@ mod tests {
         let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
 
         let message = String::from("testhello0000000testhello0000000");
-        let aes_payload = Payload { msg: &message.as_bytes(), aad: &[] };
+        let aes_payload = Payload { msg: message.as_bytes(), aad: &[] };
 
         let cipher = Aes128Gcm::new_from_slice(&test_key).unwrap();
         let nonce = GenericArray::from_slice(&test_iv);

@@ -1,12 +1,12 @@
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit } from "../common";
 
 describe("AES Key Expansion Components", () => {
   describe("BytesToWords", () => {
     let circuit: WitnessTester<["bytes"], ["words"]>;
     before(async () => {
       circuit = await circomkit.WitnessTester(`BytesToWords`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "BytesToWords",
         params: [4],
       });
@@ -23,7 +23,7 @@ describe("AES Key Expansion Components", () => {
 
     it("should rotate correctly", async () => {
       circuit = await circomkit.WitnessTester(`Rotate`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "Rotate",
         params: [1, 4],
       });
@@ -36,7 +36,7 @@ describe("AES Key Expansion Components", () => {
     let circuit: WitnessTester<["bytes"], ["substituted"]>;
     before(async () => {
       circuit = await circomkit.WitnessTester(`SubstituteWord`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "SubstituteWord",
       });
       console.log("SubstituteWord #constraints:", await circuit.getConstraintCount());
@@ -51,7 +51,7 @@ describe("AES Key Expansion Components", () => {
     let circuit: WitnessTester<["round"], ["out"]>;
     before(async () => {
       circuit = await circomkit.WitnessTester(`RCon`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "RCon",
       });
       console.log("RCon #constraints:", await circuit.getConstraintCount());
@@ -68,7 +68,7 @@ describe("AES Key Expansion Components", () => {
     let circuit: WitnessTester<["bytes1", "bytes2"], ["out"]>;
     before(async () => {
       circuit = await circomkit.WitnessTester(`XorWord`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "XorWord",
       });
       console.log("XorWord #constraints:", await circuit.getConstraintCount());
@@ -86,7 +86,7 @@ describe("AES Key Expansion Components", () => {
     let circuit: WitnessTester<["condition", "bytes1", "bytes2"], ["out"]>;
     before(async () => {
       circuit = await circomkit.WitnessTester(`WordSelector`, {
-        file: "aes-ctr/key_expansion",
+        file: "aes-gcm/aes/key_expansion",
         template: "WordSelector",
       });
       console.log("WordSelector #constraints:", await circuit.getConstraintCount());
@@ -112,7 +112,7 @@ describe("XTimes2", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
   it("should perform 2 times", async () => {
     circuit = await circomkit.WitnessTester(`XTimes2`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "XTimes2",
     });
     console.log("@XTimes2 #constraints:", await circuit.getConstraintCount());
@@ -131,7 +131,7 @@ describe("XTimes", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
   it("should perform  xtimes", async () => {
     circuit = await circomkit.WitnessTester(`XTimes`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "XTimes",
       params: [0x13],
     });
@@ -146,7 +146,7 @@ describe("XTimes2 with XTimes", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
   it("should perform 2 times with XTERMS", async () => {
     circuit = await circomkit.WitnessTester(`XTimes`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "XTimes",
       params: [0x2],
     });
@@ -167,7 +167,7 @@ describe("XTimes1 with XTimes", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
   it("should perform 1 times with XTERMS", async () => {
     circuit = await circomkit.WitnessTester(`XTimes`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "XTimes",
       params: [0x1],
     });
@@ -188,7 +188,7 @@ describe("MixColumns", () => {
   it("s0 should compute correctly", async () => {
     let circuit: WitnessTester<["in"], ["out"]>;
     circuit = await circomkit.WitnessTester(`s0`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "S0",
       params: [],
     });
@@ -200,7 +200,7 @@ describe("MixColumns", () => {
   it("s1 should compute correctly", async () => {
     let circuit: WitnessTester<["in"], ["out"]>;
     circuit = await circomkit.WitnessTester(`s1`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "S1",
       params: [],
     });
@@ -212,7 +212,7 @@ describe("MixColumns", () => {
   it("s2 should compute correctly", async () => {
     let circuit: WitnessTester<["in"], ["out"]>;
     circuit = await circomkit.WitnessTester(`s2`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "S2",
       params: [],
     });
@@ -224,7 +224,7 @@ describe("MixColumns", () => {
   it("s3 should compute correctly", async () => {
     let circuit: WitnessTester<["in"], ["out"]>;
     circuit = await circomkit.WitnessTester(`s3`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "S3",
       params: [],
     });
@@ -236,7 +236,7 @@ describe("MixColumns", () => {
   it("s4 should compute correctly", async () => {
     let circuit: WitnessTester<["state"], ["out"]>;
     circuit = await circomkit.WitnessTester(`MixColumns`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "MixColumns",
       params: [],
     });
@@ -263,7 +263,7 @@ describe("AddRoundKey", () => {
   let circuit: WitnessTester<["state", "roundKey"], ["newState"]>;
   it("should perform AddRoundKey", async () => {
     circuit = await circomkit.WitnessTester(`AddRoundKey`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "AddRoundKey",
     });
     console.log("@AddRoundKey #constraints:", await circuit.getConstraintCount());
@@ -300,7 +300,7 @@ describe("SubBlock", () => {
   let circuit: WitnessTester<["state"], ["newState"]>;
   it("should perform SubBlock", async () => {
     circuit = await circomkit.WitnessTester(`SubBlock`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "SubBlock",
     });
     console.log("@SubBlock #constraints:", await circuit.getConstraintCount());
@@ -331,7 +331,7 @@ describe("ShiftRows", () => {
   let circuit: WitnessTester<["state"], ["newState"]>;
   it("should perform ShiftRows", async () => {
     circuit = await circomkit.WitnessTester(`ShiftRows`, {
-      file: "aes-ctr/cipher",
+      file: "aes-gcm/aes/cipher",
       template: "ShiftRows",
       params: [],
     });

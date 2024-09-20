@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { WitnessTester } from "circomkit";
-import { circomkit, hexBytesToBigInt, hexToBytes } from "./common";
+import { circomkit, hexBytesToBigInt, hexToBytes } from "../common";
 
 describe("aes-gcm", () => {
   let circuit: WitnessTester<["key", "iv", "plainText", "aad"], ["cipherText", "tag"]>;

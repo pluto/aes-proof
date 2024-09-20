@@ -1,5 +1,5 @@
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit } from "../common";
 
 describe("SBox128", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
@@ -7,7 +7,7 @@ describe("SBox128", () => {
   describe("SubBox", () => {
     before(async () => {
       circuit = await circomkit.WitnessTester(`SubBytes`, {
-        file: "aes-ctr/sbox128",
+        file: "aes-gcm/aes/sbox128",
         template: "SBox128",
       });
       console.log("#constraints:", await circuit.getConstraintCount());

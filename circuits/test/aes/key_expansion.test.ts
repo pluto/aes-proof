@@ -1,10 +1,10 @@
 import { WitnessTester } from "circomkit";
-import { circomkit } from "./common";
+import { circomkit } from "../common";
 
 describe("KeyExpansion", () => {
   it("should compute correctly for aes128", async () => {
     const circuit: WitnessTester<["key"], ["keyExpanded"]> = await circomkit.WitnessTester(`SubBytes`, {
-      file: "aes-ctr/key_expansion",
+      file: "aes-gcm/aes/key_expansion",
       template: "KeyExpansion",
       params: [4, 10],
     });
@@ -60,7 +60,7 @@ describe("KeyExpansion", () => {
   });
   it("should compute correctly for aes 192", async () => {
     const circuit: WitnessTester<["key"], ["keyExpanded"]> = await circomkit.WitnessTester(`SubBytes`, {
-      file: "aes-ctr/key_expansion",
+      file: "aes-gcm/aes/key_expansion",
       template: "KeyExpansion",
       params: [6, 12],
     });
@@ -130,7 +130,7 @@ describe("KeyExpansion", () => {
 
   it("should compute correctly for aes256", async () => {
     const circuit: WitnessTester<["key"], ["keyExpanded"]> = await circomkit.WitnessTester(`SubBytes`, {
-      file: "aes-ctr/key_expansion",
+      file: "aes-gcm/aes/key_expansion",
       template: "KeyExpansion",
       params: [8, 14],
     });
