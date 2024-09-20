@@ -2,6 +2,7 @@ target
 /.vscode
 
 
+circomlib
 node_modules/*
 build/*
 ptau/*
