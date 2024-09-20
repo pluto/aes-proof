@@ -7,7 +7,7 @@ describe("reverse_byte_array", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`reverse_bytes`, {
-      file: "aes-gcm/helper_functions",
+      file: "aes-gcm/utils",
       template: "ReverseByteArray128",
     });
   });
@@ -72,45 +72,13 @@ describe("IncrementWord", () => {
   });
 });
 
-describe("IncrementByte", () => {
-  let circuit: WitnessTester<["in"], ["out"]>;
-  it("should increment the byte input", async () => {
-      circuit = await circomkit.WitnessTester(`IncrementByte`, {
-          file: "aes-gcm/utils",
-          template: "IncrementByte",
-      });
-      await circuit.expectPass(
-          {
-              in: 0x00,
-          },
-          {
-              out: 0x01,
-          }
-      );
-  });
-
-  it("should increment the byte input on overflow", async () => {
-      circuit = await circomkit.WitnessTester(`IncrementByte`, {
-          file: "aes-gcm/utils",
-          template: "IncrementByte",
-      });
-      await circuit.expectPass(
-          {
-              in: 0xFF,
-          },
-          {
-              out: 0x00,
-          }
-      );
-  });
-});
 
 describe("ParseBytesBE", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`ParseBEBytes64`, {
-      file: "aes-gcm/helper_functions",
+      file: "aes-gcm/utils",
       template: "ParseBEBytes64",
     });
   });
@@ -131,7 +99,7 @@ describe("ParseBytesLE", () => {
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`ParseLEBytes64`, {
-      file: "aes-gcm/helper_functions",
+      file: "aes-gcm/utils",
       template: "ParseLEBytes64",
     });
   });
