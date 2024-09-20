@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-include "mul.circom";
+include "wrapping_mul.circom";
 
 // Computes carryless POLYVAL multiplication over GF(2^128) in constant time.
 //
@@ -21,7 +21,7 @@ include "mul.circom";
 // This shift is unnecessary for POLYVAL and has been removed.
 //
 // ref: https://github.com/RustCrypto/universal-hashes/blob/master/polyval/src/backend/soft64.rs#L151
-template MUL() {
+template POLYVAL_GFMUL() {
     signal input a[2][64];
     signal input b[2][64];
     signal output out[2][64];
@@ -36,6 +36,13 @@ template MUL() {
     h[1] <== a[1];
     y[0] <== b[0];
     y[1] <== b[1];
+    // component Loggers[4];
+    // for (var i=0; i<4; i++) { Loggers[i] = ParseAndLogBitsAsBytes(8);}
+    // log("h0"); Loggers[0].in <== h[0];
+    // log("h1"); Loggers[1].in <== h[1];
+    // log("y0"); Loggers[2].in <== y[0];
+    // log("y1"); Loggers[3].in <== y[1];
+
     component Revs[4];
     for (var i = 0; i < 2; i++) {
         Revs[i] = REV64();
@@ -82,23 +89,31 @@ template MUL() {
         BMUL64_z[i+3].y <== h_r[i];
         zh[i] <== BMUL64_z[i+3].out;
     }
+    // component Loggers_z[3];
+    // for (var i=0; i<3; i++) { Loggers_z[i] = ParseAndLogBitsAsBytes(8);}
+    // log("z0"); Loggers_z[0].in <== z[0];
+    // log("z1"); Loggers_z[1].in <== z[1];
+    // log("z2"); Loggers_z[2].in <== z[2];
+
     // _z2 = z0 ^ z1 ^ z2;
-    // _z2h = z0h ^ z1h ^ z2h;
-    signal _z2[64];
-    signal _zh[3][64];
+    signal _z[3][64];
     component XorMultiples[2];
     XorMultiples[0] = XorMultiple(3, 64);
     XorMultiples[0].inputs <== z;
-    _z2 <== XorMultiples[0].out;
+    _z[0] <-- z[0];
+    _z[1] <-- z[1];
+    _z[2] <== XorMultiples[0].out;
 
+    // _z2h = z0h ^ z1h ^ z2h;
+    signal _zh[3][64];
     XorMultiples[1] = XorMultiple(3, 64);
     XorMultiples[1].inputs <== zh;
+    _zh[0] <-- zh[0];
+    _zh[1] <-- zh[1];
     _zh[2] <== XorMultiples[1].out;
-    _zh[1] <== zh[1];
-    _zh[0] <== zh[0];
 
-    // __z0h = rev64(z0h) >> 1;
-    // __z1h = rev64(z1h) >> 1;
+    // __z0h = rev64(_z0h) >> 1;
+    // __z1h = rev64(_z1h) >> 1;
     // __z2h = rev64(_z2h) >> 1;
     signal __zh[3][64];
     component Revs_zh[3];
@@ -106,27 +121,32 @@ template MUL() {
     for (var i = 0; i < 3; i++) {
         Revs_zh[i] = REV64();
         RightShifts_zh[i] = BitwiseRightShift(64, 1);
-        Revs_zh[i].in <== zh[i];
+        Revs_zh[i].in <== _zh[i];
         RightShifts_zh[i].in <== Revs_zh[i].out;
         __zh[i] <== RightShifts_zh[i].out;
     }
 
-    // let v0 = z0;
-    // let mut v1 = z0h ^ z2;
-    // let mut v2 = z1 ^ z2h;
+    // let v0 = _z0;
+    // let mut v1 = z0h ^ _z2;
+    // let mut v2 = _z1 ^ z2h;
     // let mut v3 = z1h;
     signal v[4][64];
     component Xors_v[2];
-    v[0] <== z[0];
+    v[0] <== _z[0];
     Xors_v[0] = BitwiseXor(64);
     Xors_v[0].a <== __zh[0];
-    Xors_v[0].b <== _z2;
+    Xors_v[0].b <== _z[2];
     v[1] <== Xors_v[0].out;
     Xors_v[1] = BitwiseXor(64);
-    Xors_v[1].a <== z[1];
+    Xors_v[1].a <== _z[1];
     Xors_v[1].b <== __zh[2];
     v[2] <== Xors_v[1].out;
     v[3] <== __zh[1];
+
+    // component Loggers_v[4];
+    // for (var i=0; i<4; i++) { Loggers_v[i] = ParseAndLogBitsAsBytes(8);}
+    // log("v0"); Loggers_v[0].in <== v[0]; log("v1"); Loggers_v[1].in <== v[1];
+    // log("v2"); Loggers_v[2].in <== v[2]; log("v3"); Loggers_v[3].in <== v[3];
 
     // _v2 = v2 ^ v0 ^ (v0 >> 1) ^ (v0 >> 2) ^ (v0 >> 7);
     // _v1 = v1 ^ (v0 << 63) ^ (v0 << 62) ^ (v0 << 57);
@@ -161,6 +181,10 @@ template MUL() {
     XorMultiples_L[0].inputs <== [v[1], LS_v[0].out, LS_v[1].out, LS_v[2].out];
     _v1 <== XorMultiples_L[0].out;
 
+    // component Loggers_v2[4];
+    // for (var i=0; i<2; i++) { Loggers_v2[i] = ParseAndLogBitsAsBytes(8);}
+    // log("_v1"); Loggers_v2[0].in <== _v1; log("_v2"); Loggers_v2[1].in <== _v2;
+
     // __v3 = v3 ^ _v1 ^ (_v1 >> 1) ^ (_v1 >> 2) ^ (_v1 >> 7);
     // __v2 = _v2 ^ (_v1 << 63) ^ (_v1 << 62) ^ (_v1 << 57);
     signal __v3[64];
@@ -183,6 +207,11 @@ template MUL() {
     __v3 <== XorMultiples_R[1].out;
     XorMultiples_L[1].inputs <== [_v2, LS_v[3].out, LS_v[4].out, LS_v[5].out];
     __v2 <== XorMultiples_L[1].out;
+
+    // component Loggers__v[2];
+    // for (var i=0; i<2; i++) { Loggers__v[i] = ParseAndLogBitsAsBytes(8);}
+    // log("__v2"); Loggers__v[0].in <== __v2;
+    // log("__v3"); Loggers__v[1].in <== __v3;
 
     out <== [__v2, __v3];
 }

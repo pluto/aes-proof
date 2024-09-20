@@ -107,34 +107,34 @@ mod tests {
         };
         use hex_literal::hex;
 
-        // first bit is 1
-        const H: [u8; 16] = hex!("80000000000000000000000000000000");
-        const X: [u8; 16] = hex!("80000000000000000000000000000000");
+        const H: [u8; 16] = hex!("aae06992acbf52a3e8f4a96ec9300bd7");
+        const X_1: [u8; 16] = hex!("98e7247c07f0fe411c267e4384b0f600");
 
         let mut ghash = GHash::new(&H.into());
-        ghash.update(&[X.into()]);
+        ghash.update(&[X_1.into()]);
         let result = ghash.finalize();
 
-        // last bit is 1
-        const H_1: [u8; 16] = hex!("00000000000000000000000000000001");
-        const X_1: [u8; 16] = hex!("00000000000000000000000000000001");
+        let hash_key = [
+            0xaa, 0xe0, 0x69, 0x92, 0xac, 0xbf, 0x52, 0xa3, 0xe8, 0xf4, 0xa9, 0x6e, 0xc9, 0x30,
+            0x0b, 0xd7,
+        ];
+        let ct = [
+            0x98, 0xe7, 0x24, 0x7c, 0x07, 0xf0, 0xfe, 0x41, 0x1c, 0x26, 0x7e, 0x43, 0x84, 0xb0,
+            0xf6, 0x00,
+        ];
+        let expected = [
+            0x2f, 0xf5, 0x8d, 0x80, 0x03, 0x39, 0x27, 0xab, 0x8e, 0xf4, 0xd4, 0x58, 0x75, 0x14,
+            0xf0, 0xfb,
+        ];
 
-        let mut ghash2 = GHash::new(&H_1.into());
-        ghash2.update(&[X_1.into()]);
+        // Alternative.
+        let mut ghash2 = GHash::new_with_init_block(&hash_key.into(), 0);
+        let ga_data = GenericArray::from_slice(&ct);
+        ghash2.update(&[*ga_data]);
         let result2 = ghash2.finalize();
 
-        // test vector of pain
-        const H_2: [u8; 16] = hex!("aae06992acbf52a3e8f4a96ec9300bd7");
-        const X_2: [u8; 16] = hex!("98e7247c07f0fe411c267e4384b0f600");
-
-        let mut ghash3 = GHash::new(&H_2.into());
-        ghash3.update(&[X_2.into()]);
-        let result3 = ghash3.finalize();
-
-        println!("GHASH Test vector 1: {:?}", hex::encode(result.as_slice()));
-        println!("GHASH Test vector 2: {:?}", hex::encode(result2.as_slice()));
-        println!("GHASH Test vector 3: {:?}", hex::encode(result3.as_slice()));
-
-        // println!("expected: {:?}", hex::encode(expected));
+        println!("GHASH NEW result: {:?}", hex::encode(result.as_slice()));
+        println!("GHASH OLD result: {:?}", hex::encode(result2.as_slice()));
+        println!("expected: {:?}", hex::encode(expected));
     }
 }

@@ -4,6 +4,7 @@ include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
 include "circomlib/circuits/comparators.circom";
 
+// parse LE bits to int
 template ParseLEBytes64() {
     signal input in[64];
     signal output out;
@@ -20,6 +21,43 @@ template ParseLEBytes64() {
 
     // Assign the final value to the output signal
     out <-- temp;
+}
+
+// parse BE bits as bytes and log them. Assumes that the number of bytes logged is a multiple of 8.
+template ParseAndLogBitsAsBytes(N_BYTES){
+    var N_BITS = N_BYTES * 8;
+    signal input in[N_BITS];
+    component Parser = ParseBEBitsToBytes(N_BYTES);
+    for (var i=0; i<N_BITS; i++){
+        Parser.in[i] <== in[i];
+    }
+    for (var i=0; i<N_BYTES / 8; i++){
+        log("in[", i, "]=", 
+            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3], 
+        Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]  
+        ); 
+    }
+}
+
+// parse BE bits to bytes. 
+template ParseBEBitsToBytes(N_BYTES) {
+    var N_BITS = N_BYTES * 8;
+    signal input in[N_BITS];
+    signal output out[N_BYTES];
+    // var temp[8] = [0,0,0,0,0,0,0,0];
+
+    // Iterate through the input bits
+    var temp[N_BYTES];
+    for (var i = 0; i < N_BYTES; i++) {
+        temp[i] = 0; 
+        for (var j = 7; j >= 0; j--) {
+            temp[i] += 2**j * in[i*8 + 7 - j];
+        }
+    }
+
+    for (var i=0; i< N_BYTES; i++) {
+        out[i] <-- temp[i];
+    }
 }
 
 // parse 64-bits to integer value
@@ -334,18 +372,8 @@ template IndexSelector(total) {
     out <== calcTotal.sum;
 }
 
-// reverse the order in an n-bit array
-template ReverseArray(n) {
-    signal input in[n];
-    signal output out[n];
-
-    for (var i = 0; i < n; i++) {
-        out[i] <== in[n-i-1];
-    }
-}
-
 // reverse the byte order in a 16 byte array
-template ReverseByteArray() {
+template ReverseByteArray128() {
     signal input in[128];
     signal output out[128];
 
@@ -353,5 +381,38 @@ template ReverseByteArray() {
         for (var j = 0; j < 8; j++) {
             out[j + 8*i] <== in[(15-i)*8 +j];
         }
+    }
+}
+// in a 128-bit array, reverse the byte order in the first 64 bits, and the second 64 bits
+template ReverseByteArrayHalves128() {
+    signal input in[128];
+    signal output out[128];
+
+    for (var i=0; i<8; i++){
+        for (var j=0; j<8; j++){
+            var SWAP_IDX = 56-(i*8)+j;
+            out[i*8+j] <== in[SWAP_IDX]; 
+        }
+    }
+    for (var i=0; i<8; i++){
+        for (var j=0; j<8; j++){
+            var SWAP_IDX = 56-(i*8)+j+64;
+            out[i*8+j+64] <== in[SWAP_IDX]; 
+        }
+    }
+}
+
+// in a 128-bit array, reverse the halves.
+template ReverseHalves128() {
+    signal input in[128];
+    signal output out[128];
+
+    for (var i=0; i<64; i++){
+        var SWAP_IDX = 64+i;
+        out[i] <== in[SWAP_IDX]; 
+    }
+    for (var i=64; i<128; i++){
+        var SWAP_IDX = i-64;
+        out[i] <== in[SWAP_IDX]; 
     }
 }

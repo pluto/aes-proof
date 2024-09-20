@@ -4,7 +4,7 @@ import { assert } from "chai";
 
 
 
-describe("ghash-hash", () => {
+describe("GHASH_HASH", () => {
   let circuit: WitnessTester<["HashKey", "msg"], ["tag"]>;
 
   before(async () => {
@@ -27,24 +27,29 @@ describe("ghash-hash", () => {
   });
 });
 
-describe("reverse_byte_array", () => {
-  let circuit: WitnessTester<["in"], ["out"]>;
+describe("TranslateHashkey", () => {
+  let circuit: WitnessTester<["inp"], ["out"]>;
 
   before(async () => {
     circuit = await circomkit.WitnessTester(`ghash`, {
-      file: "aes-gcm/helper_functions",
-      template: "ReverseByteArray",
+      file: "aes-gcm/ghash",
+      template: "TranslateHashkey",
     });
+    // console.log("#constraints:", await circuit.getConstraintCount());
   });
 
-  it("test reverse_byte_array", async () => {
-    let bits = hexToBitArray("0102030405060708091011121314151f");
-    let expect = "1f151413121110090807060504030201";
-    const _res = await circuit.compute({ in: bits }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    );
-    // console.log("expect: ", expect, "\nresult: ", result);
-    assert.equal(expect, result);
+  // initial hashkey: [37, 98, 147, 71, 88, 146, 66, 118, 29, 49, 248, 38, 186, 75, 117, 123]
+  //25629347589242761D31F826BA4B757B
+  // reversed hashkey: [123, 117, 75, 186, 38, 248, 49, 29, 118, 66, 146, 88, 71, 147, 98, 37]
+  //7B754BBA26F8311D7642925847936225
+  // post-mul_x hashkey: [246, 234, 150, 116, 77, 240, 99, 58, 236, 132, 36, 177, 142, 38, 197, 74]
+  //F6EA96744DF0633AEC8424B18E26C54A
+  it("test TranslateHashkey", async () => {
+    const inp = hexToBitArray("25629347589242761d31f826ba4b757b");
+    const out = hexToBitArray("F6EA96744DF0633AEC8424B18E26C54A");
+    const _res = await circuit.expectPass({ inp: inp }, { out });
   });
 });
+
+
+
