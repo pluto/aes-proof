@@ -1,10 +1,9 @@
 import { WitnessTester } from "circomkit";
-import { bitArrayToHex, circomkit, hexToBitArray } from "../common";
-import { assert } from "chai";
+import { circomkit } from "../common";
 
 
 
-describe("GHASH_HASH", () => {
+describe("GHASH", () => {
   let circuit: WitnessTester<["HashKey", "msg"], ["tag"]>;
 
   before(async () => {
@@ -13,7 +12,7 @@ describe("GHASH_HASH", () => {
       template: "GHASH",
       params: [2],
     });
-    // console.log("#constraints:", await circuit.getConstraintCount());
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("test ghash", async () => {
@@ -23,7 +22,7 @@ describe("GHASH_HASH", () => {
     const X2 = [0xd1, 0xa2, 0x4d, 0xdd, 0x27, 0x21, 0xd0, 0x06, 0xbb, 0xe4, 0x5f, 0x20, 0xd3, 0xc9, 0xf3, 0x62];
     const M = X1.concat(X2);
     const EXPECT = [0xbd, 0x9b, 0x39, 0x97, 0x04, 0x67, 0x31, 0xfb, 0x96, 0x25, 0x1b, 0x91, 0xf9, 0xc9, 0x9d, 0x7a];
-    const _res = await circuit.expectPass({ HashKey: H, msg: M }, { tag: EXPECT });
+    await circuit.expectPass({ HashKey: H, msg: M }, { tag: EXPECT });
   });
 });
 

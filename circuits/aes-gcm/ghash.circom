@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 include "utils.circom";
-include "nistgmul.circom";
+include "ghash_gmul.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
 // Inputs:
@@ -55,7 +55,7 @@ template GHASH(NUM_BLOCKS) {
     // Accumulate each block using GHASH multiplication
     for (var i = 0; i < NUM_BLOCKS; i++) {
         xor[i] = XORBLOCK(16);
-        gfmul[i] = NistGMulByte();
+        gfmul[i] = GhashMul();
 
         // XOR current block with the previous intermediate result
         xor[i].a <== intermediate[i];

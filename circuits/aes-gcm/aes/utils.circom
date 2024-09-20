@@ -123,42 +123,6 @@ template MulByte(){
     }
 }
 
-// XORs two bytes
-template XorByte(){
-        signal input a;
-        signal input b;
-        signal output out;
-
-        component abits = Num2Bits(8);
-        abits.in <== a;
-
-        component bbits = Num2Bits(8);
-        bbits.in <== b;
-
-        component XorBits = XorBits();
-        XorBits.a <== abits.out;
-        XorBits.b <== bbits.out;
-
-        component num = Bits2Num(8);
-        num.in <== XorBits.out;
-
-        out <== num.out;
-}
-
-// XORs two arrays of bits
-template XorBits(){
-        signal input a[8];
-        signal input b[8];
-        signal output out[8];
-
-    component xor[8];
-    for (var i = 0; i < 8; i++) {
-        xor[i] = XOR();
-        xor[i].a <== a[i];
-        xor[i].b <== b[i];
-        out[i] <== xor[i].out;
-    }
-}
 
 //convert stream of plain text to blocks of 16 bytes
 template ToBlocks(l){
