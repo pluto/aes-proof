@@ -85,6 +85,27 @@ export function padArrayTo64Bits(array: number[]): number[] {
   return new Array(64 - array.length).fill(0).concat(array);
 }
 
+export function hexByteToBigInt(hexByte: string): bigint {
+  if (typeof hexByte !== 'string') {
+      throw new TypeError('Input must be a string');
+  }
+  
+  // Remove '0x' prefix if present and ensure lowercase
+  hexByte = hexByte.replace(/^0x/i, "").toLowerCase();
+  
+  if (hexByte.length !== 2) {
+      throw new Error('Input must be exactly one byte (2 hex characters)');
+  }
+  
+  const byte = parseInt(hexByte, 16);
+  
+  if (isNaN(byte)) {
+      throw new Error('Invalid hex byte');
+  }
+  
+  return BigInt(byte);
+  }
+
 export function numberTo16Hex(num: number): string {
   // Convert the number to a hexadecimal string
   let hexString = num.toString(16);
@@ -127,3 +148,28 @@ it("tests bitArrayToHexString", async () => {
   result = bitArrayToHex(bits);
   assert.equal(result, expectedHex);
 });
+
+export function hexStringToByteArray(hexString: string): number[] {
+  // Ensure the string has an even number of characters
+  if (hexString.length % 2 !== 0) {
+    throw new Error('Hex string must have an even number of characters');
+  }
+
+  const byteArray: number[] = [];
+
+  for (let i = 0; i < hexString.length; i += 2) {
+    const byteValue = parseInt(hexString.substr(i, 2), 16);
+    if (isNaN(byteValue)) {
+      throw new Error('Invalid hex string');
+    }
+    byteArray.push(byteValue);
+  }
+
+  return byteArray;
+}
+
+export function byteArrayToHex(byteArray: any) {
+  return Array.from(byteArray, (byte: any) => {
+      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+  }).join('');
+}
