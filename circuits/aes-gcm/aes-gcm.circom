@@ -1,6 +1,5 @@
 pragma circom 2.1.9;
 
-include "ctr.circom";
 include "ghash.circom";
 include "aes/cipher.circom";
 include "circomlib/circuits/bitify.circom";
@@ -118,7 +117,6 @@ template AESGCM(l) {
             byte_value += (len >> i*8+j) & 1;
         }
         ghashMessage[ghashblocks-1][i\4+2][i%4] <== byte_value;
-        // TODO: Probably need to check exact value. 
     }
 
     // Step 5: Define a block, S
@@ -126,7 +124,9 @@ template AESGCM(l) {
     component ghash = GHASH(ghashblocks);
     ghash.HashKey <== cipherH.cipher;
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    ghash.msg <== ghashMessage; // TODO(WJ 2024-09-16): this is wrong
+    component msgToStream = ToStream(ghashblocks, 16);
+    msgToStream.blocks <== ghashMessage;
+    ghash.msg <== msgToStream.stream; 
     // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
     // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
     // size. The concatenation of these strings is appended with the 64-bit representations of the

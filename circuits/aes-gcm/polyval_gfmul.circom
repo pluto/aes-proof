@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-include "wrapping_mul.circom";
+include "utils.circom";
 
 // Computes carryless POLYVAL multiplication over GF(2^128) in constant time.
 //

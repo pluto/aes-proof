@@ -21,7 +21,7 @@ describe("POLYVAL_HASH_1", () => {
       template: "POLYVAL",
       params: [2],
     });
-    // console.log("#constraints:", await circuit.getConstraintCount());
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("POLYVAL 1", async () => {
@@ -44,18 +44,16 @@ describe("POLYVAL_HASH_2", () => {
       template: "POLYVAL",
       params: [1],
     });
-    // console.log("#constraints:", await circuit.getConstraintCount());
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("POLYVAL 2", async () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
-    // console.log(bitArrayToHex((_res.out as number[][])[0]));
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
     );
-    // console.log("expect: ", EXPECT_2, "\nresult: ", result);
     assert.equal(result, EXPECT_2);
   });
 });
