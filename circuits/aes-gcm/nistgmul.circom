@@ -1,7 +1,7 @@
 pragma circom 2.1.9;
 
 include "utils.circom"; // xor
-include "../circomlib/circuits/comparators.circom"; // isZero
+include "circomlib/circuits/comparators.circom"; // isZero
 include "helper_functions.circom"; // bitwise right shift
 include "circomlib/circuits/mux1.circom"; // multiplexer
 include "../aes-ctr/utils.circom"; // xorbyte
