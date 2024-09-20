@@ -72,14 +72,14 @@ mod tests {
     }
 
     // AES GCM multiple blocks of data
-    // cargo test test_aes_gcm_blocks -- --show-output
+    // cargo test test_aes_gcm_10_blocks -- --show-output
     #[tokio::test]
-    async fn test_aes_gcm_blocks() {
+    async fn test_aes_gcm_10_blocks() {
         use aes_gcm::{
             aead::{generic_array::GenericArray, Aead, NewAead, Payload},
             Aes128Gcm,
         };
-
+        
         let test_key = [
             0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
             0x31, 0x31,
@@ -89,7 +89,7 @@ mod tests {
         let mut payload: Vec<u8> = Vec::new();
         let mut last_byte = 0;
         for i in 0..10 {
-            let message = format!("testhello00000{}", last_byte);
+            let message = format!("testhello000000{}", last_byte);
             last_byte += 1;
             payload.extend(message.as_bytes());
         }
