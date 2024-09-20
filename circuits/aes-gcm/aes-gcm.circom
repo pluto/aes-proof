@@ -122,7 +122,9 @@ template AESGCM(l) {
     // Step 5: Define a block, S
     // needs to take in the number of blocks
     component ghash = GHASH(ghashblocks);
-    ghash.HashKey <== cipherH.cipher;
+    component hashKeyToStream = ToStream(16, 16);
+    hashKeyToStream.bl <== cipherH.cipher;
+    ghash.HashKey <== hashKeyToStream.out;
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     component msgToStream = ToStream(ghashblocks, 16);
     msgToStream.blocks <== ghashMessage;
