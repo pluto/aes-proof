@@ -1,8 +1,8 @@
 pragma circom 2.1.9;
 
-include "circomlib/circuits/bitify.circom";
-include "circomlib/circuits/gates.circom";
-include "circomlib/circuits/comparators.circom";
+include "../circomlib/circuits/bitify.circom";
+include "../circomlib/circuits/gates.circom";
+include "../circomlib/circuits/comparators.circom";
 
 // parse LE bits to int
 template ParseLEBytes64() {

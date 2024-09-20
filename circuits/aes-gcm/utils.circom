@@ -1,7 +1,7 @@
 pragma circom 2.1.9;
 
-include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/mux1.circom";
+include "../circomlib/circuits/comparators.circom";
+include "../circomlib/circuits/mux1.circom";
 
 // Increment a 32-bit word, represented as a 4-byte array
 //

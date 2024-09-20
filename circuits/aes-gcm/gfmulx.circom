@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-// include "circomlib/circuits/gates.circom";
+// include "../circomlib/circuits/gates.circom";
 include "helper_functions.circom";
 
 // compute x * `in` over ghash polynomial

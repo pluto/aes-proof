@@ -1,9 +1,9 @@
 pragma circom 2.1.9;
 
 include "sbox128.circom";
-include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/bitify.circom";
-include "circomlib/circuits/gates.circom";
+include "../circomlib/circuits/comparators.circom";
+include "../circomlib/circuits/bitify.circom";
+include "../circomlib/circuits/gates.circom";
 
 // Converts an array of bytes to an array of words
 template BytesToWords(n) {

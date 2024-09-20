@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 
-include "circomlib/circuits/comparators.circom";
+include "../circomlib/circuits/comparators.circom";
 
 template SBox128() {
     signal input in;

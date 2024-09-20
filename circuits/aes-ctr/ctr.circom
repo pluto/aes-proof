@@ -2,6 +2,8 @@ pragma circom 2.1.9;
 
 include "cipher.circom";
 include "transformations.circom";
+// include "../circomlib/circuits/comparators.circom";
+// include "comparators.circom";
 
 template EncryptCTR(l,nk){
         signal input plainText[l];
