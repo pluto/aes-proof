@@ -1,7 +1,7 @@
 pragma circom 2.1.9;
 
 include "transformations.circom";
-include "../circomlib/circuits/bitify.circom";
+include "circomlib/circuits/bitify.circom";
 
 //tbox[0] =>> multiplication by 2
 //tbox[1] =>> multiplication by 3

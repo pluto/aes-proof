@@ -1,9 +1,9 @@
 pragma circom 2.1.9;
 
 include "transformations.circom";
-include "../circomlib/circuits/comparators.circom";
-include "../circomlib/circuits/bitify.circom";
-include "../circomlib/circuits/gates.circom";
+include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/gates.circom";
 include "tbox.circom";
 
 // MixColumns: Applies the equation for each column:
