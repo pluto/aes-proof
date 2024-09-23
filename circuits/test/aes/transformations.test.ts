@@ -2,22 +2,6 @@ import { WitnessTester } from "circomkit";
 import { circomkit } from "../common";
 
 describe("AES Key Expansion Components", () => {
-  describe("BytesToWords", () => {
-    let circuit: WitnessTester<["bytes"], ["words"]>;
-    before(async () => {
-      circuit = await circomkit.WitnessTester(`BytesToWords`, {
-        file: "aes-gcm/aes/key_expansion",
-        template: "BytesToWords",
-        params: [4],
-      });
-      console.log("BytesToWords #constraints:", await circuit.getConstraintCount());
-    });
-
-    it("should compute correctly", async () => {
-      await circuit.expectPass({ bytes: [0x01, 0x12, 0x02, 0x30] }, { words: [[0x01, 0x12, 0x02, 0x30]] });
-    });
-  });
-
   describe("Rotate", () => {
     let circuit: WitnessTester<["bytes"], ["rotated"]>;
 
@@ -78,31 +62,6 @@ describe("AES Key Expansion Components", () => {
       await circuit.expectPass(
         { bytes1: [0x0a, 0x0b, 0x0c, 0x0d], bytes2: [0x01, 0x02, 0x03, 0x04] },
         { out: [0x0b, 0x09, 0x0f, 0x09] }
-      );
-    });
-  });
-
-  describe("WordSelector", () => {
-    let circuit: WitnessTester<["condition", "bytes1", "bytes2"], ["out"]>;
-    before(async () => {
-      circuit = await circomkit.WitnessTester(`WordSelector`, {
-        file: "aes-gcm/aes/key_expansion",
-        template: "WordSelector",
-      });
-      console.log("WordSelector #constraints:", await circuit.getConstraintCount());
-    });
-
-    it("should select first word when condition is 1", async () => {
-      await circuit.expectPass(
-        { condition: 1, bytes1: [0x0a, 0x0b, 0x0c, 0x0d], bytes2: [0x01, 0x02, 0x03, 0x04] },
-        { out: [0x0a, 0x0b, 0x0c, 0x0d] }
-      );
-    });
-
-    it("should select second word when condition is 0", async () => {
-      await circuit.expectPass(
-        { condition: 0, bytes1: [0x0a, 0x0b, 0x0c, 0x0d], bytes2: [0x01, 0x02, 0x03, 0x04] },
-        { out: [0x01, 0x02, 0x03, 0x04] }
       );
     });
   });

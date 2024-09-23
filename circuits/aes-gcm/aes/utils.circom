@@ -6,19 +6,6 @@ include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
 
-// Converts an array of bytes to an array of words
-template BytesToWords(n) {
-    assert(n % 4 == 0);
-    signal input bytes[n];
-    signal output words[n \ 4][n];
-
-    for (var i = 0; i < n \ 4; i++) {
-        for(var j = 0; j < 4; j++) {
-            words[i][j] <== bytes[i * 4 + j];
-        }
-    }
-}
-
 // Rotates an array of bytes to the left by a specified rotation
 template Rotate(rotation, length) {
     assert(rotation < length);
@@ -98,18 +85,6 @@ template XorWord() {
         }
 
         out[i] <== b2n[i].out;
-    }
-}
-
-// Selects between two words based on a condition
-template WordSelector() {
-    signal input condition;
-    signal input bytes1[4];
-    signal input bytes2[4];
-    signal output out[4];
-
-    for (var i = 0; i < 4; i++) {
-        out[i] <== condition * (bytes1[i] - bytes2[i]) + bytes2[i];
     }
 }
 
