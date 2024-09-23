@@ -1,5 +1,5 @@
 pragma circom 2.1.9;
-include "helper_functions.circom";
+include "utils.circom";
 include "polyval_gfmul.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
@@ -63,7 +63,7 @@ template GHASHFOLDABLE(NUM_BLOCKS) {
             HashKey[i][j] === lc;
         }
     }
-    
+
     signal msgBits[NUM_BLOCKS][2][64];
     for(var i = 0; i < NUM_BLOCKS; i++) {
         for(var j = 0; j < 4; j++) {
