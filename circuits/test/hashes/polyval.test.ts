@@ -11,6 +11,7 @@ const EXPECT = "f7a3b47b846119fae5b7866cf5e5b77e";
 // generated with rust-crypto
 const EXPECT_2 = "cedac64537ff50989c16011551086d77";
 
+// these take a long time (15s for the both), leave commented for until we can optimize these
 describe("POLYVAL_HASH_1", () => {
   let circuit: WitnessTester<["msg", "H"], ["out"]>;
 
@@ -20,7 +21,7 @@ describe("POLYVAL_HASH_1", () => {
       template: "POLYVAL",
       params: [2],
     });
-    // console.log("#constraints:", await circuit.getConstraintCount());
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("POLYVAL 1", async () => {
@@ -29,7 +30,7 @@ describe("POLYVAL_HASH_1", () => {
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
     )
-    console.log("expect: ", EXPECT, "\nresult: ", result);
+    // console.log("expect: ", EXPECT, "\nresult: ", result);
     assert.equal(result, EXPECT);
   });
 });
@@ -43,18 +44,16 @@ describe("POLYVAL_HASH_2", () => {
       template: "POLYVAL",
       params: [1],
     });
-    // console.log("#constraints:", await circuit.getConstraintCount());
+    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("POLYVAL 2", async () => {
     const M = hexToBitArray(X1);
     const input = { msg: M, H: H };
     const _res = await circuit.compute(input, ["out"]);
-    // console.log(bitArrayToHex((_res.out as number[][])[0]));
     const result = bitArrayToHex(
       (_res.out as number[][])[0].map((bit) => Number(bit))
     );
-    console.log("expect: ", EXPECT_2, "\nresult: ", result);
     assert.equal(result, EXPECT_2);
   });
 });

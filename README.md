@@ -3,7 +3,7 @@
 </h1>
 
 <div align="center">
-  <a href="https://github.com/pluto/aes-gcm-circom/graphs/contributors">
+  <a href="https://github.com/pluto/aes-proof/graphs/contributors">
     <img src="https://img.shields.io/github/contributors/pluto/aes-gcm-circom?style=flat-square&logo=github&logoColor=8b949e&labelColor=282f3b&color=32c955" alt="Contributors" />
   </a>
   <a href="https://github.com/pluto/aes-gcm-circom/actions/workflows/test.yaml">
