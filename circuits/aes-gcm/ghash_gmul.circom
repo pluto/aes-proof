@@ -14,7 +14,6 @@ include "aes/utils.circom"; // xorbyte
 // 1 + X + X^2 + X^7 + X^128
 // computes a “product” block, denoted X •Y
 template GhashMul() {
-
     signal input X[16];
     signal input Y[16];
     signal output out[16];

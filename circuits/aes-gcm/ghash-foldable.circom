@@ -1,6 +1,6 @@
 pragma circom 2.1.9;
 include "helper_functions.circom";
-include "gfmul.circom";
+include "polyval_gfmul.circom";
 
 // GHASH computes the authentication tag for AES-GCM.
 // Inputs:
@@ -63,7 +63,7 @@ template GHASHFOLDABLE(NUM_BLOCKS) {
             HashKey[i][j] === lc;
         }
     }
-
+    
     signal msgBits[NUM_BLOCKS][2][64];
     for(var i = 0; i < NUM_BLOCKS; i++) {
         for(var j = 0; j < 4; j++) {
@@ -122,7 +122,7 @@ template GHASHFOLDABLE(NUM_BLOCKS) {
     for (var i = 1; i < NUM_BLOCKS; i++) {
         xor[i][0] = BitwiseXor(64);
         xor[i][1] = BitwiseXor(64);
-        gfmul[i] = MUL();
+        gfmul[i] = POLYVAL_GFMUL();
 
         // XOR current block with the previous intermediate result
         // note: intermediate[0] is initialized to zero, so all rounds are valid
@@ -147,7 +147,6 @@ template GHASHFOLDABLE(NUM_BLOCKS) {
     // Case 1: We are at the starting, tag is last one.
     // Case 2: We are in the middle, tag is first one.
     // Case 3: We are at the end, tag is second one. 
-
 
     // Assign the final tag
     for (var i = 0; i < NUM_BLOCKS; i++) {
