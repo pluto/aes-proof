@@ -34,7 +34,7 @@ template GhashMul() {
     //  Zi+1 ⎨ 
     //       ⎩ Zi ⊕Vi           if xi =1.
     //
-    // The V update is actually just gmulx (multiply binary polynomial by x)
+    // The V update is isomorphic to multiplying binary polynomial by x
     //
     //       ⎧ Vi >>1           if LSB1(Vi) = 0;
     //  Vi+1 ⎨ 
