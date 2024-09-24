@@ -99,7 +99,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     targetMode.foldedBlocks <== foldedBlocks;
 
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, blockCount);
+    component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, TOTAL_BLOCKS);
     selectedBlocks.aad <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
     selectedBlocks.targetMode <== targetMode.mode;
@@ -128,11 +128,20 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     component selectTag = SelectGhashTag(ghashBlocks);
     selectTag.possibleTags <== ghash.possibleTags;
     selectTag.targetMode <== targetMode.mode;
-    
+
+    // TODO: Cleanup, in the end always encrypt with 0001.
+    component StartJ0 = ToBlocks(16);
+    for (var i = 0; i < 12; i++) {
+        StartJ0.stream[i] <== iv[i];
+    }
+    for (var i = 12; i < 16; i++) {
+        StartJ0.stream[i] <== (i == 15) ? 1 : 0;
+    }
+
     // Step 6: Encrypt the tag. Let T = MSBt(GCTRK(J0, S))
     component gctrT = GCTR(16, 4);
     gctrT.key <== key;
-    gctrT.initialCounterBlock <== J0builder.blocks[0];
+    gctrT.initialCounterBlock <== StartJ0.blocks[0];
     gctrT.plainText <== selectTag.tag;
 
     component m = GhashModes();
@@ -145,7 +154,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
 
     authTag <== useEncryption.out;
     cipherText <== gctr.cipherText;
-    // TODO: Need to fork gctr to output its counter.
+    // TODO: Need to fork gctr to output its counter, right now we also incr by 1.
     counter <== J0[3];
 }
 
@@ -156,7 +165,7 @@ template GhashModes() {
     signal output END_MODE       <== 3;
 }
 
-template SelectGhashBlocks(l, ghashBlocks, blocksPerFold) {
+template SelectGhashBlocks(l, ghashBlocks, totalBlocks) {
     signal input aad[16];
     signal input cipherText[l]; 
     signal input targetMode;
@@ -165,16 +174,16 @@ template SelectGhashBlocks(l, ghashBlocks, blocksPerFold) {
     signal targetBlocks[3][ghashBlocks*4*4];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start = GhashStartMode(l, blocksPerFold, ghashBlocks);
+    component start = GhashStartMode(l, totalBlocks, ghashBlocks);
     start.aad <== aad;
     start.cipherText <== cipherText;
     targetBlocks[0] <== start.blocks;
 
-    component stream = GhashStreamMode(l, blocksPerFold, ghashBlocks);
+    component stream = GhashStreamMode(l, ghashBlocks);
     stream.cipherText <== cipherText;
     targetBlocks[1] <== stream.blocks;
 
-    component end = GhashEndMode(l, blocksPerFold, ghashBlocks);
+    component end = GhashEndMode(l, totalBlocks, ghashBlocks);
     end.cipherText <== cipherText;
     targetBlocks[2] <== end.blocks;
     
@@ -196,39 +205,19 @@ template SelectGhashTag(ghashBlocks) {
     signal input targetMode;
     signal output tag[16];
 
-    // TAG CHOOSING LOGIC. 
-    //
-    // case 1: If we are in start_mode: Choose ghashblocks-2 (skip end tag)
-    // case 2: If we are in start_end_mode: Choose ghashblocks-1 (skip end tag)
-    // case 3: If we are in stream_mode: Choose ghashblocks-2 (skip start and end)
-    // case 4: If we are in end_mode: Choose ghashblocks-1 (skip start)
+    // Intermediate tag choosing log
     // 
-    // conditions:
-    //  skip_one = !START_MODE && !STREAM_MODE
-    //  skip_two = !START_END_MODE && !END_MODE
-    component m = GhashModes();
-    component notStartMode = Contains(3);
-    notStartMode.array <== [m.STREAM_MODE, m.START_END_MODE, m.END_MODE];
-    notStartMode.in <== targetMode;
-
-    component notStreamMode = Contains(3);
-    notStreamMode.array <== [m.START_MODE, m.START_END_MODE, m.END_MODE];
-    notStreamMode.in <== targetMode;
-
-    component notEndMode = Contains(3);
-    notEndMode.array <== [m.START_MODE, m.START_END_MODE, m.STREAM_MODE];
-    notEndMode.in <== targetMode;
-
-    component notStartEndMode = Contains(3);
-    notStartEndMode.array <== [m.START_MODE, m.STREAM_MODE, m.END_MODE];
-    notStartEndMode.in <== targetMode;
-
-    signal skipOne <== notStartMode.out * notStreamMode.out;
-    signal skipTwo <== notEndMode.out * notStartEndMode.out;
-    skipOne * (skipOne - 1) === 0;
-    skipTwo * (skipTwo - 1) === 0;
-    skipOne + skipTwo === 1;
-    signal tagIndex <== ghashBlocks - (skipOne * 1 + skipTwo * 2);
+    // case 1: If we are in start_mode: Choose ghashblocks-2 (skip end tag)
+    // case 2: If we are in start_end_mode: Choose ghashblocks-1 (skip none)
+    // case 3: If we are in stream_mode: Choose ghashblocks-3 (first item, skip start/end)
+    // case 4: If we are in end_mode: Choose ghashblocks-1 (skip start)
+    
+    signal modeToIndex[4] <== [2, 1, 3, 2];
+    component mapModeToIndex = Selector(4);
+    mapModeToIndex.in <== modeToIndex;
+    mapModeToIndex.index <== targetMode;
+    
+    signal tagIndex <== ghashBlocks - mapModeToIndex.out;
 
     component s = ArraySelector(ghashBlocks, 16);
     s.in <== possibleTags;
@@ -270,7 +259,7 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     mode <== choice.out;
 }
 
-template GhashStartMode(l, blockCount, ghashBlocks) {
+template GhashStartMode(l, totalBlocks, ghashBlocks) {
     signal input aad[16];
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
@@ -295,31 +284,26 @@ template GhashStartMode(l, blockCount, ghashBlocks) {
         blockIndex += 1;
     }
 
-    // Temporary: Match rust crypto algo. This algo is wrong for longer ciphers
-    // TODO: Fix for longer plaintext.
-    for (var i = 0; i<8; i++) {
-        blocks[blockIndex] <== lengthData[i];
-        blockIndex += 1;
-    }
-
     // length of blocks as a u64 (8 bytes)
-    // var len = blockCount * 128;
-    // for (var i=0; i<8; i++) {
-    //     var byte_value = 0;
-    //     for (var j=0; j<8; j++) {
-    //         byte_value += (len >> i*8+j) & 1;
-    //     }
-    //     blocks[blockIndex] <== byte_value;
-    //     blockIndex += 1;
-
-    //     // TODO: Need to check exact value as bit sum.
-    // }
+    var len = totalBlocks * 128;
+    for (var i=0; i<8; i++) {
+        var byteValue = 0;
+        var val = 1;
+        for (var j=0; j<8; j++) {
+            var bit = (len >> i*8+j) & 1;
+            byteValue += bit*val;
+            val = val+val;
+        }
+        // Insert in reversed (big endian) order. 
+        blocks[blockIndex+7-i] <== byteValue;
+    }
+    blockIndex+=8;
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?
 // template GhashStartAndEndMode(l, blockCount, ghashBlocks) {}
 
-template GhashStreamMode(l, blockCount, ghashBlocks) {
+template GhashStreamMode(l, ghashBlocks) {
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
 
@@ -336,7 +320,7 @@ template GhashStreamMode(l, blockCount, ghashBlocks) {
     }
 }
 
-template GhashEndMode(l, blockCount, ghashBlocks) {
+template GhashEndMode(l, totalBlocks, ghashBlocks) {
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
 
@@ -354,15 +338,17 @@ template GhashEndMode(l, blockCount, ghashBlocks) {
     }
 
     // length of blocks as a u64 (8 bytes)
-    var len = blockCount * 128;
+    var len = totalBlocks * 128;
     for (var i=0; i<8; i++) {
         var byte_value = 0;
+        var val = 1;
         for (var j=0; j<8; j++) {
-            byte_value += (len >> i*8+j) & 1;
+            var bit = (len >> i*8+j) & 1;
+            byte_value += bit*val;
+            val = val+val;
         }
-        blocks[blockIndex] <== byte_value;
-        blockIndex += 1;
-
-        // TODO: Need to check exact value as bit sum.
+        // Insert in reversed (big endian) order. 
+        blocks[blockIndex+7-i] <== byte_value;
     }
+    blockIndex+=8;
 } 
