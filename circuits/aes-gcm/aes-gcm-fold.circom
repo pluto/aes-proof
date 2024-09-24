@@ -29,19 +29,17 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
     // Fold inputs
     var inputIndex = bytesPerFold-4;
     for(var i = 0; i < 4; i++) {
-        // var index = bytesPerFold-4+i;
-        aes.lastCounter[i] <== step_in[inputIndex]; // 12,13,14,15
+        aes.lastCounter[i] <== step_in[inputIndex];
         inputIndex+=1;
     }
 
     for(var i = 0; i < 16; i++) {
-        // var index = bytesPerFold-16+i;
-        aes.lastTag[i] <== step_in[inputIndex]; // 16..32
+        aes.lastTag[i] <== step_in[inputIndex];
         inputIndex+=1;
     }
     // TODO: range check, assertions, stuff.
     inputIndex+=15;
-    aes.foldedBlocks <== step_in[inputIndex]; // 47
+    aes.foldedBlocks <== step_in[inputIndex];
 
     // Fold Outputs
     signal output step_out[48];
