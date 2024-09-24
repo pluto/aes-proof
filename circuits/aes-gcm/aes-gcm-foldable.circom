@@ -105,14 +105,19 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     selectedBlocks.targetMode <== targetMode.mode;
 
     // Step 5: Define a block, S
+    // TODO: Remove this blocks-to-stream translation by migrating the ghash select
+    // logic to using streams by default. 
     component ghash = GHASHFOLDABLE(ghashBlocks);
-    ghash.HashKey <== cipherH.cipher;
-    ghash.msg <== selectedBlocks.blocks;
-
-    // TODO: Remove this transform from the circuit, cleanup types. 
-    component tagBlocks = ToBlocks(16);
-    tagBlocks.stream <== lastTag;
-    ghash.lastTag <== tagBlocks.blocks[0];
+    component cipherToStream = ToStream(1, 16);
+    cipherToStream.blocks[0] <== cipherH.cipher;
+    ghash.HashKey <== cipherToStream.stream;
+    component selectedBlocksToStream[ghashBlocks];
+    for(var i = 0; i < ghashBlocks; i++) {
+        selectedBlocksToStream[i] = ToStream(1, 16);
+        selectedBlocksToStream[i].blocks[0] <== selectedBlocks.blocks[i];
+        ghash.msg[i] <== selectedBlocksToStream[i].stream;
+    }
+    ghash.lastTag <== lastTag;
 
     // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
     // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
@@ -124,47 +129,24 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     selectTag.possibleTags <== ghash.possibleTags;
     selectTag.targetMode <== targetMode.mode;
     
-    // TODO: Check the endianness
-    log("ghash bytes"); // BUG: Currently 0. 
-    var tagBytes[16];
-    for(var i = 0; i < 16; i++) {
-        var byteValue = 0;
-        var sum=1;
-        for(var j = 0; j<8; j++) {
-            var bitIndex = i*8+j;  
-            byteValue += selectTag.tag[bitIndex]*sum;
-            sum = sum*sum;
-        }
-        log(byteValue);
-        tagBytes[i] = byteValue;
-    }
-    log("end ghash bytes");
-
     // Step 6: Encrypt the tag. Let T = MSBt(GCTRK(J0, S))
     component gctrT = GCTR(16, 4);
     gctrT.key <== key;
-    gctrT.initialCounterBlock <== J0;
-    gctrT.plainText <== tagBytes;
+    gctrT.initialCounterBlock <== J0builder.blocks[0];
+    gctrT.plainText <== selectTag.tag;
 
     component m = GhashModes();
+    component isEnding = Contains(2);
+    isEnding.array <== [m.START_END_MODE, m.END_MODE];
+    isEnding.in <== targetMode.mode;
     component useEncryption = ArraySelector(2, 16);
-    useEncryption.in <== [tagBytes, gctrT.cipherText];
-    useEncryption.index <== IsEqual()([targetMode.mode, m.END_MODE]);
-    
+    useEncryption.in <== [selectTag.tag, gctrT.cipherText];
+    useEncryption.index <== isEnding.out;
+
     authTag <== useEncryption.out;
     cipherText <== gctr.cipherText;
-    // TODO: Need to fork gctr to output its counter. 
+    // TODO: Need to fork gctr to output its counter.
     counter <== J0[3];
-
-    // Next steps:
-    // ✅ We only layout 3 modes, that's fine. Two of them resolve to the start mode array.
-    // ✅  The only distinction is which tag we ultimately choose from the set of possible tags.
-    //      - Is this choice dependent on encrypt/decrypt? 
-    //      - No, it's deterministic. Depending on our mode there is always a right tag. 
-    // ✅ The choice also depends on the mode. We need to choose a correct index. 
-    // ✅ Then we encrypt the tag and make a choice between encrypted or not encrypted
-
-    // OKAY! Let's test and fold this biss.
 }
 
 template GhashModes() {
@@ -210,9 +192,9 @@ template SelectGhashBlocks(l, ghashBlocks, blocksPerFold) {
 }
 
 template SelectGhashTag(ghashBlocks) {
-    signal input possibleTags[ghashBlocks][128];
+    signal input possibleTags[ghashBlocks][16];
     signal input targetMode;
-    signal output tag[128];
+    signal output tag[16];
 
     // TAG CHOOSING LOGIC. 
     //
@@ -248,7 +230,7 @@ template SelectGhashTag(ghashBlocks) {
     skipOne + skipTwo === 1;
     signal tagIndex <== ghashBlocks - (skipOne * 1 + skipTwo * 2);
 
-    component s = ArraySelector(ghashBlocks, 128);
+    component s = ArraySelector(ghashBlocks, 16);
     s.in <== possibleTags;
     s.index <== tagIndex; 
 
@@ -272,11 +254,11 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     // case !isStart && !isFinish: STREAM_MODE
     // case !isStart && isFinish: END_MODE
 
-    // TODO: Test the ordering for constants and selectors. 
+    // Choice order is [00, 10, 01, 11]
     component m = GhashModes();
     component choice = Mux2();
-    choice.c <== [m.STREAM_MODE, m.END_MODE, m.START_MODE, m.START_END_MODE];
-    choice.s <== [isFinish, isStart];
+    choice.c <== [m.STREAM_MODE, m.START_MODE, m.END_MODE, m.START_END_MODE];
+    choice.s <== [isStart, isFinish];
     
     signal isStartEndMode <== IsEqual()([choice.out, m.START_END_MODE]);
     signal isStartMode <== IsEqual()([choice.out, m.START_MODE]);
@@ -284,6 +266,8 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     signal isEndMode <== IsEqual()([choice.out, m.END_MODE]);
 
     isStartEndMode + isStartMode + isStreamMode + isEndMode === 1;
+
+    mode <== choice.out;
 }
 
 template GhashStartMode(l, blockCount, ghashBlocks) {
@@ -311,18 +295,25 @@ template GhashStartMode(l, blockCount, ghashBlocks) {
         blockIndex += 1;
     }
 
-    // length of blocks as a u64 (8 bytes)
-    var len = blockCount * 128;
-    for (var i=0; i<8; i++) {
-        var byte_value = 0;
-        for (var j=0; j<8; j++) {
-            byte_value += (len >> i*8+j) & 1;
-        }
-        blocks[blockIndex] <== byte_value;
+    // Temporary: Match rust crypto algo. This algo is wrong for longer ciphers
+    // TODO: Fix for longer plaintext.
+    for (var i = 0; i<8; i++) {
+        blocks[blockIndex] <== lengthData[i];
         blockIndex += 1;
-
-        // TODO: Need to check exact value as bit sum.
     }
+
+    // length of blocks as a u64 (8 bytes)
+    // var len = blockCount * 128;
+    // for (var i=0; i<8; i++) {
+    //     var byte_value = 0;
+    //     for (var j=0; j<8; j++) {
+    //         byte_value += (len >> i*8+j) & 1;
+    //     }
+    //     blocks[blockIndex] <== byte_value;
+    //     blockIndex += 1;
+
+    //     // TODO: Need to check exact value as bit sum.
+    // }
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?

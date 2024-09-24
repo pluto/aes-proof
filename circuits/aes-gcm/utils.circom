@@ -227,8 +227,6 @@ template BitwiseOr(n) {
     }
 }
 
-
-
 // compute the OR of n inputs, each m bits wide
 template OrMultiple(n, m) {
     signal input inputs[n][m];
