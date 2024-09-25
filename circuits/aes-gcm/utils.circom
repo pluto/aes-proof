@@ -382,15 +382,20 @@ template Contains(n) {
     out <== 1 - someEqual.out;
 }
 
+/// m is the number of arrarys, n is the length of each array
 template ArraySelector(m, n) {
     signal input in[m][n];
-    signal input index;
+    signal input index; 
     signal output out[n];
     assert(index >= 0 && index < m);
 
     signal selector[m];
+    component Equal[m];
     for (var i = 0; i < m; i++) {
-        selector[i] <-- index == i ? 1 : 0;
+        Equal[i] = IsEqual();
+        Equal[i].in[0] <== index;
+        Equal[i].in[1] <== i;
+        selector[i] <== Equal[i].out;
         selector[i] * (1 - selector[i]) === 0; 
     }
 
