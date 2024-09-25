@@ -28,7 +28,7 @@ describe("reverse_byte_array", () => {
 describe("IncrementWord", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
   it("should increment the word input", async () => {
-      circuit = await circomkit.WitnessTester(`IncrementByte`, {
+      circuit = await circomkit.WitnessTester(`IncrementWord`, {
           file: "aes-gcm/utils",
           template: "IncrementWord",
       });

@@ -353,27 +353,6 @@ template IncrementWord() {
     }
 }
 
-template IncrementByte() {
-    signal input in;
-    signal output out;
-    signal output carry;
-
-    component IsGreaterThan = GreaterThan(8);
-    component mux = Mux1();
-
-    // check to carry overflow
-    IsGreaterThan.in[0] <== in + 1;
-    IsGreaterThan.in[1] <== 0xFF;
-
-    mux.c[0] <== in + 1;
-    mux.c[1] <== 0x00;
-    mux.s <== IsGreaterThan.out;
-    carry <== IsGreaterThan.out;
-
-    out <== mux.out;
-
-}
-
 template Contains(n) {
     assert(n > 0);
     /*

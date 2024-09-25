@@ -87,10 +87,8 @@ mod tests {
         let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
 
         let mut payload: Vec<u8> = Vec::new();
-        let mut last_byte = 0;
-        for i in 0..10 {
+        for last_byte in 0..10 {
             let message = format!("testhello000000{}", last_byte);
-            last_byte += 1;
             payload.extend(message.as_bytes());
         }
         let aes_payload = Payload { msg: &payload, aad: &[] };
