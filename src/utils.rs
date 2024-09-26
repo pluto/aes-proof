@@ -17,7 +17,6 @@ use crate::{
 //
 /// construct the nonce from the `iv` and `seq` as specified in RFC 8452
 /// https://www.rfc-editor.org/rfc/rfc8452
-
 /// See TLS1.3
 pub(crate) fn make_nonce(iv: [u8; 12], seq: u64) -> Nonce {
     let mut nonce = [0u8; 12];

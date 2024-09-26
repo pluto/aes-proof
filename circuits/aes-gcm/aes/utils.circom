@@ -5,6 +5,7 @@ include "sbox128.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
+include "../utils.circom";
 
 // Rotates an array of bytes to the left by a specified rotation
 template Rotate(rotation, length) {

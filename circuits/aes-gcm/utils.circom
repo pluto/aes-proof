@@ -353,27 +353,6 @@ template IncrementWord() {
     }
 }
 
-template IncrementByte() {
-    signal input in;
-    signal output out;
-    signal output carry;
-
-    component IsGreaterThan = GreaterThan(8);
-    component mux = Mux1();
-
-    // check to carry overflow
-    IsGreaterThan.in[0] <== in + 1;
-    IsGreaterThan.in[1] <== 0xFF;
-
-    mux.c[0] <== in + 1;
-    mux.c[1] <== 0x00;
-    mux.s <== IsGreaterThan.out;
-    carry <== IsGreaterThan.out;
-
-    out <== mux.out;
-
-}
-
 template Contains(n) {
     assert(n > 0);
     /*
@@ -403,16 +382,17 @@ template Contains(n) {
     out <== 1 - someEqual.out;
 }
 
+/// m is the number of arrarys, n is the length of each array
 template ArraySelector(m, n) {
     signal input in[m][n];
-    signal input index;
+    signal input index; 
     signal output out[n];
     assert(index >= 0 && index < m);
 
     signal selector[m];
+    component Equal[m];
     for (var i = 0; i < m; i++) {
-        selector[i] <-- index == i ? 1 : 0;
-        selector[i] * (1 - selector[i]) === 0; 
+        selector[i] <== IsEqual()([index, i]);
     }
 
     var sum = 0;

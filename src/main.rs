@@ -1,15 +1,10 @@
 //! This generates witnesses to test circom artifacts in the `circuits` directory.
 
-#![feature(trivial_bounds)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
-#![allow(unreachable_code)]
 #![allow(non_snake_case)]
 #![allow(clippy::clone_on_copy)]
-#![allow(unused_mut)]
 
-use std::{io, io::Write};
+use std::io;
 
 use aes::{cipher::generic_array::GenericArray, Aes256};
 use cipher::consts::U16;
@@ -87,10 +82,8 @@ mod tests {
         let test_iv = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
 
         let mut payload: Vec<u8> = Vec::new();
-        let mut last_byte = 0;
-        for i in 0..10 {
+        for last_byte in 0..10 {
             let message = format!("testhello000000{}", last_byte);
-            last_byte += 1;
             payload.extend(message.as_bytes());
         }
         let aes_payload = Payload { msg: &payload, aad: &[] };

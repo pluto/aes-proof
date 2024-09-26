@@ -17,9 +17,8 @@ use aes_gcm::{
     aead::{generic_array::GenericArray, Aead, NewAead, Payload},
     Aes128Gcm, Aes256Gcm,
 };
-use anyhow::{Context, Result};
-use cipher::consts::U16;
-use serde::{Deserialize, Serialize};
+use anyhow::Result;
+use serde::Serialize;
 
 use crate::{
     consts::*,
