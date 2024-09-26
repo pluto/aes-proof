@@ -1,16 +1,10 @@
 //! This generates witnesses to test circom artifacts in the `circuits` directory.
 
-#![feature(trivial_bounds)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
-#![allow(unreachable_code)]
 #![allow(non_snake_case)]
 #![allow(clippy::clone_on_copy)]
-#![allow(unused_mut)]
 
-use std::{io, io::Write};
-
+use std::io;
 use aes::{cipher::generic_array::GenericArray, Aes256};
 use cipher::consts::U16;
 use utils::make_json_witness;
