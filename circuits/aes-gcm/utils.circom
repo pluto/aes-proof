@@ -392,10 +392,7 @@ template ArraySelector(m, n) {
     signal selector[m];
     component Equal[m];
     for (var i = 0; i < m; i++) {
-        Equal[i] = IsEqual();
-        Equal[i].in[0] <== index;
-        Equal[i].in[1] <== i;
-        selector[i] <== Equal[i].out;
+        selector[i] <== IsEqual()([index, i]);
         selector[i] * (1 - selector[i]) === 0; 
     }
 
