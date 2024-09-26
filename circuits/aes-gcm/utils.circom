@@ -393,7 +393,6 @@ template ArraySelector(m, n) {
     component Equal[m];
     for (var i = 0; i < m; i++) {
         selector[i] <== IsEqual()([index, i]);
-        selector[i] * (1 - selector[i]) === 0; 
     }
 
     var sum = 0;
