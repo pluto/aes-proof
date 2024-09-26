@@ -67,9 +67,6 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     J0WordIncrementer.in <== J0builder.blocks[0][3];
 
     // NOTE: With folding, start at counter 0001 always, then increment by 1. Same amount of work in every fold.
-    // 
-    // component J0WordIncrementer2 = IncrementWord();
-    // J0WordIncrementer2.in <== J0WordIncrementer.out;
 
     signal J0[4][4];
     for (var i = 0; i < 3; i++) {
