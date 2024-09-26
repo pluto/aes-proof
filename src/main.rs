@@ -4,9 +4,9 @@
 #![allow(non_snake_case)]
 #![allow(clippy::clone_on_copy)]
 
-use std::io;
 use aes::{cipher::generic_array::GenericArray, Aes256};
 use cipher::consts::U16;
+use std::io;
 use utils::make_json_witness;
 
 mod consts;
