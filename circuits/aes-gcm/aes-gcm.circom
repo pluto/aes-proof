@@ -8,7 +8,7 @@ include "gctr.circom";
 
 
 /// AES-GCM with 128 bit key authenticated encryption according to: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
-/// 
+///
 /// Parameters:
 /// l: length of the plaintext
 ///
@@ -21,7 +21,7 @@ include "gctr.circom";
 /// Outputs:
 /// cipherText: encrypted ciphertext
 /// authTag: authentication tag
-/// 
+///
 template AESGCM(l) {
     // Inputs
     signal input key[16]; // 128-bit key
@@ -54,7 +54,7 @@ template AESGCM(l) {
     }
     component J0WordIncrementer = IncrementWord();
     J0WordIncrementer.in <== J0builder.blocks[0][3];
-    
+
     component J0WordIncrementer2 = IncrementWord();
     J0WordIncrementer2.in <== J0WordIncrementer.out;
 
@@ -81,14 +81,14 @@ template AESGCM(l) {
     }
     var ghashblocks = 1 + blockCount + 1; // blocksize is 16 bytes
 
-    // 
+    //
     // A => 1 => length of AAD (always at most 128 bits)
     // 0^v => padding bytes, none for v
     // C => l\16+1 => number of ciphertext blocks
     // 0^u => padding bytes, u value
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
-    // 
+    //
     signal ghashMessage[ghashblocks][4][4];
 
     // set aad as first block
@@ -104,7 +104,7 @@ template AESGCM(l) {
     for (var i=0; i<blockCount; i++) {
         ghashMessage[i+1] <== ciphertextBlocks.blocks[i];
     }
-  
+
     // length of aad = 128 = 0x80 as 64 bit number
     ghashMessage[ghashblocks-1][0] <== [0x00, 0x00, 0x00, 0x00];
     ghashMessage[ghashblocks-1][1] <== [0x00, 0x00, 0x00, 0x80];
@@ -126,9 +126,13 @@ template AESGCM(l) {
     hashKeyToStream.blocks[0] <== cipherH.cipher;
     ghash.HashKey <== hashKeyToStream.stream;
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    component msgToStream = ToStream(ghashblocks, 16);
-    msgToStream.blocks <== ghashMessage;
-    ghash.msg <== msgToStream.stream; 
+    // component msgToStream = ToStream(ghashblocks, 16);
+    // msgToStream.blocks <== ghashMessage;
+    component selectedBlocksToStream[ghashblocks];
+    for (var i = 0 ; i<ghashblocks ; i++) {
+        ghash.msg[i] <== ToStream(1, 16)([ghashMessage[i]]);
+    }
+    // ghash.msg <== msgToStream.stream;
     // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
     // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
     // size. The concatenation of these strings is appended with the 64-bit representations of the
@@ -136,20 +140,21 @@ template AESGCM(l) {
     // produce a single output block.
 
     // TODO: Check the endianness
-    log("ghash bytes"); // BUG: Currently 0. 
+    // log("ghash bytes"); // BUG: Currently 0.
     var bytes[16];
+    signal tagBytes[16 * 8] <== BytesToBits(16)(ghash.tag);
     for(var i = 0; i < 16; i++) {
         var byteValue = 0;
         var sum=1;
         for(var j = 0; j<8; j++) {
-            var bitIndex = i*8+j;  
-            byteValue += ghash.tag[bitIndex]*sum;
+            var bitIndex = i*8+j;
+            byteValue += tagBytes[bitIndex]*sum;
             sum = sum*sum;
         }
-        log(byteValue);
+        // log(byteValue);
         bytes[i] = byteValue;
     }
-    log("end ghash bytes");
+    // log("end ghash bytes");
 
     // Step 6: Let T = MSBt(GCTRK(J0, S))
     component gctrT = GCTR(16, 4);
