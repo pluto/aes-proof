@@ -66,17 +66,17 @@ describe("Cipher", () => {
 });
 
 describe("NextRound", () => {
-  let circuit: WitnessTester<["key", "round"], ["nextKey"]>;
+  let circuit: WitnessTester<["key"], ["nextKey"]>;
 
   describe("NextRound", () => {
-    before(async () => {
+    async function generatePassCase(round: number, key: number[][], expectedKey: number[][]) {
       circuit = await circomkit.WitnessTester(`NextRound_${4}_${4}`, {
         file: "aes-gcm/aes/key_expansion",
         template: "NextRound",
-        params: [4, 4],
+        params: [4, 4, round],
       });
       console.log("#constraints:", await circuit.getConstraintCount());
-    });
+    }
 
     it("should compute correctly", async () => {
       const key = [
@@ -93,7 +93,7 @@ describe("NextRound", () => {
         [0x2a, 0x6c, 0x76, 0x05],
       ];
 
-      await circuit.expectPass({ key, round: 1 }, { nextKey: expectedNextKey });
+      await generatePassCase(1, key, expectedNextKey);
     });
   });
 });

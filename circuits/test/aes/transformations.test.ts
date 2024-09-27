@@ -32,19 +32,23 @@ describe("AES Key Expansion Components", () => {
   });
 
   describe("RCon", () => {
-    let circuit: WitnessTester<["round"], ["out"]>;
-    before(async () => {
+    let circuit: WitnessTester<[], ["out"]>;
+
+    async function generatePassCase(round: number, out: number[]) {
       circuit = await circomkit.WitnessTester(`RCon`, {
         file: "aes-gcm/aes/key_expansion",
         template: "RCon",
+        params: [round]
       });
       console.log("RCon #constraints:", await circuit.getConstraintCount());
-    });
+
+      await circuit.expectPass({}, { out: out });
+    }
 
     it("should compute round constant correctly", async () => {
-      await circuit.expectPass({ round: 1 }, { out: [0x01, 0x00, 0x00, 0x00] });
-      await circuit.expectPass({ round: 2 }, { out: [0x02, 0x00, 0x00, 0x00] });
-      await circuit.expectPass({ round: 10 }, { out: [0x36, 0x00, 0x00, 0x00] });
+      await generatePassCase(1, [0x01, 0x00, 0x00, 0x00]);
+      await generatePassCase(2, [0x02, 0x00, 0x00, 0x00]);
+      await generatePassCase(10, [0x36, 0x00, 0x00, 0x00]);
     });
   });
 

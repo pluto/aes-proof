@@ -172,6 +172,7 @@ template AddCipher(){
 
 // converts iv to counter blocks
 // iv is 16 bytes
+// TODO: this is definitely underconstrained
 template GenerateCounterBlocks(n){
         assert(n < 0xffffffff);
         signal input iv[16];
@@ -183,7 +184,7 @@ template GenerateCounterBlocks(n){
 
         for (var i = 0; i < n; i++) {
                 toBlocks[i] = ToBlocks(16);
-                toBlocks[i].stream <== ivr;
+                toBlocks[i].stream <-- ivr;
                 counterBlocks[i] <== toBlocks[i].blocks[0];
                 ivr[15] = (ivr[15] + 1)%256;
                 if (ivr[15] == 0){
