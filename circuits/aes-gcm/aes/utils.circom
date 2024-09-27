@@ -183,7 +183,7 @@ template GenerateCounterBlocks(n){
 
         for (var i = 0; i < n; i++) {
                 toBlocks[i] = ToBlocks(16);
-                toBlocks[i].stream <-- ivr;
+                toBlocks[i].stream <== ivr;
                 counterBlocks[i] <== toBlocks[i].blocks[0];
                 ivr[15] = (ivr[15] + 1)%256;
                 if (ivr[15] == 0){

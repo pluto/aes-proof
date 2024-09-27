@@ -115,7 +115,7 @@ template ParseLEBytes64() {
     }
 
     // Assign the final value to the output signal
-    out <-- temp;
+    out <== temp;
 }
 
 // parse BE bits as bytes and log them. Assumes that the number of bytes logged is a multiple of 8.
@@ -127,14 +127,14 @@ template ParseAndLogBitsAsBytes(N_BYTES){
         Parser.in[i] <== in[i];
     }
     for (var i=0; i<N_BYTES / 8; i++){
-        log("in[", i, "]=", 
-            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3], 
-        Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]  
-        ); 
+        log("in[", i, "]=",
+            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3],
+        Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]
+        );
     }
 }
 
-// parse BE bits to bytes. 
+// parse BE bits to bytes.
 template ParseBEBitsToBytes(N_BYTES) {
     var N_BITS = N_BYTES * 8;
     signal input in[N_BITS];
@@ -142,16 +142,16 @@ template ParseBEBitsToBytes(N_BYTES) {
     // var temp[8] = [0,0,0,0,0,0,0,0];
 
     // Iterate through the input bits
-    var temp[N_BYTES];
+    signal temp[N_BYTES][8];
     for (var i = 0; i < N_BYTES; i++) {
-        temp[i] = 0; 
+        temp[i][0] <== 0;
         for (var j = 7; j >= 0; j--) {
-            temp[i] += 2**j * in[i*8 + 7 - j];
+            temp[i][j] = temp[i][j+1] + 2**j * in[i*8 + 7 - j];
         }
     }
 
     for (var i=0; i< N_BYTES; i++) {
-        out[i] <-- temp[i];
+        out[i] <== temp[i][0];
     }
 }
 
@@ -168,7 +168,7 @@ template ParseBEBytes64() {
     }
 
     // Assign the final value to the output signal
-    out <-- temp;
+    out <== temp;
 }
 
 template BitwiseRightShift(n, r) {
@@ -285,13 +285,13 @@ template ReverseByteArrayHalves128() {
     for (var i=0; i<8; i++){
         for (var j=0; j<8; j++){
             var SWAP_IDX = 56-(i*8)+j;
-            out[i*8+j] <== in[SWAP_IDX]; 
+            out[i*8+j] <== in[SWAP_IDX];
         }
     }
     for (var i=0; i<8; i++){
         for (var j=0; j<8; j++){
             var SWAP_IDX = 56-(i*8)+j+64;
-            out[i*8+j+64] <== in[SWAP_IDX]; 
+            out[i*8+j+64] <== in[SWAP_IDX];
         }
     }
 }
@@ -311,7 +311,7 @@ template ReverseByteArrayHalves128() {
 //    /_   _\                            __                   /_   _\
 //  .'  \ /  `.               .-.       /  |                .'  \ /  `.
 //    /  |  \               __| |__     `| |                  /  |  \
-//       |                 |__   __|     | |                  
+//       |                 |__   __|     | |
 //    \  |  /                 | |       _| |_                 \  |  /
 // `. __/ \__ .'              '-'      |_____|             `. __/ \__ .'
 // _ _\     /_ _                                           _ _\     /_ _
@@ -385,7 +385,7 @@ template Contains(n) {
 /// m is the number of arrarys, n is the length of each array
 template ArraySelector(m, n) {
     signal input in[m][n];
-    signal input index; 
+    signal input index;
     signal output out[n];
     assert(index >= 0 && index < m);
 
@@ -420,8 +420,7 @@ template Selector(n) {
 
     signal selector[n];
     for (var i = 0; i < n; i++) {
-        selector[i] <-- index == i ? 1 : 0;
-        selector[i] * (1 - selector[i]) === 0;
+        selector[i] <== IsEqual()([index, i]);
     }
 
     var sum = 0;
