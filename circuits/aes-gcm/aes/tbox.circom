@@ -3,10 +3,14 @@ pragma circom 2.1.9;
 
 include "transformations.circom";
 include "circomlib/circuits/bitify.circom";
+include "../utils.circom";
 
 //tbox[0] =>> multiplication by 2
 //tbox[1] =>> multiplication by 3
-function TBox(index, subbyte) {
+template TBox(index) {
+    signal input subindex;
+
+    // TODO: unsure whether using this as var makes the circuit underconstrained too?
     var tbox[2][256] = [
         [
             0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60,
@@ -35,5 +39,5 @@ function TBox(index, subbyte) {
         ]
     ];
 
-    return tbox[index][subbyte];
+    signal output out <== Selector(256)(tbox[index], subindex);
 }

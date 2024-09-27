@@ -126,8 +126,6 @@ template AESGCM(l) {
     hashKeyToStream.blocks[0] <== cipherH.cipher;
     ghash.HashKey <== hashKeyToStream.stream;
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    // component msgToStream = ToStream(ghashblocks, 16);
-    // msgToStream.blocks <== ghashMessage;
     component selectedBlocksToStream[ghashblocks];
     for (var i = 0 ; i<ghashblocks ; i++) {
         ghash.msg[i] <== ToStream(1, 16)([ghashMessage[i]]);
@@ -140,8 +138,9 @@ template AESGCM(l) {
     // produce a single output block.
 
     // TODO: Check the endianness
+    // TODO: this is underconstrained too
     // log("ghash bytes"); // BUG: Currently 0.
-    var bytes[16];
+    signal bytes[16];
     signal tagBytes[16 * 8] <== BytesToBits(16)(ghash.tag);
     for(var i = 0; i < 16; i++) {
         var byteValue = 0;
@@ -152,7 +151,7 @@ template AESGCM(l) {
             sum = sum*sum;
         }
         // log(byteValue);
-        bytes[i] = byteValue;
+        bytes[i] <== byteValue;
     }
     // log("end ghash bytes");
 

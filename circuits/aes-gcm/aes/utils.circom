@@ -37,8 +37,7 @@ template SubstituteWord() {
 }
 
 // Outputs a round constant for a given round number
-template RCon() {
-    signal input round;
+template RCon(round) {
     signal output out[4];
 
     assert(round > 0 && round <= 10);
@@ -56,7 +55,7 @@ template RCon() {
         [0x36, 0x00, 0x00, 0x00]
     ];
 
-    out <-- rcon[round-1];
+    out <== rcon[round-1];
 }
 
 
@@ -64,7 +63,7 @@ template RCon() {
 template XorWord() {
     signal input bytes1[4];
     signal input bytes2[4];
-    
+
     component n2b[4 * 2];
     component b2n[4];
     component xor[4][8];
