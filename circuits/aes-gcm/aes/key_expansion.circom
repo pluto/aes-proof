@@ -42,9 +42,9 @@ include "utils.circom";
 // @inputs key: array of nk*4 bytes representing the key
 // @outputs keyExpanded: array of (nr+1)*4 words i.e for AES 128, 192, 256 it will be 44, 52, 60 words
 template KeyExpansion(nk,nr) {
-    assert(nk == 4 || nk == 6 || nk == 8 );    
+    assert(nk == 4 || nk == 6 || nk == 8 );
     signal input key[nk * 4];
-    
+
     var totalWords = (4 * (nr + 1));
     var effectiveRounds = nk == 4 ? 10 : totalWords\nk;
 
@@ -55,20 +55,18 @@ template KeyExpansion(nk,nr) {
             keyExpanded[i][j] <== key[(4 * i) + j];
         }
     }
-    
+
     component nextRound[effectiveRounds];
-    
+
     for (var round = 1; round <= effectiveRounds; round++) {
-        var outputWordLen = round == effectiveRounds ? 4 : nk; 
-        nextRound[round - 1] = NextRound(nk, outputWordLen);
+        var outputWordLen = round == effectiveRounds ? 4 : nk;
+        nextRound[round - 1] = NextRound(nk, outputWordLen, round);
 
         for (var i = 0; i < nk; i++) {
             for (var j = 0; j < 4; j++) {
                 nextRound[round - 1].key[i][j] <== keyExpanded[(round * nk) + i - nk][j];
             }
         }
-
-        nextRound[round - 1].round <== round;
 
         for (var i = 0; i < outputWordLen; i++) {
             for (var j = 0; j < 4; j++) {
@@ -80,22 +78,20 @@ template KeyExpansion(nk,nr) {
 
 // @param nk: number of keys which can be 4, 6, 8
 // @param o: number of output words which can be 4 or nk
-template NextRound(nk, o){
-    signal input key[nk][4]; 
-    signal input round;
+template NextRound(nk, o, round){
+    signal input key[nk][4];
     signal output nextKey[o][4];
 
     component rotateWord = Rotate(1, 4);
     for (var i = 0; i < 4; i++) {
         rotateWord.bytes[i] <== key[nk - 1][i];
     }
-    
+
     component substituteWord[2];
     substituteWord[0] = SubstituteWord();
     substituteWord[0].bytes <== rotateWord.rotated;
 
-    component rcon = RCon();
-    rcon.round <== round; 
+    component rcon = RCon(round);
 
     component xorWord[o + 1];
     xorWord[0] = XorWord();
@@ -114,7 +110,7 @@ template NextRound(nk, o){
             xorWord[i+1].bytes1 <== nextKey[i-1];
         }
         xorWord[i+1].bytes2 <== key[i];
-        
+
         for (var j = 0; j < 4; j++) {
             nextKey[i][j] <== xorWord[i+1].out[j];
         }
