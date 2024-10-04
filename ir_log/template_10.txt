@@ -1,0 +1,7 @@
+TEMPLATE(IsOdd_10)(
+STORE(line:0,template_id:0,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:0,template_id:0,as:U32,op_number:0,value:0), NONE),src:VALUE(line:0,template_id:0,as:BigInt,op_number:0,value:4))
+CREATE_CMP(line:0,template_id:10,name:Num2Bits_9,id_no:VALUE(line:0,template_id:10,as:U32,op_number:0,value:0))
+STORE(line:66,template_id:10,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:10,as:U32,op_number:0,value:0):LAST,dest:INDEXED: (VALUE(line:0,template_id:9,as:U32,op_number:0,value:3), Num2Bits_9),src:LOAD(line:66,template_id:10,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:10,as:U32,op_number:0,value:1), NONE)))
+STORE(line:66,template_id:10,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:10,as:U32,op_number:0,value:2), NONE),src:LOAD(line:66,template_id:10,address_type:SUBCOMPONENT:VALUE(line:0,template_id:10,as:U32,op_number:0,value:0):NO_INPUT,src:INDEXED: (VALUE(line:0,template_id:9,as:U32,op_number:0,value:0), Num2Bits_9)))
+STORE(line:67,template_id:10,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:10,as:U32,op_number:0,value:0), NONE),src:LOAD(line:67,template_id:10,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:10,as:U32,op_number:0,value:2), NONE)))
+)

@@ -1,0 +1,6 @@
+TEMPLATE(GhashModes_69)(
+STORE(line:159,template_id:69,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:69,as:U32,op_number:0,value:0), NONE),src:VALUE(line:159,template_id:69,as:BigInt,op_number:0,value:2))
+STORE(line:160,template_id:69,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:69,as:U32,op_number:0,value:1), NONE),src:VALUE(line:160,template_id:69,as:BigInt,op_number:0,value:1))
+STORE(line:161,template_id:69,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:69,as:U32,op_number:0,value:2), NONE),src:VALUE(line:161,template_id:69,as:BigInt,op_number:0,value:7))
+STORE(line:162,template_id:69,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:69,as:U32,op_number:0,value:3), NONE),src:VALUE(line:162,template_id:69,as:BigInt,op_number:0,value:4))
+)

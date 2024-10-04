@@ -1,0 +1,4 @@
+TEMPLATE(BitwiseXor_66)(
+STORE(line:0,template_id:0,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:0,template_id:0,as:U32,op_number:0,value:0), NONE),src:VALUE(line:0,template_id:0,as:BigInt,op_number:0,value:2))
+STORE(line:204,template_id:66,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:204,template_id:66,as:U32,op_number:0,value:1), NONE),src:VALUE(line:204,template_id:66,as:BigInt,op_number:0,value:2))
+)

@@ -1,0 +1,6 @@
+TEMPLATE(TBox_48)(
+STORE(line:0,template_id:0,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:0,template_id:0,as:U32,op_number:0,value:0), NONE),src:VALUE(line:0,template_id:0,as:BigInt,op_number:0,value:2))
+CREATE_CMP(line:0,template_id:48,name:FieldMul2_47,id_no:VALUE(line:0,template_id:48,as:U32,op_number:0,value:0))
+STORE(line:12,template_id:48,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:48,as:U32,op_number:0,value:0):LAST,dest:INDEXED: (VALUE(line:0,template_id:47,as:U32,op_number:0,value:1), FieldMul2_47),src:LOAD(line:12,template_id:48,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:48,as:U32,op_number:0,value:1), NONE)))
+STORE(line:12,template_id:48,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:48,as:U32,op_number:0,value:0), NONE),src:LOAD(line:12,template_id:48,address_type:SUBCOMPONENT:VALUE(line:0,template_id:48,as:U32,op_number:0,value:0):NO_INPUT,src:INDEXED: (VALUE(line:0,template_id:47,as:U32,op_number:0,value:0), FieldMul2_47)))
+)

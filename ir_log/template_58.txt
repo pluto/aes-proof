@@ -1,0 +1,7 @@
+TEMPLATE(LessThan_58)(
+STORE(line:0,template_id:0,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:0,template_id:0,as:U32,op_number:0,value:0), NONE),src:VALUE(line:0,template_id:0,as:BigInt,op_number:0,value:5))
+CREATE_CMP(line:0,template_id:58,name:Num2Bits_57,id_no:VALUE(line:0,template_id:58,as:U32,op_number:0,value:0))
+ASSERT(line: 90,template_id: 58,evaluate: VALUE(line:90,template_id:58,as:BigInt,op_number:0,value:1))
+STORE(line:96,template_id:58,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:58,as:U32,op_number:0,value:0):LAST,dest:INDEXED: (VALUE(line:0,template_id:57,as:U32,op_number:0,value:9), Num2Bits_57),src:COMPUTE(line:96,template_id:58,op_number:0,op:SUB,stack:COMPUTE(line:96,template_id:58,op_number:1,op:ADD,stack:LOAD(line:96,template_id:58,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:1), NONE));VALUE(line:96,template_id:58,as:BigInt,op_number:2,value:256););LOAD(line:96,template_id:58,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:2), NONE));))
+STORE(line:98,template_id:58,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:0), NONE),src:COMPUTE(line:98,template_id:58,op_number:0,op:SUB,stack:VALUE(line:98,template_id:58,as:BigInt,op_number:1,value:1);LOAD(line:98,template_id:58,address_type:SUBCOMPONENT:VALUE(line:0,template_id:58,as:U32,op_number:0,value:0):NO_INPUT,src:INDEXED: (VALUE(line:0,template_id:57,as:U32,op_number:0,value:8), Num2Bits_57));))
+)

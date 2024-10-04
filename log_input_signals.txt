@@ -1,0 +1,5 @@
+main.step_in 48
+main.key 16
+main.iv 12
+main.aad 16
+main.plainText 16
