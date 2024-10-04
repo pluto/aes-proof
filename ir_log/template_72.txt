@@ -1,0 +1,5 @@
+TEMPLATE(IsEqual_72)(
+CREATE_CMP(line:0,template_id:72,name:IsZero_7,id_no:VALUE(line:0,template_id:72,as:U32,op_number:0,value:0))
+STORE(line:43,template_id:72,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:72,as:U32,op_number:0,value:0):LAST,dest:INDEXED: (VALUE(line:0,template_id:7,as:U32,op_number:0,value:1), IsZero_7),src:COMPUTE(line:43,template_id:72,op_number:0,op:SUB,stack:LOAD(line:43,template_id:72,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:72,as:U32,op_number:0,value:2), NONE));LOAD(line:43,template_id:72,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:72,as:U32,op_number:0,value:1), NONE));))
+STORE(line:45,template_id:72,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:72,as:U32,op_number:0,value:0), NONE),src:LOAD(line:45,template_id:72,address_type:SUBCOMPONENT:VALUE(line:0,template_id:72,as:U32,op_number:0,value:0):NO_INPUT,src:INDEXED: (VALUE(line:0,template_id:7,as:U32,op_number:0,value:0), IsZero_7)))
+)

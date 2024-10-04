@@ -1,0 +1,7 @@
+TEMPLATE(GreaterThan_59)(
+STORE(line:0,template_id:0,dest_type:VARIABLE,dest:INDEXED: (VALUE(line:0,template_id:0,as:U32,op_number:0,value:0), NONE),src:VALUE(line:0,template_id:0,as:BigInt,op_number:0,value:5))
+CREATE_CMP(line:0,template_id:59,name:LessThan_58,id_no:VALUE(line:0,template_id:59,as:U32,op_number:0,value:0))
+STORE(line:124,template_id:59,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:59,as:U32,op_number:0,value:0):NO_LAST,dest:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:1), LessThan_58),src:LOAD(line:124,template_id:59,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:59,as:U32,op_number:0,value:2), NONE)))
+STORE(line:125,template_id:59,dest_type:SUBCOMPONENT:VALUE(line:0,template_id:59,as:U32,op_number:0,value:0):LAST,dest:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:2), LessThan_58),src:LOAD(line:125,template_id:59,address_type:SIGNAL,src:INDEXED: (VALUE(line:0,template_id:59,as:U32,op_number:0,value:1), NONE)))
+STORE(line:126,template_id:59,dest_type:SIGNAL,dest:INDEXED: (VALUE(line:0,template_id:59,as:U32,op_number:0,value:0), NONE),src:LOAD(line:126,template_id:59,address_type:SUBCOMPONENT:VALUE(line:0,template_id:59,as:U32,op_number:0,value:0):NO_INPUT,src:INDEXED: (VALUE(line:0,template_id:58,as:U32,op_number:0,value:0), LessThan_58)))
+)
