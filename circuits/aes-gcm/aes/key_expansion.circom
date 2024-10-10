@@ -44,90 +44,43 @@ include "utils.circom";
 template KeyExpansion() {
     signal input key[16];
 
-    // var totalWords = 44;
-    // var effectiveRounds = 10;
+    var totalWords = (4 * (10 + 1));
+    var effectiveRounds = 10;
 
-    signal output keyExpanded[44][4];
+    signal output keyExpanded[totalWords][4];
 
-    for (var i = 0; i < 44; i++) {
+    for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 4; j++) {
-            keyExpanded[i][j] <== 0; //key[(4 * i) + j];
+            keyExpanded[i][j] <== key[(4 * i) + j];
         }
     }
 
-//     component nextRound[10];
+    component nextRound[effectiveRounds];
+    var outputWordLen = 4;
+    for (var round = 1; round <= effectiveRounds; round++) {
+        nextRound[round - 1] = NextRound();
+        nextRound[round - 1].round <== round;
 
-//     signal preKey[10][4][4];
-//     signal nextKey[10][4][4];
-//     component xorWord[10][5];
-//     component rcon[10];
-//     component rotateWord[10];
-//     component substituteWord[10][2];
+        for (var i = 0; i < 4; i++) {
+            for (var j = 0; j < 4; j++) {
+                nextRound[round - 1].key[i][j] <== keyExpanded[(round * 4) + i - 4][j];
+            }
+        }
 
-//     for (var round = 1; round <= 10; round++) {
-//         // var outputWordLen = round == 10 ? 4 : nk;
-//         // nextRound[round - 1] = NextRound(round);
-
-//         // get the previous key
-//         for (var i = 0; i < 4; i++) {
-//             for (var j = 0; j < 4; j++) {
-//                 preKey[round-1][i][j] <== keyExpanded[(round * 4) + i - 4][j];
-//             }
-//         }
-// // ------------------------------------// ------------------------------------
-//         // rot the word
-//         rotateWord[round - 1] = Rotate(1, 4);
-//         for (var i = 0; i < 4; i++) {
-//             rotateWord[round - 1].bytes[i] <== preKey[round - 1][4 - 1][i];
-//         }
-//         // sub the word
-//         substituteWord[round - 1][0] = SubstituteWord();
-//         substituteWord[round - 1][0].bytes <== rotateWord[round - 1].rotated;
-
-//         // get the rcon
-//         rcon[round - 1] = RCon(round);
-
-//         // xor the rcon with the substituted word
-//         xorWord[round - 1][0] = XorWord();
-//         xorWord[round - 1][0].bytes1 <== substituteWord[round - 1][0].substituted;
-//         xorWord[round - 1][0].bytes2 <== rcon[round - 1].out;
-
-
-//         for (var i = 0; i < 4; i++) {
-//             xorWord[round - 1][i+1] = XorWord();
-//             if (i == 0) {
-//                 xorWord[round - 1][i+1].bytes1 <== xorWord[round - 1][0].out;
-//             } else {
-//                 xorWord[round - 1][i+1].bytes1 <== nextKey[round - 1][i-1];
-//             }
-//             xorWord[round - 1][i+1].bytes2 <== preKey[round - 1][i];
-
-//             for (var j = 0; j < 4; j++) {
-//                 nextKey[round - 1][i][j] <== xorWord[round - 1][i+1].out[j];
-//             }
-//         }
-
-//         // set the next key
-//         for (var i = 0; i < 4; i++) {
-//             for (var j = 0; j < 4; j++) {
-//                 keyExpanded[(round * 4) + i][j] <== nextKey[round-1][i][j];
-//             }
-//         }
-//     }
+        for (var i = 0; i < outputWordLen; i++) {
+            for (var j = 0; j < 4; j++) {
+                keyExpanded[(round * 4) + i][j] <== nextRound[round - 1].nextKey[i][j];
+            }
+        }
+    }
 }
 
 // @param nk: number of keys which can be 4, 6, 8
 // @param o: number of output words which can be 4 or nk
-template NextRound(round){
+template NextRound(){
+    signal input round;
     signal input key[4][4];
     signal output nextKey[4][4];
-
-
-    // for (var i = 0; i < 4; i++) {
-    //     for (var j = 0; j<4; j++) {
-    //         nextKey[i][j] <== 0;
-    //     }
-    // }
 
     component rotateWord = Rotate(1, 4);
     for (var i = 0; i < 4; i++) {
@@ -138,7 +91,24 @@ template NextRound(round){
     substituteWord[0] = SubstituteWord();
     substituteWord[0].bytes <== rotateWord.rotated;
 
-    component rcon = RCon(round);
+    // component rcon = RCon(round);
+    /// m is the number of arrarys, n is the length of each array
+    component rcon = ArraySelector(10, 4);
+    rcon.in <== [
+        [0x01, 0x00, 0x00, 0x00],
+        [0x02, 0x00, 0x00, 0x00],
+        [0x04, 0x00, 0x00, 0x00],
+        [0x08, 0x00, 0x00, 0x00],
+        [0x10, 0x00, 0x00, 0x00],
+        [0x20, 0x00, 0x00, 0x00],
+        [0x40, 0x00, 0x00, 0x00],
+        [0x80, 0x00, 0x00, 0x00],
+        [0x1b, 0x00, 0x00, 0x00],
+        [0x36, 0x00, 0x00, 0x00]
+    ];
+    rcon.index <== round;
+
+    // var rcon[4] = rcons[round-1];
 
     component xorWord[4 + 1];
     xorWord[0] = XorWord();
