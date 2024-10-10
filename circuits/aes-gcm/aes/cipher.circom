@@ -30,6 +30,8 @@ include "mix_columns.circom";
 //                                                                      ▼
 //                                                                 Ciphertext
 
+
+/// nk: number of keys which can be 4, 6, 8 corosponding to AES 128, 192, 256
 // @param nk: number of keys which can be 4, 6, 8
 // @inputs block: 4x4 matrix representing the input block
 // @inputs key: array of nk*4 bytes representing the key
