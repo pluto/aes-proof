@@ -104,13 +104,13 @@ template GCTR(INPUT_LEN) {
 
     // TODO: When we only have one block, this double Cipher's. We shouldnnt do this when l % 16 == 0
     // encrypt the last counter block 
-    // aes[nBlocks] = Cipher();
-    // aes[nBlocks].key <== key;
-    // aes[nBlocks].block <== CounterBlocks[nBlocks-1];
-    // component aesCipherToStream = ToStream(1, 16);
-    // aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
+    aes[nBlocks] = Cipher();
+    aes[nBlocks].key <== key;
+    aes[nBlocks].block <== CounterBlocks[nBlocks-1];
+    component aesCipherToStream = ToStream(1, 16);
+    aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
 
-    // // XOR the cipher with the last chunk of unpadded plaintext
+    // XOR the cipher with the last chunk of unpadded plaintext
     // component addLastCipher = XorMultiple(2, lastBlockSize);
     // for (var i = 0; i < lastBlockSize; i++) {
     //     // convert cipher to stream
