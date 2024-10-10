@@ -32,97 +32,99 @@ include "utils.circom";
 
 // We are opperating on 128 bit blocks represented as 16 bytes
 
-template GCTR(INPUT_LEN, nk) {
-    signal input key[nk * 4];
+template GCTR(INPUT_LEN) {
+    signal input key[16];
     signal input initialCounterBlock[4][4];
     signal input plainText[INPUT_LEN];
     signal output cipherText[INPUT_LEN];
 
-    // number of 16 byte blocks in the plaintext
-    var nBlocks = (INPUT_LEN \ 16); // "\" is floored integer division
-    // size of the last block
-    var lastBlockSize = INPUT_LEN % 16;
-    // total number of bits in the plaintext blocks
-    var bytesExcludingLastBlock = 16 * (nBlocks);
-    assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
+    cipherText <== plainText;
 
-    // generate plaintext blocks
-    // note to not use the last block of plaintext
-    // because it will be padded by the toBlocks components
-    component plainTextBlocks = ToBlocks(INPUT_LEN);
-    plainTextBlocks.stream <== plainText;
+    // // number of 16 byte blocks in the plaintext
+    // var nBlocks = (INPUT_LEN \ 16); // "\" is floored integer division
+    // // size of the last block
+    // var lastBlockSize = INPUT_LEN % 16;
+    // // total number of bits in the plaintext blocks
+    // var bytesExcludingLastBlock = 16 * (nBlocks);
+    // assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
 
-    // Step 1: Generate counter blocks
-    signal CounterBlocks[nBlocks][4][4];
-    CounterBlocks[0] <== initialCounterBlock;
+    // // generate plaintext blocks
+    // // note to not use the last block of plaintext
+    // // because it will be padded by the toBlocks components
+    // component plainTextBlocks = ToBlocks(INPUT_LEN);
+    // plainTextBlocks.stream <== plainText;
 
-    // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
-    // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
-    //
-    // component to increment the last word of the counter block
-    component inc32[nBlocks];
-    // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
+    // // Step 1: Generate counter blocks
+    // signal CounterBlocks[nBlocks][4][4];
+    // CounterBlocks[0] <== initialCounterBlock;
 
-    // TODO: Actually test me on a block larger than 16 bytes. 
-    for (var i = 1; i < nBlocks; i++) {
-        inc32[i] = IncrementWord();
-        inc32[i].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
+    // // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
+    // // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
+    // //
+    // // component to increment the last word of the counter block
+    // component inc32[nBlocks];
+    // // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
 
-        // copy the previous 12 bytes of the counter block
-        for (var j = 0; j < 3; j++) {
-            CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
-        }
-        // should write the last 4 bytes of the incremented word
-        CounterBlocks[i][3] <== inc32[i].out;
-    }
+    // // TODO: Actually test me on a block larger than 16 bytes. 
+    // for (var i = 1; i < nBlocks; i++) {
+    //     inc32[i] = IncrementWord();
+    //     inc32[i].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
 
-    // Convert blocks of 16 bytes to stream
-    component toStream = ToStream(nBlocks, bytesExcludingLastBlock);
-    // Step 2: Encrypt each counter block with the key
-    component aes[nBlocks+1]; // +1 for the last block
-    component AddCipher[nBlocks];
+    //     // copy the previous 12 bytes of the counter block
+    //     for (var j = 0; j < 3; j++) {
+    //         CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
+    //     }
+    //     // should write the last 4 bytes of the incremented word
+    //     CounterBlocks[i][3] <== inc32[i].out;
+    // }
 
-    // NOTE: All this code does for one block is encrypt and xor, 
-    // which is identical to CTR. 
-    for (var i = 0; i < nBlocks; i++) {
-        // encrypt counter block
-        aes[i] = Cipher();
-        aes[i].key <== key;
-        aes[i].block <== CounterBlocks[i];
+    // // Convert blocks of 16 bytes to stream
+    // component toStream = ToStream(nBlocks, bytesExcludingLastBlock);
+    // // Step 2: Encrypt each counter block with the key
+    // component aes[nBlocks+1]; // +1 for the last block
+    // component AddCipher[nBlocks];
 
-        // XOR cipher text with input block
-        AddCipher[i] = AddCipher();    
-        AddCipher[i].state <== plainTextBlocks.blocks[i];
-        AddCipher[i].cipher <== aes[i].cipher;
+    // // NOTE: All this code does for one block is encrypt and xor, 
+    // // which is identical to CTR. 
+    // for (var i = 0; i < nBlocks; i++) {
+    //     // encrypt counter block
+    //     aes[i] = Cipher();
+    //     aes[i].key <== key;
+    //     aes[i].block <== CounterBlocks[i];
 
-        // set output block
-        toStream.blocks[i] <== AddCipher[i].newState;
-    }
+    //     // XOR cipher text with input block
+    //     AddCipher[i] = AddCipher();    
+    //     AddCipher[i].state <== plainTextBlocks.blocks[i];
+    //     AddCipher[i].cipher <== aes[i].cipher;
 
-    // Step 3: Handle the last block separately
-    // Y* = X* ⊕ MSBlen(X*) (CIPH_K (CB_n*))
+    //     // set output block
+    //     toStream.blocks[i] <== AddCipher[i].newState;
+    // }
 
-    // TODO: When we only have one block, this double Cipher's. We shouldnnt do this when l % 16 == 0
-    // encrypt the last counter block 
-    aes[nBlocks] = Cipher();
-    aes[nBlocks].key <== key;
-    aes[nBlocks].block <== CounterBlocks[nBlocks-1];
-    component aesCipherToStream = ToStream(1, 16);
-    aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
+    // // Step 3: Handle the last block separately
+    // // Y* = X* ⊕ MSBlen(X*) (CIPH_K (CB_n*))
 
-    // XOR the cipher with the last chunk of unpadded plaintext
-    component addLastCipher = XorMultiple(2, lastBlockSize);
-    for (var i = 0; i < lastBlockSize; i++) {
-        // convert cipher to stream
-        addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
-        addLastCipher.inputs[1][i] <== plainText[bytesExcludingLastBlock + i];
-    }
+    // // TODO: When we only have one block, this double Cipher's. We shouldnnt do this when l % 16 == 0
+    // // encrypt the last counter block 
+    // aes[nBlocks] = Cipher();
+    // aes[nBlocks].key <== key;
+    // aes[nBlocks].block <== CounterBlocks[nBlocks-1];
+    // component aesCipherToStream = ToStream(1, 16);
+    // aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
 
-    for (var i = 0; i < bytesExcludingLastBlock; i++) {
-        cipherText[i] <== toStream.stream[i];
-    }
+    // // XOR the cipher with the last chunk of unpadded plaintext
+    // component addLastCipher = XorMultiple(2, lastBlockSize);
+    // for (var i = 0; i < lastBlockSize; i++) {
+    //     // convert cipher to stream
+    //     addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
+    //     addLastCipher.inputs[1][i] <== plainText[bytesExcludingLastBlock + i];
+    // }
 
-    for (var i = 0; i < lastBlockSize; i++) {
-        cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
-    }
+    // for (var i = 0; i < bytesExcludingLastBlock; i++) {
+    //     cipherText[i] <== toStream.stream[i];
+    // }
+
+    // for (var i = 0; i < lastBlockSize; i++) {
+    //     cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
+    // }
 }

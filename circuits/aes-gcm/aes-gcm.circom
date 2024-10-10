@@ -30,8 +30,8 @@ template AESGCM(l) {
     signal input aad[16]; // AAD length is 128 bits (16 bytes)
 
     // Outputs
-    // signal output cipherText[l];
-    // signal output authTag[16]; //   Authentication tag length is 128 bits (16 bytes)
+    signal output cipherText[l];
+    signal output authTag[16]; //   Authentication tag length is 128 bits (16 bytes)
 
     component zeroBlock = ToBlocks(16);
     for (var i = 0; i < 16; i++) {
@@ -43,126 +43,128 @@ template AESGCM(l) {
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
-    // // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
-    // // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
-    // component J0builder = ToBlocks(16);
-    // for (var i = 0; i < 12; i++) {
-    //     J0builder.stream[i] <== iv[i];
-    // }
-    // for (var i = 12; i < 16; i++) {
-    //     J0builder.stream[i] <== 0;
-    // }
-    // component J0WordIncrementer = IncrementWord();
-    // J0WordIncrementer.in <== J0builder.blocks[0][3];
+    // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
+    // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
+    component J0builder = ToBlocks(16);
+    for (var i = 0; i < 12; i++) {
+        J0builder.stream[i] <== iv[i];
+    }
+    for (var i = 12; i < 16; i++) {
+        J0builder.stream[i] <== 0;
+    }
+    component J0WordIncrementer = IncrementWord();
+    J0WordIncrementer.in <== J0builder.blocks[0][3];
 
-    // component J0WordIncrementer2 = IncrementWord();
-    // J0WordIncrementer2.in <== J0WordIncrementer.out;
+    component J0WordIncrementer2 = IncrementWord();
+    J0WordIncrementer2.in <== J0WordIncrementer.out;
 
-    // signal J0[4][4];
-    // for (var i = 0; i < 3; i++) {
-    //     J0[i] <== J0builder.blocks[0][i];
-    // }
-    // J0[3] <== J0WordIncrementer2.out;
+    signal J0[4][4];
+    for (var i = 0; i < 3; i++) {
+        J0[i] <== J0builder.blocks[0][i];
+    }
+    J0[3] <== J0WordIncrementer2.out;
 
-    // // Step 3: Let C = GCTRK(inc32(J0), P)
-    // component gctr = GCTR(l, 4);
-    // gctr.key <== key;
-    // gctr.initialCounterBlock <== J0;
-    // gctr.plainText <== plainText;
+    // Step 3: Let C = GCTRK(inc32(J0), P)
+    component gctr = GCTR(l);
+    gctr.key <== key;
+    gctr.initialCounterBlock <== J0;
+    gctr.plainText <== plainText;
 
-    // // Step 4: Let u and v
-    // var u = 128 * (l \ 128) - l;
-    // // when we handle dynamic aad lengths, we'll need to change this
-    // var v = 0;
 
-    // var blockCount = l\16;
-    // if(l%16 > 0){
-    //     blockCount = blockCount + 1;
-    // }
-    // var ghashblocks = 1 + blockCount + 1; // blocksize is 16 bytes
+// TODO: Worked through step 3
+    // Step 4: Let u and v
+    var u = 128 * (l \ 128) - l;
+    // when we handle dynamic aad lengths, we'll need to change this
+    var v = 0;
 
-    // //
-    // // A => 1 => length of AAD (always at most 128 bits)
-    // // 0^v => padding bytes, none for v
-    // // C => l\16+1 => number of ciphertext blocks
-    // // 0^u => padding bytes, u value
-    // // len(A) => u64
-    // // len(b) => u64 (together, 1 block)
-    // //
-    // signal ghashMessage[ghashblocks][4][4];
+    var blockCount = l\16;
+    if(l%16 > 0){
+        blockCount = blockCount + 1;
+    }
+    var ghashblocks = 1 + blockCount + 1; // blocksize is 16 bytes
 
-    // // set aad as first block
-    // for (var i=0; i < 4; i++) {
-    //     for (var j=0; j < 4; j++) {
-    //         ghashMessage[0][i][j] <== aad[i*4+j];
-    //     }
-    // }
-    // // set cipher text block padded
-    // component ciphertextBlocks = ToBlocks(l);
-    // ciphertextBlocks.stream <== gctr.cipherText;
+    //
+    // A => 1 => length of AAD (always at most 128 bits)
+    // 0^v => padding bytes, none for v
+    // C => l\16+1 => number of ciphertext blocks
+    // 0^u => padding bytes, u value
+    // len(A) => u64
+    // len(b) => u64 (together, 1 block)
+    //
+    signal ghashMessage[ghashblocks][4][4];
 
-    // for (var i=0; i<blockCount; i++) {
-    //     ghashMessage[i+1] <== ciphertextBlocks.blocks[i];
-    // }
+    // set aad as first block
+    for (var i=0; i < 4; i++) {
+        for (var j=0; j < 4; j++) {
+            ghashMessage[0][i][j] <== aad[i*4+j];
+        }
+    }
+    // set cipher text block padded
+    component ciphertextBlocks = ToBlocks(l);
+    ciphertextBlocks.stream <== gctr.cipherText;
 
-    // // length of aad = 128 = 0x80 as 64 bit number
-    // ghashMessage[ghashblocks-1][0] <== [0x00, 0x00, 0x00, 0x00];
-    // ghashMessage[ghashblocks-1][1] <== [0x00, 0x00, 0x00, 0x80];
+    for (var i=0; i<blockCount; i++) {
+        ghashMessage[i+1] <== ciphertextBlocks.blocks[i];
+    }
 
-    // // TODO: constrain len to be u64 range.
-    // var len = blockCount * 128;
-    // for (var i=0; i<8; i++) {
-    //     var byte_value = 0;
-    //     for (var j=0; j<8; j++) {
-    //         byte_value += (len >> i*8+j) & 1;
-    //     }
-    //     ghashMessage[ghashblocks-1][i\4+2][i%4] <== byte_value;
-    // }
+    // length of aad = 128 = 0x80 as 64 bit number
+    ghashMessage[ghashblocks-1][0] <== [0x00, 0x00, 0x00, 0x00];
+    ghashMessage[ghashblocks-1][1] <== [0x00, 0x00, 0x00, 0x80];
 
-    // // Step 5: Define a block, S
-    // // needs to take in the number of blocks
-    // component ghash = GHASH(ghashblocks);
-    // component hashKeyToStream = ToStream(1, 16);
-    // hashKeyToStream.blocks[0] <== cipherH.cipher;
-    // ghash.HashKey <== hashKeyToStream.stream;
-    // // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    // component selectedBlocksToStream[ghashblocks];
-    // for (var i = 0 ; i<ghashblocks ; i++) {
-    //     ghash.msg[i] <== ToStream(1, 16)([ghashMessage[i]]);
-    // }
-    // // ghash.msg <== msgToStream.stream;
-    // // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
-    // // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
-    // // size. The concatenation of these strings is appended with the 64-bit representations of the
-    // // lengths of the AAD and the ciphertext, and the GHASH function is applied to the result to
-    // // produce a single output block.
+    // TODO: constrain len to be u64 range.
+    var len = blockCount * 128;
+    for (var i=0; i<8; i++) {
+        var byte_value = 0;
+        for (var j=0; j<8; j++) {
+            byte_value += (len >> i*8+j) & 1;
+        }
+        ghashMessage[ghashblocks-1][i\4+2][i%4] <== byte_value;
+    }
 
-    // // TODO: Check the endianness
-    // // TODO: this is underconstrained too
-    // // log("ghash bytes"); // BUG: Currently 0.
-    // signal bytes[16];
-    // signal tagBytes[16 * 8] <== BytesToBits(16)(ghash.tag);
-    // for(var i = 0; i < 16; i++) {
-    //     var byteValue = 0;
-    //     var sum=1;
-    //     for(var j = 0; j<8; j++) {
-    //         var bitIndex = i*8+j;
-    //         byteValue += tagBytes[bitIndex]*sum;
-    //         sum = sum*sum;
-    //     }
-    //     // log(byteValue);
-    //     bytes[i] <== byteValue;
-    // }
-    // // log("end ghash bytes");
+    // Step 5: Define a block, S
+    // needs to take in the number of blocks
+    component ghash = GHASH(ghashblocks);
+    component hashKeyToStream = ToStream(1, 16);
+    hashKeyToStream.blocks[0] <== cipherH.cipher;
+    ghash.HashKey <== hashKeyToStream.stream;
+    // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
+    component selectedBlocksToStream[ghashblocks];
+    for (var i = 0 ; i<ghashblocks ; i++) {
+        ghash.msg[i] <== ToStream(1, 16)([ghashMessage[i]]);
+    }
+    // ghash.msg <== msgToStream.stream;
+    // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
+    // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
+    // size. The concatenation of these strings is appended with the 64-bit representations of the
+    // lengths of the AAD and the ciphertext, and the GHASH function is applied to the result to
+    // produce a single output block.
 
-    // // Step 6: Let T = MSBt(GCTRK(J0, S))
-    // component gctrT = GCTR(16, 4);
-    // gctrT.key <== key;
-    // gctrT.initialCounterBlock <== J0;
-    // gctrT.plainText <== bytes;
+    // TODO: Check the endianness
+    // TODO: this is underconstrained too
+    // log("ghash bytes"); // BUG: Currently 0.
+    signal bytes[16];
+    signal tagBytes[16 * 8] <== BytesToBits(16)(ghash.tag);
+    for(var i = 0; i < 16; i++) {
+        var byteValue = 0;
+        var sum=1;
+        for(var j = 0; j<8; j++) {
+            var bitIndex = i*8+j;
+            byteValue += tagBytes[bitIndex]*sum;
+            sum = sum*sum;
+        }
+        // log(byteValue);
+        bytes[i] <== byteValue;
+    }
+    // log("end ghash bytes");
 
-    // authTag <== gctrT.cipherText;
-    // cipherText <== gctr.cipherText;
+    // Step 6: Let T = MSBt(GCTRK(J0, S))
+    component gctrT = GCTR(16);
+    gctrT.key <== key;
+    gctrT.initialCounterBlock <== J0;
+    gctrT.plainText <== bytes;
+
+    authTag <== gctrT.cipherText;
+    cipherText <== gctr.cipherText;
 }
 
 component main = AESGCM(128);

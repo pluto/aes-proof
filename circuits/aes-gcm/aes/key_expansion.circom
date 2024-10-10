@@ -49,71 +49,71 @@ template KeyExpansion() {
 
     signal output keyExpanded[44][4];
 
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 44; i++) {
         for (var j = 0; j < 4; j++) {
             keyExpanded[i][j] <== 0; //key[(4 * i) + j];
         }
     }
 
-    component nextRound[10];
+//     component nextRound[10];
 
-    signal preKey[10][4][4];
-    signal nextKey[10][4][4];
-    component xorWord[10][5];
-    component rcon[10];
-    component rotateWord[10];
-    component substituteWord[10][2];
+//     signal preKey[10][4][4];
+//     signal nextKey[10][4][4];
+//     component xorWord[10][5];
+//     component rcon[10];
+//     component rotateWord[10];
+//     component substituteWord[10][2];
 
-    for (var round = 1; round <= 10; round++) {
-        // var outputWordLen = round == 10 ? 4 : nk;
-        // nextRound[round - 1] = NextRound(round);
+//     for (var round = 1; round <= 10; round++) {
+//         // var outputWordLen = round == 10 ? 4 : nk;
+//         // nextRound[round - 1] = NextRound(round);
 
-        // get the previous key
-        for (var i = 0; i < 4; i++) {
-            for (var j = 0; j < 4; j++) {
-                preKey[round-1][i][j] <== keyExpanded[(round * 4) + i - 4][j];
-            }
-        }
-// ------------------------------------// ------------------------------------
-        // rot the word
-        rotateWord[round - 1] = Rotate(1, 4);
-        for (var i = 0; i < 4; i++) {
-            rotateWord[round - 1].bytes[i] <== preKey[round - 1][4 - 1][i];
-        }
-        // sub the word
-        substituteWord[round - 1][0] = SubstituteWord();
-        substituteWord[round - 1][0].bytes <== rotateWord[round - 1].rotated;
+//         // get the previous key
+//         for (var i = 0; i < 4; i++) {
+//             for (var j = 0; j < 4; j++) {
+//                 preKey[round-1][i][j] <== keyExpanded[(round * 4) + i - 4][j];
+//             }
+//         }
+// // ------------------------------------// ------------------------------------
+//         // rot the word
+//         rotateWord[round - 1] = Rotate(1, 4);
+//         for (var i = 0; i < 4; i++) {
+//             rotateWord[round - 1].bytes[i] <== preKey[round - 1][4 - 1][i];
+//         }
+//         // sub the word
+//         substituteWord[round - 1][0] = SubstituteWord();
+//         substituteWord[round - 1][0].bytes <== rotateWord[round - 1].rotated;
 
-        // get the rcon
-        rcon[round - 1] = RCon(round);
+//         // get the rcon
+//         rcon[round - 1] = RCon(round);
 
-        // xor the rcon with the substituted word
-        xorWord[round - 1][0] = XorWord();
-        xorWord[round - 1][0].bytes1 <== substituteWord[round - 1][0].substituted;
-        xorWord[round - 1][0].bytes2 <== rcon[round - 1].out;
+//         // xor the rcon with the substituted word
+//         xorWord[round - 1][0] = XorWord();
+//         xorWord[round - 1][0].bytes1 <== substituteWord[round - 1][0].substituted;
+//         xorWord[round - 1][0].bytes2 <== rcon[round - 1].out;
 
 
-        for (var i = 0; i < 4; i++) {
-            xorWord[round - 1][i+1] = XorWord();
-            if (i == 0) {
-                xorWord[round - 1][i+1].bytes1 <== xorWord[round - 1][0].out;
-            } else {
-                xorWord[round - 1][i+1].bytes1 <== nextKey[round - 1][i-1];
-            }
-            xorWord[round - 1][i+1].bytes2 <== preKey[round - 1][i];
+//         for (var i = 0; i < 4; i++) {
+//             xorWord[round - 1][i+1] = XorWord();
+//             if (i == 0) {
+//                 xorWord[round - 1][i+1].bytes1 <== xorWord[round - 1][0].out;
+//             } else {
+//                 xorWord[round - 1][i+1].bytes1 <== nextKey[round - 1][i-1];
+//             }
+//             xorWord[round - 1][i+1].bytes2 <== preKey[round - 1][i];
 
-            for (var j = 0; j < 4; j++) {
-                nextKey[round - 1][i][j] <== xorWord[round - 1][i+1].out[j];
-            }
-        }
+//             for (var j = 0; j < 4; j++) {
+//                 nextKey[round - 1][i][j] <== xorWord[round - 1][i+1].out[j];
+//             }
+//         }
 
-        // set the next key
-        for (var i = 0; i < 4; i++) {
-            for (var j = 0; j < 4; j++) {
-                keyExpanded[(round * 4) + i][j] <== nextKey[round-1][i][j];
-            }
-        }
-    }
+//         // set the next key
+//         for (var i = 0; i < 4; i++) {
+//             for (var j = 0; j < 4; j++) {
+//                 keyExpanded[(round * 4) + i][j] <== nextKey[round-1][i][j];
+//             }
+//         }
+//     }
 }
 
 // @param nk: number of keys which can be 4, 6, 8
