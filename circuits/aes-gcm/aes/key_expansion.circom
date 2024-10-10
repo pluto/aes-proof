@@ -50,30 +50,30 @@ template KeyExpansion(nk,nr) {
 
     signal output keyExpanded[totalWords][4];
 
-    for (var i = 0; i < nk; i++) {
+    for (var i = 0; i < totalWords; i++) {
         for (var j = 0; j < 4; j++) {
-            keyExpanded[i][j] <== key[(4 * i) + j];
+            keyExpanded[i][j] <== 0; //key[(4 * i) + j];
         }
     }
 
-    component nextRound[effectiveRounds];
+    // component nextRound[effectiveRounds];
 
-    for (var round = 1; round <= effectiveRounds; round++) {
-        var outputWordLen = round == effectiveRounds ? 4 : nk;
-        nextRound[round - 1] = NextRound(nk, outputWordLen, round);
+    // for (var round = 1; round <= effectiveRounds; round++) {
+    //     var outputWordLen = round == effectiveRounds ? 4 : nk;
+    //     nextRound[round - 1] = NextRound(nk, outputWordLen, round);
 
-        for (var i = 0; i < nk; i++) {
-            for (var j = 0; j < 4; j++) {
-                nextRound[round - 1].key[i][j] <== keyExpanded[(round * nk) + i - nk][j];
-            }
-        }
+    //     for (var i = 0; i < nk; i++) {
+    //         for (var j = 0; j < 4; j++) {
+    //             nextRound[round - 1].key[i][j] <== keyExpanded[(round * nk) + i - nk][j];
+    //         }
+    //     }
 
-        for (var i = 0; i < outputWordLen; i++) {
-            for (var j = 0; j < 4; j++) {
-                keyExpanded[(round * nk) + i][j] <== nextRound[round - 1].nextKey[i][j];
-            }
-        }
-    }
+    //     for (var i = 0; i < outputWordLen; i++) {
+    //         for (var j = 0; j < 4; j++) {
+    //             keyExpanded[(round * nk) + i][j] <== nextRound[round - 1].nextKey[i][j];
+    //         }
+    //     }
+    // }
 }
 
 // @param nk: number of keys which can be 4, 6, 8
@@ -82,39 +82,46 @@ template NextRound(nk, o, round){
     signal input key[nk][4];
     signal output nextKey[o][4];
 
-    component rotateWord = Rotate(1, 4);
-    for (var i = 0; i < 4; i++) {
-        rotateWord.bytes[i] <== key[nk - 1][i];
-    }
-
-    component substituteWord[2];
-    substituteWord[0] = SubstituteWord();
-    substituteWord[0].bytes <== rotateWord.rotated;
-
-    component rcon = RCon(round);
-
-    component xorWord[o + 1];
-    xorWord[0] = XorWord();
-    xorWord[0].bytes1 <== substituteWord[0].substituted;
-    xorWord[0].bytes2 <== rcon.out;
 
     for (var i = 0; i < o; i++) {
-        xorWord[i+1] = XorWord();
-        if (i == 0) {
-            xorWord[i+1].bytes1 <== xorWord[0].out;
-        } else if(nk == 8 && i == 4) {
-            substituteWord[1] = SubstituteWord();
-            substituteWord[1].bytes <== nextKey[i - 1];
-            xorWord[i+1].bytes1 <== substituteWord[1].substituted;
-        } else {
-            xorWord[i+1].bytes1 <== nextKey[i-1];
-        }
-        xorWord[i+1].bytes2 <== key[i];
-
-        for (var j = 0; j < 4; j++) {
-            nextKey[i][j] <== xorWord[i+1].out[j];
+        for (var j = 0; j<4; j++) {
+            nextKey[i][j] <== 0;
         }
     }
+
+    // component rotateWord = Rotate(1, 4);
+    // for (var i = 0; i < 4; i++) {
+    //     rotateWord.bytes[i] <== key[nk - 1][i];
+    // }
+
+    // component substituteWord[2];
+    // substituteWord[0] = SubstituteWord();
+    // substituteWord[0].bytes <== rotateWord.rotated;
+
+    // component rcon = RCon(round);
+
+    // component xorWord[o + 1];
+    // xorWord[0] = XorWord();
+    // xorWord[0].bytes1 <== substituteWord[0].substituted;
+    // xorWord[0].bytes2 <== rcon.out;
+
+    // for (var i = 0; i < o; i++) {
+    //     xorWord[i+1] = XorWord();
+    //     if (i == 0) {
+    //         xorWord[i+1].bytes1 <== xorWord[0].out;
+    //     } else if(nk == 8 && i == 4) {
+    //         substituteWord[1] = SubstituteWord();
+    //         substituteWord[1].bytes <== nextKey[i - 1];
+    //         xorWord[i+1].bytes1 <== substituteWord[1].substituted;
+    //     } else {
+    //         xorWord[i+1].bytes1 <== nextKey[i-1];
+    //     }
+    //     xorWord[i+1].bytes2 <== key[i];
+
+    //     for (var j = 0; j < 4; j++) {
+    //         nextKey[i][j] <== xorWord[i+1].out[j];
+    //     }
+    // }
 }
 
 

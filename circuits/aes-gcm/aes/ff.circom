@@ -132,7 +132,7 @@ template FieldInv() {
                     0x5b, 0x23, 0x38, 0x34, 0x68, 0x46, 0x03, 0x8c, 0xdd, 0x9c, 0x7d, 0xa0, 0xcd, 0x1a, 0x41, 0x1c];
 
     // Obtain an unchecked result from a lookup table
-    out <-- inv[in];
+    out <== 0;
     // Compute the product of the input and output, expected to be 1
     signal checkRes <== FieldMul()(in, out);
     // For the special case when the input is 0, both input and output should be 0
