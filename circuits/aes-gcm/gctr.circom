@@ -76,28 +76,28 @@ template GCTR(INPUT_LEN) {
         CounterBlocks[i][3] <== inc32[i - 1].out;
     }
 
-    // // Convert blocks of 16 bytes to stream
-    // component toStream = ToStream(nBlocks, bytesExcludingLastBlock);
-    // // Step 2: Encrypt each counter block with the key
-    // component aes[nBlocks+1]; // +1 for the last block
-    // component AddCipher[nBlocks];
+    // Convert blocks of 16 bytes to stream
+    component toStream = ToStream(nBlocks, bytesExcludingLastBlock);
+    // Step 2: Encrypt each counter block with the key
+    component aes[nBlocks+1]; // +1 for the last block
+    component AddCipher[nBlocks];
 
-    // // NOTE: All this code does for one block is encrypt and xor, 
-    // // which is identical to CTR. 
-    // for (var i = 0; i < nBlocks; i++) {
-    //     // encrypt counter block
-    //     aes[i] = Cipher();
-    //     aes[i].key <== key;
-    //     aes[i].block <== CounterBlocks[i];
+    // NOTE: All this code does for one block is encrypt and xor, 
+    // which is identical to CTR. 
+    for (var i = 0; i < nBlocks; i++) {
+        // encrypt counter block
+        aes[i] = Cipher();
+        aes[i].key <== key;
+        aes[i].block <== CounterBlocks[i];
 
-    //     // XOR cipher text with input block
-    //     AddCipher[i] = AddCipher();    
-    //     AddCipher[i].state <== plainTextBlocks.blocks[i];
-    //     AddCipher[i].cipher <== aes[i].cipher;
+        // XOR cipher text with input block
+        AddCipher[i] = AddCipher();    
+        AddCipher[i].state <== plainTextBlocks.blocks[i];
+        AddCipher[i].cipher <== aes[i].cipher;
 
-    //     // set output block
-    //     toStream.blocks[i] <== AddCipher[i].newState;
-    // }
+        // set output block
+        toStream.blocks[i] <== AddCipher[i].newState;
+    }
 
     // Step 3: Handle the last block separately
     // Y* = X* ⊕ MSBlen(X*) (CIPH_K (CB_n*))
