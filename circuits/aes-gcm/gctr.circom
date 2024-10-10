@@ -86,7 +86,7 @@ template GCTR(INPUT_LEN, nk) {
     // which is identical to CTR. 
     for (var i = 0; i < nBlocks; i++) {
         // encrypt counter block
-        aes[i] = Cipher(nk);
+        aes[i] = Cipher();
         aes[i].key <== key;
         aes[i].block <== CounterBlocks[i];
 
@@ -104,7 +104,7 @@ template GCTR(INPUT_LEN, nk) {
 
     // TODO: When we only have one block, this double Cipher's. We shouldnnt do this when l % 16 == 0
     // encrypt the last counter block 
-    aes[nBlocks] = Cipher(nk);
+    aes[nBlocks] = Cipher();
     aes[nBlocks].key <== key;
     aes[nBlocks].block <== CounterBlocks[nBlocks-1];
     component aesCipherToStream = ToStream(1, 16);

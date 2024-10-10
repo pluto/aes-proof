@@ -39,7 +39,7 @@ template AESGCM(l) {
     }
 
     // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(4); // 128-bit key -> 4 32-bit words -> 10 rounds
+    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
