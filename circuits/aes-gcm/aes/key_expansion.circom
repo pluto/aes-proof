@@ -57,55 +57,57 @@ template KeyExpansion() {
 
     component nextRound[10];
 
+    signal preKey[10][4][4];
     signal nextKey[10][4][4];
     component xorWord[10][5];
     component rcon[10];
     component rotateWord[10];
-    component substituteWord[10];
+    component substituteWord[10][2];
 
     for (var round = 1; round <= 10; round++) {
         // var outputWordLen = round == 10 ? 4 : nk;
         // nextRound[round - 1] = NextRound(round);
 
-
-// ------------------------------------// ------------------------------------
-
-        rotateWord[round] = Rotate(1, 4);
-    for (var i = 0; i < 4; i++) {
-        rotateWord.bytes[i] <== key[4 - 1][i];
-    }
-
-    substituteWord[round] = SubstituteWord();
-    substituteWord[round].bytes <== rotateWord.rotated;
-
-    rcon[round] = RCon(round);
-
-    // component xorWord[4 + 1];
-    xorWord[round][0] = XorWord();
-    xorWord[round][0].bytes1 <== substituteWord[round].substituted;
-    xorWord[round][0].bytes2 <== rcon[round].out;
-
-    for (var i = 0; i < 4; i++) {
-        xorWord[i+1] = XorWord();
-        if (i == 0) {
-            xorWord[i+1].bytes1 <== xorWord[round][0].out;
-        } else {
-            xorWord[i+1].bytes1 <== nextKey[i-1];
-        }
-        xorWord[i+1].bytes2 <== key[i];
-
-        for (var j = 0; j < 4; j++) {
-            nextKey[round][i][j] <== xorWord[i+1].out[j];
-        }
-    }
-// ------------------------------------// ------------------------------------
-
+        // get the previous key
         for (var i = 0; i < 4; i++) {
             for (var j = 0; j < 4; j++) {
-                key[round-1][i][j] <== keyExpanded[(round * 4) + i - 4][j];
+                preKey[round-1][i][j] <== keyExpanded[(round * 4) + i - 4][j];
+            }
+        }
+// ------------------------------------// ------------------------------------
+        // rot the word
+        rotateWord[round - 1] = Rotate(1, 4);
+        for (var i = 0; i < 4; i++) {
+            rotateWord[round - 1].bytes[i] <== preKey[round - 1][4 - 1][i];
+        }
+        // sub the word
+        substituteWord[round - 1][0] = SubstituteWord();
+        substituteWord[round - 1][0].bytes <== rotateWord[round - 1].rotated;
+
+        // get the rcon
+        rcon[round - 1] = RCon(round);
+
+        // xor the rcon with the substituted word
+        xorWord[round - 1][0] = XorWord();
+        xorWord[round - 1][0].bytes1 <== substituteWord[round - 1][0].substituted;
+        xorWord[round - 1][0].bytes2 <== rcon[round - 1].out;
+
+
+        for (var i = 0; i < 4; i++) {
+            xorWord[round - 1][i+1] = XorWord();
+            if (i == 0) {
+                xorWord[round - 1][i+1].bytes1 <== xorWord[round - 1][0].out;
+            } else {
+                xorWord[round - 1][i+1].bytes1 <== nextKey[round - 1][i-1];
+            }
+            xorWord[round - 1][i+1].bytes2 <== preKey[round - 1][i];
+
+            for (var j = 0; j < 4; j++) {
+                nextKey[round - 1][i][j] <== xorWord[round - 1][i+1].out[j];
             }
         }
 
+        // set the next key
         for (var i = 0; i < 4; i++) {
             for (var j = 0; j < 4; j++) {
                 keyExpanded[(round * 4) + i][j] <== nextKey[round-1][i][j];
@@ -147,10 +149,6 @@ template NextRound(round){
         xorWord[i+1] = XorWord();
         if (i == 0) {
             xorWord[i+1].bytes1 <== xorWord[0].out;
-        } else if(i == 4) {
-            substituteWord[1] = SubstituteWord();
-            substituteWord[1].bytes <== nextKey[i - 1];
-            xorWord[i+1].bytes1 <== substituteWord[1].substituted;
         } else {
             xorWord[i+1].bytes1 <== nextKey[i-1];
         }
