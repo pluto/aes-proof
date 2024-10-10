@@ -46,35 +46,35 @@ template GCTR(INPUT_LEN) {
     var bytesExcludingLastBlock = 16 * (nBlocks);
     assert(INPUT_LEN == nBlocks * 16 + lastBlockSize);
 
-    // generate plaintext blocks
-    // note to not use the last block of plaintext
-    // because it will be padded by the toBlocks components
-    component plainTextBlocks = ToBlocks(INPUT_LEN);
-    plainTextBlocks.stream <== plainText;
+    // // generate plaintext blocks
+    // // note to not use the last block of plaintext
+    // // because it will be padded by the toBlocks components
+    // component plainTextBlocks = ToBlocks(INPUT_LEN);
+    // plainTextBlocks.stream <== plainText;
 
-    // Step 1: Generate counter blocks
-    signal CounterBlocks[nBlocks][4][4];
-    CounterBlocks[0] <== initialCounterBlock;
+    // // Step 1: Generate counter blocks
+    // signal CounterBlocks[nBlocks][4][4];
+    // CounterBlocks[0] <== initialCounterBlock;
 
-    // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
-    // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
-    //
-    // component to increment the last word of the counter block
-    component inc32[nBlocks];
-    // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
+    // // First counter block is passed in, as a combination of the IV right padded with zeros IV is 96 bits or 12 bytes
+    // // The next counter needs to be set by incrementing the right most 32 bits (4 bytes) of the previous counter block
+    // //
+    // // component to increment the last word of the counter block
+    // component inc32[nBlocks];
+    // // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
 
-    // TODO: Actually test me on a block larger than 16 bytes. 
-    for (var i = 1; i < nBlocks; i++) {
-        inc32[i] = IncrementWord();
-        inc32[i].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
+    // // TODO: Actually test me on a block larger than 16 bytes. 
+    // for (var i = 1; i < nBlocks; i++) {
+    //     inc32[i] = IncrementWord();
+    //     inc32[i].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
 
-        // copy the previous 12 bytes of the counter block
-        for (var j = 0; j < 3; j++) {
-            CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
-        }
-        // should write the last 4 bytes of the incremented word
-        CounterBlocks[i][3] <== inc32[i].out;
-    }
+    //     // copy the previous 12 bytes of the counter block
+    //     for (var j = 0; j < 3; j++) {
+    //         CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
+    //     }
+    //     // should write the last 4 bytes of the incremented word
+    //     CounterBlocks[i][3] <== inc32[i].out;
+    // }
 
     // Convert blocks of 16 bytes to stream
     // component toStream = ToStream(nBlocks, bytesExcludingLastBlock);

@@ -49,7 +49,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     }
 
     // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(4); // 128-bit key -> 4 32-bit words -> 10 rounds
+    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
@@ -75,7 +75,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     J0[3] <== J0WordIncrementer.out;
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
-    component gctr = GCTR(l, 4);
+    component gctr = GCTR(l);
     gctr.key <== key;
     gctr.initialCounterBlock <== J0;
     gctr.plainText <== plainText;
@@ -136,7 +136,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     }
 
     // Step 6: Encrypt the tag. Let T = MSBt(GCTRK(J0, S))
-    component gctrT = GCTR(16, 4);
+    component gctrT = GCTR(16);
     gctrT.key <== key;
     gctrT.initialCounterBlock <== StartJ0.blocks[0];
     gctrT.plainText <== selectTag.tag;

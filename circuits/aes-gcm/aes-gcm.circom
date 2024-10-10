@@ -167,4 +167,4 @@ template AESGCM(l) {
     cipherText <== gctr.cipherText;
 }
 
-component main = AESGCM(128);
+component main = AESGCM(32);
