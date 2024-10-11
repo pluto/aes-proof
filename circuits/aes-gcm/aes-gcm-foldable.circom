@@ -89,15 +89,16 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
     // 
-    var blockCount = l\16 + (l%16 > 0 ? 1 : 0); // blocksize is 16 bytes
+    var blockCount  = l\16 + (l%16 > 0 ? 1 : 0); // blocksize is 16 bytes
     var ghashBlocks = 1 + blockCount + 1; 
 
-    component targetMode = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
+    component targetMode    = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
     targetMode.foldedBlocks <== foldedBlocks;
 
+    // TODO THIS BLOCK IS PROBLEM CHILD SO FAR
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, TOTAL_BLOCKS);
-    selectedBlocks.aad <== aad;
+    selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
     selectedBlocks.targetMode <== targetMode.mode;
 
@@ -171,30 +172,30 @@ template SelectGhashBlocks(l, ghashBlocks, totalBlocks) {
     signal targetBlocks[3][ghashBlocks*4*4];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start = GhashStartMode(l, totalBlocks, ghashBlocks);
-    start.aad <== aad;
+    component start  = GhashStartMode(l, totalBlocks, ghashBlocks);
+    start.aad        <== aad;
     start.cipherText <== cipherText;
-    targetBlocks[0] <== start.blocks;
+    targetBlocks[0]  <== start.blocks;
 
-    component stream = GhashStreamMode(l, ghashBlocks);
+    component stream  = GhashStreamMode(l, ghashBlocks);
     stream.cipherText <== cipherText;
-    targetBlocks[1] <== stream.blocks;
+    targetBlocks[1]   <== stream.blocks;
 
-    component end = GhashEndMode(l, totalBlocks, ghashBlocks);
-    end.cipherText <== cipherText;
+    component end   = GhashEndMode(l, totalBlocks, ghashBlocks);
+    end.cipherText  <== cipherText;
     targetBlocks[2] <== end.blocks;
     
     component mapModeToArray = Selector(4);
-    mapModeToArray.in <== modeToBlocks;
-    mapModeToArray.index <== targetMode;
+    mapModeToArray.in        <== modeToBlocks;
+    mapModeToArray.index     <== targetMode;
 
     component chooseBlocks = ArraySelector(3, ghashBlocks*4*4);
-    chooseBlocks.in <== targetBlocks;
-    chooseBlocks.index <== mapModeToArray.out;
+    chooseBlocks.in        <== targetBlocks;
+    chooseBlocks.index     <== mapModeToArray.out;
     
     component toBlocks = ToBlocks(ghashBlocks*4*4);
-    toBlocks.stream <== chooseBlocks.out;
-    blocks <== toBlocks.blocks;
+    toBlocks.stream    <== chooseBlocks.out;
+    blocks             <== toBlocks.blocks;
 }
 
 template SelectGhashTag(ghashBlocks) {
@@ -227,10 +228,17 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     signal input foldedBlocks;
     signal output mode;
 
+    // NOTE: I used equal because it seemed good enough.
     // May need to compute these differently due to foldedBlocks. 
     // i.e. using GT operator, Equal operator, etc. 
+    // component isFinish = IsEqual();
+    // isFinish.in        <== [blocksPerFold, totalBlocks - foldedBlocks];
     signal isFinish <-- (blocksPerFold >= totalBlocks-foldedBlocks) ? 1 : 0;
-    signal isStart <-- (foldedBlocks == 0) ? 1: 0;
+
+    // NOTE: I changed this
+    // component isStart = IsZero();
+    // isStart.in        <== foldedBlocks;
+    signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
     isStart * (isStart - 1) === 0;
@@ -317,9 +325,14 @@ template GhashStreamMode(l, ghashBlocks) {
     }
 }
 
+// TODO: This is the problem
 template GhashEndMode(l, totalBlocks, ghashBlocks) {
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
+
+    // for (var i = 0 ; i < ghashBlocks * 4 * 4 ; i++) {
+    //     blocks[i] <== 0;
+    // }
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
@@ -349,3 +362,6 @@ template GhashEndMode(l, totalBlocks, ghashBlocks) {
     }
     blockIndex+=8;
 } 
+
+
+component main = AESGCMFOLDABLE(16, 0);
