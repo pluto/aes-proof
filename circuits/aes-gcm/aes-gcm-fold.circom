@@ -14,49 +14,37 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
 
     // Output from the last encryption step
     // Always use last bytes for inputs which are not same size.
-    // step_in[0] => lastCounter
-    // step_in[1] => lastTag
-    // step_in[2] => foldedBlocks
-    signal input step_in[48]; 
+    // step_in[0..4]  => lastCounter
+    // step_in[4..20] => lastTag
+    // step_in[20]    => foldedBlocks
+    signal input step_in[21]; 
 
     // For now, attempt to support variable fold size. Potential fix at 16 in the future.
     component aes = AESGCMFOLDABLE(bytesPerFold, totalBytes\16);
-    aes.key <== key;
-    aes.iv <== iv;
-    aes.aad <== aad;
+    aes.key       <== key;
+    aes.iv        <== iv;
+    aes.aad       <== aad;
     aes.plainText <== plainText;
 
     // Fold inputs
-    var inputIndex = bytesPerFold-4;
     for(var i = 0; i < 4; i++) {
-        aes.lastCounter[i] <== step_in[inputIndex];
-        inputIndex+=1;
+        aes.lastCounter[i] <== step_in[i];
     }
-
     for(var i = 0; i < 16; i++) {
-        aes.lastTag[i] <== step_in[inputIndex];
-        inputIndex+=1;
+        aes.lastTag[i] <== step_in[4 + i];
     }
     // TODO: range check, assertions, stuff.
-    inputIndex+=15;
-    aes.foldedBlocks <== step_in[inputIndex];
+    aes.foldedBlocks <== step_in[20];
 
     // Fold Outputs
-    signal output step_out[48];
-    var outputIndex = bytesPerFold-4;
+    signal output step_out[21];
     for(var i = 0; i < 4; i++) {
-        step_out[outputIndex] <== aes.counter[i];
-        outputIndex+=1;
+        step_out[i] <== aes.counter[i];
     }
     for(var i = 0; i < 16; i++) {
-        step_out[outputIndex] <== aes.authTag[i];
-        outputIndex+=1;
+        step_out[4 + i] <== aes.authTag[i];
     }
-    outputIndex+=15;
-    step_out[outputIndex] <== step_in[inputIndex] + bytesPerFold \ 16;
-
-    signal output authTag[16] <== aes.authTag;
-    signal output cipherText[bytesPerFold] <== aes.cipherText;
+    step_out[20] <== step_in[20] + bytesPerFold \ 16;
 }
 
-component main { public [step_in] } = AESGCMFOLD(16, 320);
+component main { public [step_in] } = AESGCMFOLD(16, 32);

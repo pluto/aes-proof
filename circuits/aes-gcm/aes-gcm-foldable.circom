@@ -241,7 +241,7 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
-    isStart * (isStart - 1) === 0;
+    isStart * (isStart - 1)   === 0;
 
     // case isStart && isFinish: START_END_MODE
     // case isStart && !isFinish: START_MODE
@@ -255,9 +255,9 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     choice.s <== [isStart, isFinish];
     
     signal isStartEndMode <== IsEqual()([choice.out, m.START_END_MODE]);
-    signal isStartMode <== IsEqual()([choice.out, m.START_MODE]);
-    signal isStreamMode <== IsEqual()([choice.out, m.STREAM_MODE]);
-    signal isEndMode <== IsEqual()([choice.out, m.END_MODE]);
+    signal isStartMode    <== IsEqual()([choice.out, m.START_MODE]);
+    signal isStreamMode   <== IsEqual()([choice.out, m.STREAM_MODE]);
+    signal isEndMode      <== IsEqual()([choice.out, m.END_MODE]);
 
     isStartEndMode + isStartMode + isStreamMode + isEndMode === 1;
 
@@ -275,6 +275,7 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         blocks[blockIndex] <== aad[i];
         blockIndex += 1;
     }
+    // 16 block indices
 
     // layout blocks of cipherText (l*16 bytes)
     for (var i=0; i<l; i++) {
@@ -282,12 +283,16 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         blockIndex += 1;
     }
 
+    // 16 + l block indices 
+
     // length of aad = 128 = 0x80 as 64 bit number (8 bytes)
     signal lengthData[8] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80];
     for (var i = 0; i<8; i++) {
         blocks[blockIndex] <== lengthData[i];
         blockIndex += 1;
     }
+
+    // 16 + l + 8
 
     // length of blocks as a u64 (8 bytes)
     var len = totalBlocks * 128;
@@ -302,7 +307,8 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         // Insert in reversed (big endian) order. 
         blocks[blockIndex+7-i] <== byteValue;
     }
-    blockIndex+=8;
+    // 16 + l + 8 + 8
+    blockIndex+=8; // TODO: I don't think this does anything
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?
@@ -330,10 +336,6 @@ template GhashEndMode(l, totalBlocks, ghashBlocks) {
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
 
-    // for (var i = 0 ; i < ghashBlocks * 4 * 4 ; i++) {
-    //     blocks[i] <== 0;
-    // }
-
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
     for (var i=0; i<l; i++) {
@@ -360,8 +362,13 @@ template GhashEndMode(l, totalBlocks, ghashBlocks) {
         // Insert in reversed (big endian) order. 
         blocks[blockIndex+7-i] <== byte_value;
     }
-    blockIndex+=8;
+    blockIndex+=8; 
+    // NOTE: Added this so all of blocks is written
+    for (var i = 0; i<16; i++) {
+        blocks[blockIndex] <== 0;
+        blockIndex += 1;
+    }
 } 
 
 
-component main = AESGCMFOLDABLE(16, 0);
+// component main = AESGCMFOLDABLE(16, 0);
