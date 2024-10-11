@@ -111,21 +111,21 @@ template GCTR(INPUT_LEN) {
     aesCipherToStream.blocks[0] <== aes[nBlocks].cipher;
 
     // XOR the cipher with the last chunk of unpadded plaintext
-    // component addLastCipher = XorMultiple(2, lastBlockSize);
-    // for (var i = 0; i < lastBlockSize; i++) {
-    //     // convert cipher to stream
-    //     addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
-    //     addLastCipher.inputs[1][i] <== plainText[bytesExcludingLastBlock + i];
-    // }
+    if (lastBlockSize != 0) {
+
+    component addLastCipher = XorMultiple(2, lastBlockSize);
+        for (var i = 0; i < lastBlockSize; i++) {
+            // convert cipher to stream
+            addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
+            addLastCipher.inputs[1][i] <== plainText[bytesExcludingLastBlock + i];
+        }
+        for (var i = 0; i < lastBlockSize; i++) {
+            cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
+        }
+    }
 
     for (var i = 0; i < bytesExcludingLastBlock; i++) {
         cipherText[i] <== toStream.stream[i];
     }
 
-    // for (var i = 0; i < lastBlockSize; i++) {
-    //     cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
-    // }
-
-
-    // cipherText <== plainText;
 }
