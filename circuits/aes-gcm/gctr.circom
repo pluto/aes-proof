@@ -118,14 +118,14 @@ template GCTR(INPUT_LEN) {
     //     addLastCipher.inputs[1][i] <== plainText[bytesExcludingLastBlock + i];
     // }
 
-    // for (var i = 0; i < bytesExcludingLastBlock; i++) {
-    //     cipherText[i] <== toStream.stream[i];
-    // }
+    for (var i = 0; i < bytesExcludingLastBlock; i++) {
+        cipherText[i] <== toStream.stream[i];
+    }
 
     // for (var i = 0; i < lastBlockSize; i++) {
     //     cipherText[bytesExcludingLastBlock + i] <== addLastCipher.out[i];
     // }
 
 
-    cipherText <== plainText;
+    // cipherText <== plainText;
 }
