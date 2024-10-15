@@ -19,3 +19,21 @@ describe("SBox128", () => {
     });
   });
 });
+
+describe("FieldInv", () => {
+  let circuit: WitnessTester<["in"], ["out"]>;
+
+  before(async () => {
+    circuit = await circomkit.WitnessTester(`FieldInv`, {
+      file: "aes-gcm/aes/ff",
+      template: "FieldInv",
+    });
+    console.log("#constraints:", await circuit.getConstraintCount());
+  });
+
+  it("should compute correctly", async () => {
+    await circuit.expectPass({ in: 0 }, { out: 0x00 });
+    await circuit.expectPass({ in: 34 }, { out: 0x5a });
+    await circuit.expectPass({ in: 253 }, { out: 0x1a });
+  });
+});
