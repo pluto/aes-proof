@@ -105,7 +105,7 @@ template NextRound(){
         [0x1b, 0x00, 0x00, 0x00],
         [0x36, 0x00, 0x00, 0x00]
     ];
-    rcon.index <== round;
+    rcon.index <== round-1;
 
     // var rcon[4] = rcons[round-1];
 

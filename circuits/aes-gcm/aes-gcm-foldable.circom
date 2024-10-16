@@ -368,7 +368,4 @@ template GhashEndMode(l, totalBlocks, ghashBlocks) {
         blocks[blockIndex] <== 0;
         blockIndex += 1;
     }
-} 
-
-
-// component main = AESGCMFOLDABLE(16, 0);
+}

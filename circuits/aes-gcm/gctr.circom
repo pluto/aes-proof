@@ -112,8 +112,7 @@ template GCTR(INPUT_LEN) {
 
     // XOR the cipher with the last chunk of unpadded plaintext
     if (lastBlockSize != 0) {
-
-    component addLastCipher = XorMultiple(2, lastBlockSize);
+        component addLastCipher = XorMultiple(2, lastBlockSize);
         for (var i = 0; i < lastBlockSize; i++) {
             // convert cipher to stream
             addLastCipher.inputs[0][i] <== aesCipherToStream.stream[i];
