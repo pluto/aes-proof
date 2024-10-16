@@ -7,7 +7,6 @@ describe("Cipher", () => {
     circuit = await circomkit.WitnessTester(`Cipher`, {
       file: "aes-gcm/aes/cipher",
       template: "Cipher",
-      params: [4],
     });
     console.log("@Cipher #constraints:", await circuit.getConstraintCount());
 
@@ -39,7 +38,6 @@ describe("Cipher", () => {
     circuit = await circomkit.WitnessTester(`Cipher`, {
       file: "aes-gcm/aes/cipher",
       template: "Cipher",
-      params: [4],
     });
     console.log("@Cipher #constraints:", await circuit.getConstraintCount());
 
@@ -73,7 +71,6 @@ describe("NextRound", () => {
       circuit = await circomkit.WitnessTester(`NextRound_${4}_${4}`, {
         file: "aes-gcm/aes/key_expansion",
         template: "NextRound",
-        params: [4, 4, round],
       });
       console.log("#constraints:", await circuit.getConstraintCount());
     }

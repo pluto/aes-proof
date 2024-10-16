@@ -166,5 +166,3 @@ template AESGCM(l) {
     authTag <== gctrT.cipherText;
     cipherText <== gctr.cipherText;
 }
-
-component main = AESGCM(32);
