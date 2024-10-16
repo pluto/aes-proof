@@ -71,7 +71,6 @@ template AESGCM(l) {
     gctr.plainText <== plainText;
 
 
-// TODO: Worked through step 3
     // Step 4: Let u and v
     var u = 128 * (l \ 128) - l;
     // when we handle dynamic aad lengths, we'll need to change this

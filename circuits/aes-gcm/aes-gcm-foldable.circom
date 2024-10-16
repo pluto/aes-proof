@@ -228,16 +228,9 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     signal input foldedBlocks;
     signal output mode;
 
-    // NOTE: I used equal because it seemed good enough.
     // May need to compute these differently due to foldedBlocks. 
     // i.e. using GT operator, Equal operator, etc. 
-    // component isFinish = IsEqual();
-    // isFinish.in        <== [blocksPerFold, totalBlocks - foldedBlocks];
     signal isFinish <-- (blocksPerFold >= totalBlocks-foldedBlocks) ? 1 : 0;
-
-    // NOTE: I changed this
-    // component isStart = IsZero();
-    // isStart.in        <== foldedBlocks;
     signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
@@ -275,7 +268,6 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         blocks[blockIndex] <== aad[i];
         blockIndex += 1;
     }
-    // 16 block indices
 
     // layout blocks of cipherText (l*16 bytes)
     for (var i=0; i<l; i++) {
@@ -283,16 +275,12 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         blockIndex += 1;
     }
 
-    // 16 + l block indices 
-
     // length of aad = 128 = 0x80 as 64 bit number (8 bytes)
     signal lengthData[8] <== [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80];
     for (var i = 0; i<8; i++) {
         blocks[blockIndex] <== lengthData[i];
         blockIndex += 1;
     }
-
-    // 16 + l + 8
 
     // length of blocks as a u64 (8 bytes)
     var len = totalBlocks * 128;
@@ -331,7 +319,6 @@ template GhashStreamMode(l, ghashBlocks) {
     }
 }
 
-// TODO: This is the problem
 template GhashEndMode(l, totalBlocks, ghashBlocks) {
     signal input cipherText[l];
     signal output blocks[ghashBlocks*4*4];
