@@ -30,27 +30,27 @@ include "mix_columns.circom";
 //                                                                      ▼
 //                                                                 Ciphertext
 
+
 // @param nk: number of keys which can be 4, 6, 8
 // @inputs block: 4x4 matrix representing the input block
 // @inputs key: array of nk*4 bytes representing the key
 // @outputs cipher: 4x4 matrix representing the output block
-template Cipher(nk){
-        assert(nk == 4 || nk == 6 || nk == 8 );
+template Cipher(){
         signal input block[4][4];
-        signal input key[nk * 4];
+        signal input key[16];
         signal output cipher[4][4];
 
-        var nr = Rounds(nk);
+        // var nr = Rounds(nk);
         
-        component keyExpansion = KeyExpansion(nk,nr);
+        component keyExpansion = KeyExpansion();
         keyExpansion.key <== key;
 
-        component addRoundKey[nr+1]; 
-        component subBytes[nr];
-        component shiftRows[nr];
-        component mixColumns[nr-1];
+        component addRoundKey[11]; 
+        component subBytes[10];
+        component shiftRows[10];
+        component mixColumns[9];
 
-        signal interBlock[nr][4][4];
+        signal interBlock[10][4][4];
 
         addRoundKey[0] = AddRoundKey();
         addRoundKey[0].state <== block;
@@ -59,7 +59,7 @@ template Cipher(nk){
         }
 
         interBlock[0] <== addRoundKey[0].newState;
-        for (var i = 1; i < nr; i++) {
+        for (var i = 1; i < 10; i++) {
                 subBytes[i-1] = SubBlock();
                 subBytes[i-1].state <== interBlock[i-1];
 
@@ -78,19 +78,19 @@ template Cipher(nk){
                 interBlock[i] <== addRoundKey[i].newState;
         }
 
-        subBytes[nr-1] = SubBlock();
-        subBytes[nr-1].state <== interBlock[nr-1];
+        subBytes[9] = SubBlock();
+        subBytes[9].state <== interBlock[9];
 
-        shiftRows[nr-1] = ShiftRows();
-        shiftRows[nr-1].state <== subBytes[nr-1].newState;
+        shiftRows[9] = ShiftRows();
+        shiftRows[9].state <== subBytes[9].newState;
 
-        addRoundKey[nr] = AddRoundKey();
-        addRoundKey[nr].state <== shiftRows[nr-1].newState;
+        addRoundKey[10] = AddRoundKey();
+        addRoundKey[10].state <== shiftRows[9].newState;
         for (var i = 0; i < 4; i++) {
-                addRoundKey[nr].roundKey[i] <== keyExpansion.keyExpanded[i + (nr * 4)];
+                addRoundKey[10].roundKey[i] <== keyExpansion.keyExpanded[i + (40)];
         }
 
-        cipher <== addRoundKey[nr].newState;
+        cipher <== addRoundKey[10].newState;
 }
 
 // @param nk: number of keys which can be 4, 6, 8
