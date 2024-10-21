@@ -34,7 +34,7 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
     for(var i = 0; i < 16; i++) {
         aes.lastTag[i] <== step_in[4 + i];
     }
-    // TODO: range check, assertions, stuff.
+    // TODO:tracy range check, assertions, stuff.
     aes.foldedBlocks <== step_in[20];
 
     // Fold Outputs

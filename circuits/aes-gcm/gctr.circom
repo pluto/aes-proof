@@ -31,7 +31,6 @@ include "utils.circom";
 
 
 // We are opperating on 128 bit blocks represented as 16 bytes
-
 template GCTR(INPUT_LEN) {
     signal input key[16];
     signal input initialCounterBlock[4][4];
@@ -63,16 +62,15 @@ template GCTR(INPUT_LEN) {
     component inc32[nBlocks - 1];
     // For i = 2 to nBlocks, let CBi = inc32(CBi-1).
 
-    // TODO: Actually test me on a block larger than 16 bytes. 
     for (var i = 1; i < nBlocks; i++) {
         inc32[i - 1] = IncrementWord();
-        inc32[i - 1].in <== CounterBlocks[i - 1][3]; // idea: use the counterblock here directly so that we don't need to use this toCounterblock thing
+        inc32[i - 1].in <== CounterBlocks[i - 1][3];
 
         // copy the previous 12 bytes of the counter block
         for (var j = 0; j < 3; j++) {
             CounterBlocks[i][j] <== CounterBlocks[i - 1][j];
         }
-        // should write the last 4 bytes of the incremented word
+        // write the last 4 bytes of the incremented word
         CounterBlocks[i][3] <== inc32[i - 1].out;
     }
 
@@ -102,7 +100,6 @@ template GCTR(INPUT_LEN) {
     // Step 3: Handle the last block separately
     // Y* = X* ⊕ MSBlen(X*) (CIPH_K (CB_n*))
 
-    // TODO: When we only have one block, this double Cipher's. We shouldnnt do this when l % 16 == 0
     // encrypt the last counter block 
     aes[nBlocks] = Cipher();
     aes[nBlocks].key <== key;

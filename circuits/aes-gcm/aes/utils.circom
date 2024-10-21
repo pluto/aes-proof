@@ -169,33 +169,3 @@ template AddCipher(){
         }
     }
 }
-
-// converts iv to counter blocks
-// iv is 16 bytes
-// TODO: this is definitely underconstrained
-template GenerateCounterBlocks(n){
-        assert(n < 0xffffffff);
-        signal input iv[16];
-        signal output counterBlocks[n][4][4];
-
-        var ivr[16] = iv;
-
-        component toBlocks[n];
-
-        for (var i = 0; i < n; i++) {
-                toBlocks[i] = ToBlocks(16);
-                toBlocks[i].stream <-- ivr;
-                counterBlocks[i] <== toBlocks[i].blocks[0];
-                ivr[15] = (ivr[15] + 1)%256;
-                if (ivr[15] == 0){
-                        ivr[14] = (ivr[14] + 1)%256;
-                        if (ivr[14] == 0){
-                                ivr[13] = (ivr[13] + 1)%256;
-                                if (ivr[13] == 0){
-                                        ivr[12] = (ivr[12] + 1)%256;
-                                }
-                        }
-                }
-
-        }
-}

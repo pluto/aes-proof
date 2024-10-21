@@ -10,11 +10,6 @@ include "ghash_gmul.circom";
 // Outputs:
 // - `tag` the authentication tag
 //
-// Computes:
-// Y_0 = 0^128
-// Y_{i+1} = (Y_i xor X_{i-1}) * H
-// output: Y_{n+1} where n is the number of blocks.
-// GHASH Process
 //
 //           X1                      X2          ...          XM 
 //           │                       │                        │ 

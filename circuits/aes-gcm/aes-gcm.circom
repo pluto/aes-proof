@@ -38,13 +38,12 @@ template AESGCM(l) {
         zeroBlock.stream[i] <== 0;
     }
 
-    // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
+    // Step 1: Let H = aes(key, zeroBlock)
+    component cipherH = Cipher();
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
     // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
-    // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
     component J0builder = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
         J0builder.stream[i] <== iv[i];
@@ -71,11 +70,8 @@ template AESGCM(l) {
     gctr.plainText <== plainText;
 
 
-    // Step 4: Let u and v
+    // Step 4: Let u and v (v is always zero with out key size and aad length)
     var u = 128 * (l \ 128) - l;
-    // when we handle dynamic aad lengths, we'll need to change this
-    var v = 0;
-
     var blockCount = l\16;
     if(l%16 > 0){
         blockCount = blockCount + 1;
@@ -110,7 +106,6 @@ template AESGCM(l) {
     ghashMessage[ghashblocks-1][0] <== [0x00, 0x00, 0x00, 0x00];
     ghashMessage[ghashblocks-1][1] <== [0x00, 0x00, 0x00, 0x80];
 
-    // TODO: constrain len to be u64 range.
     var len = blockCount * 128;
     for (var i=0; i<8; i++) {
         var byte_value = 0;
@@ -131,16 +126,7 @@ template AESGCM(l) {
     for (var i = 0 ; i<ghashblocks ; i++) {
         ghash.msg[i] <== ToStream(1, 16)([ghashMessage[i]]);
     }
-    // ghash.msg <== msgToStream.stream;
-    // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
-    // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
-    // size. The concatenation of these strings is appended with the 64-bit representations of the
-    // lengths of the AAD and the ciphertext, and the GHASH function is applied to the result to
-    // produce a single output block.
 
-    // TODO: Check the endianness
-    // TODO: this is underconstrained too
-    // log("ghash bytes"); // BUG: Currently 0.
     signal bytes[16];
     signal tagBytes[16 * 8] <== BytesToBits(16)(ghash.tag);
     for(var i = 0; i < 16; i++) {
@@ -151,10 +137,8 @@ template AESGCM(l) {
             byteValue += tagBytes[bitIndex]*sum;
             sum = sum*sum;
         }
-        // log(byteValue);
         bytes[i] <== byteValue;
     }
-    // log("end ghash bytes");
 
     // Step 6: Let T = MSBt(GCTRK(J0, S))
     component gctrT = GCTR(16);

@@ -47,7 +47,6 @@ template GhashMul() {
     signal bitsX[16*8];
     bitsX <== bytesToBits.out;
     for (var i = 0; i < 128; i++) {
-        // log("i*8 + j", i*8 + j);
         // z_i_update
         z_i_update[i] = Z_UPDATE(16);
         z_i_update[i].Z <== Z[i];
