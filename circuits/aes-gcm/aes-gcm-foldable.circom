@@ -49,7 +49,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     }
 
     // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(4); // 128-bit key -> 4 32-bit words -> 10 rounds
+    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
@@ -75,7 +75,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     J0[3] <== J0WordIncrementer.out;
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
-    component gctr = GCTR(l, 4);
+    component gctr = GCTR(l);
     gctr.key <== key;
     gctr.initialCounterBlock <== J0;
     gctr.plainText <== plainText;
@@ -89,15 +89,16 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
     // 
-    var blockCount = l\16 + (l%16 > 0 ? 1 : 0); // blocksize is 16 bytes
+    var blockCount  = l\16 + (l%16 > 0 ? 1 : 0); // blocksize is 16 bytes
     var ghashBlocks = 1 + blockCount + 1; 
 
-    component targetMode = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
+    component targetMode    = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
     targetMode.foldedBlocks <== foldedBlocks;
 
+    // TODO(CR 2024-10-18): THIS BLOCK IS PROBLEM CHILD SO FAR
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, TOTAL_BLOCKS);
-    selectedBlocks.aad <== aad;
+    selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
     selectedBlocks.targetMode <== targetMode.mode;
 
@@ -136,7 +137,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     }
 
     // Step 6: Encrypt the tag. Let T = MSBt(GCTRK(J0, S))
-    component gctrT = GCTR(16, 4);
+    component gctrT = GCTR(16);
     gctrT.key <== key;
     gctrT.initialCounterBlock <== StartJ0.blocks[0];
     gctrT.plainText <== selectTag.tag;
@@ -171,30 +172,30 @@ template SelectGhashBlocks(l, ghashBlocks, totalBlocks) {
     signal targetBlocks[3][ghashBlocks*4*4];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start = GhashStartMode(l, totalBlocks, ghashBlocks);
-    start.aad <== aad;
+    component start  = GhashStartMode(l, totalBlocks, ghashBlocks);
+    start.aad        <== aad;
     start.cipherText <== cipherText;
-    targetBlocks[0] <== start.blocks;
+    targetBlocks[0]  <== start.blocks;
 
-    component stream = GhashStreamMode(l, ghashBlocks);
+    component stream  = GhashStreamMode(l, ghashBlocks);
     stream.cipherText <== cipherText;
-    targetBlocks[1] <== stream.blocks;
+    targetBlocks[1]   <== stream.blocks;
 
-    component end = GhashEndMode(l, totalBlocks, ghashBlocks);
-    end.cipherText <== cipherText;
+    component end   = GhashEndMode(l, totalBlocks, ghashBlocks);
+    end.cipherText  <== cipherText;
     targetBlocks[2] <== end.blocks;
     
     component mapModeToArray = Selector(4);
-    mapModeToArray.in <== modeToBlocks;
-    mapModeToArray.index <== targetMode;
+    mapModeToArray.in        <== modeToBlocks;
+    mapModeToArray.index     <== targetMode;
 
     component chooseBlocks = ArraySelector(3, ghashBlocks*4*4);
-    chooseBlocks.in <== targetBlocks;
-    chooseBlocks.index <== mapModeToArray.out;
+    chooseBlocks.in        <== targetBlocks;
+    chooseBlocks.index     <== mapModeToArray.out;
     
     component toBlocks = ToBlocks(ghashBlocks*4*4);
-    toBlocks.stream <== chooseBlocks.out;
-    blocks <== toBlocks.blocks;
+    toBlocks.stream    <== chooseBlocks.out;
+    blocks             <== toBlocks.blocks;
 }
 
 template SelectGhashTag(ghashBlocks) {
@@ -230,10 +231,10 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     // May need to compute these differently due to foldedBlocks. 
     // i.e. using GT operator, Equal operator, etc. 
     signal isFinish <-- (blocksPerFold >= totalBlocks-foldedBlocks) ? 1 : 0;
-    signal isStart <-- (foldedBlocks == 0) ? 1: 0;
+    signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
-    isStart * (isStart - 1) === 0;
+    isStart * (isStart - 1)   === 0;
 
     // case isStart && isFinish: START_END_MODE
     // case isStart && !isFinish: START_MODE
@@ -247,9 +248,9 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     choice.s <== [isStart, isFinish];
     
     signal isStartEndMode <== IsEqual()([choice.out, m.START_END_MODE]);
-    signal isStartMode <== IsEqual()([choice.out, m.START_MODE]);
-    signal isStreamMode <== IsEqual()([choice.out, m.STREAM_MODE]);
-    signal isEndMode <== IsEqual()([choice.out, m.END_MODE]);
+    signal isStartMode    <== IsEqual()([choice.out, m.START_MODE]);
+    signal isStreamMode   <== IsEqual()([choice.out, m.STREAM_MODE]);
+    signal isEndMode      <== IsEqual()([choice.out, m.END_MODE]);
 
     isStartEndMode + isStartMode + isStreamMode + isEndMode === 1;
 
@@ -294,7 +295,8 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         // Insert in reversed (big endian) order. 
         blocks[blockIndex+7-i] <== byteValue;
     }
-    blockIndex+=8;
+    // 16 + l + 8 + 8
+    blockIndex+=8; // TODO(CR 2024-10-18): I don't think this does anything
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?
@@ -347,5 +349,10 @@ template GhashEndMode(l, totalBlocks, ghashBlocks) {
         // Insert in reversed (big endian) order. 
         blocks[blockIndex+7-i] <== byte_value;
     }
-    blockIndex+=8;
-} 
+    blockIndex+=8; 
+    // NOTE: Added this so all of blocks is written
+    for (var i = 0; i<16; i++) {
+        blocks[blockIndex] <== 0;
+        blockIndex += 1;
+    }
+}

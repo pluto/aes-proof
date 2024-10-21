@@ -39,7 +39,7 @@ template AESGCM(l) {
     }
 
     // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(4); // 128-bit key -> 4 32-bit words -> 10 rounds
+    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
@@ -65,10 +65,11 @@ template AESGCM(l) {
     J0[3] <== J0WordIncrementer2.out;
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
-    component gctr = GCTR(l, 4);
+    component gctr = GCTR(l);
     gctr.key <== key;
     gctr.initialCounterBlock <== J0;
     gctr.plainText <== plainText;
+
 
     // Step 4: Let u and v
     var u = 128 * (l \ 128) - l;
@@ -156,7 +157,7 @@ template AESGCM(l) {
     // log("end ghash bytes");
 
     // Step 6: Let T = MSBt(GCTRK(J0, S))
-    component gctrT = GCTR(16, 4);
+    component gctrT = GCTR(16);
     gctrT.key <== key;
     gctrT.initialCounterBlock <== J0;
     gctrT.plainText <== bytes;
