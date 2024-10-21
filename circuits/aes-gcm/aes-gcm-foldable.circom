@@ -95,7 +95,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     component targetMode    = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
     targetMode.foldedBlocks <== foldedBlocks;
 
-    // TODO THIS BLOCK IS PROBLEM CHILD SO FAR
+    // TODO(CR 2024-10-18): THIS BLOCK IS PROBLEM CHILD SO FAR
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, TOTAL_BLOCKS);
     selectedBlocks.aad        <== aad;
@@ -296,7 +296,7 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
         blocks[blockIndex+7-i] <== byteValue;
     }
     // 16 + l + 8 + 8
-    blockIndex+=8; // TODO: I don't think this does anything
+    blockIndex+=8; // TODO(CR 2024-10-18): I don't think this does anything
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?

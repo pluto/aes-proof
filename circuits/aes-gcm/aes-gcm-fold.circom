@@ -2,6 +2,7 @@ pragma circom 2.1.9;
 
 include "./aes-gcm-foldable.circom";
 
+// Compute AES-GCM 
 template AESGCMFOLD(bytesPerFold, totalBytes) {
     // cannot fold outside chunk boundaries.
     assert(bytesPerFold % 16 == 0);
