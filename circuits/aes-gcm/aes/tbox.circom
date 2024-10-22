@@ -8,10 +8,8 @@ template TBox(index) {
     signal output out;
 
     if (index == 0) {
-        // tbox[0] =>> multiplication by 2
         out <== FieldMul2()(subindex);
     } else if (index == 1) {
-        // tbox[1] =>> multiplication by 3
         out <== FieldMul3()(subindex);
     }
 }

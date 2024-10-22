@@ -9,8 +9,7 @@ include "transformations.circom";
 include "mix_columns.circom";
 
 // Cipher Process
-// nk: number of keys which can be 4, 6, 8
-// AES 128, 192, 256 have 10, 12, 14 rounds.
+// AES 128 keys have 10 rounds.
 // Input Block   Initial Round Key          Round Key             Final Round Key
 //     │                │                       │                       │
 //     ▼                ▼                       ▼                       ▼
@@ -31,16 +30,13 @@ include "mix_columns.circom";
 //                                                                 Ciphertext
 
 
-// @param nk: number of keys which can be 4, 6, 8
 // @inputs block: 4x4 matrix representing the input block
-// @inputs key: array of nk*4 bytes representing the key
+// @inputs key: array of 16 bytes representing the key
 // @outputs cipher: 4x4 matrix representing the output block
 template Cipher(){
         signal input block[4][4];
         signal input key[16];
         signal output cipher[4][4];
-
-        // var nr = Rounds(nk);
         
         component keyExpansion = KeyExpansion();
         keyExpansion.key <== key;
@@ -59,16 +55,21 @@ template Cipher(){
         }
 
         interBlock[0] <== addRoundKey[0].newState;
+        // for each round. 
         for (var i = 1; i < 10; i++) {
+                // SubBytes
                 subBytes[i-1] = SubBlock();
                 subBytes[i-1].state <== interBlock[i-1];
 
+                // ShiftRows
                 shiftRows[i-1] = ShiftRows();
                 shiftRows[i-1].state <== subBytes[i-1].newState;
 
+                // MixColumns
                 mixColumns[i-1] = MixColumns();
                 mixColumns[i-1].state <== shiftRows[i-1].newState;
 
+                // AddRoundKey
                 addRoundKey[i] = AddRoundKey();
                 addRoundKey[i].state <== mixColumns[i-1].out;
                  for (var j = 0; j < 4; j++) {
@@ -78,12 +79,14 @@ template Cipher(){
                 interBlock[i] <== addRoundKey[i].newState;
         }
 
+        // Final SubBytes
         subBytes[9] = SubBlock();
         subBytes[9].state <== interBlock[9];
 
         shiftRows[9] = ShiftRows();
         shiftRows[9].state <== subBytes[9].newState;
 
+        // Final AddRoundKey
         addRoundKey[10] = AddRoundKey();
         addRoundKey[10].state <== shiftRows[9].newState;
         for (var i = 0; i < 4; i++) {
@@ -92,18 +95,3 @@ template Cipher(){
 
         cipher <== addRoundKey[10].newState;
 }
-
-// @param nk: number of keys which can be 4, 6, 8
-// @returns number of rounds
-// AES 128, 192, 256 have 10, 12, 14 rounds.
-function Rounds (nk) {
-    if (nk == 4) {
-       return 10;
-    } else if (nk == 6) {
-        return 12;
-    } else {
-        return 14;
-    }
-}
-
-

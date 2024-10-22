@@ -106,9 +106,6 @@ template NextRound(){
         [0x36, 0x00, 0x00, 0x00]
     ];
     rcon.index <== round-1;
-
-    // var rcon[4] = rcons[round-1];
-
     component xorWord[4 + 1];
     xorWord[0] = XorWord();
     xorWord[0].bytes1 <== substituteWord[0].substituted;

@@ -139,7 +139,6 @@ template ParseBEBitsToBytes(N_BYTES) {
     var N_BITS = N_BYTES * 8;
     signal input in[N_BITS];
     signal output out[N_BYTES];
-    // var temp[8] = [0,0,0,0,0,0,0,0];
 
     // Iterate through the input bits
     signal temp[N_BYTES][8];
