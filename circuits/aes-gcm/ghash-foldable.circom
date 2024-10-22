@@ -29,23 +29,24 @@ include "ghash_gmul.circom";
 //      └─────────┘             └─────────┘              └─────────┘
 // 
 
-template GHASHFOLDABLE(NUM_BLOCKS) {
+// should only fold a single aes block at a time.
+template GHASHFOLDABLE() {
     signal input HashKey[16]; // Hash subkey (128 bits)
-    signal input msg[NUM_BLOCKS][16]; // Input blocks (each 128 bits)
+    signal input msg[3][16]; // Input blocks (each 128 bits)
 
     // folding signals, the last tag. 
     signal input lastTag[16];
-    signal output possibleTags[NUM_BLOCKS][16]; // Output tag (16 bytes)
+    signal output possibleTags[3][16]; // Output tag (16 bytes)
 
     // Intermediate tags
-    signal intermediate[NUM_BLOCKS+1][16];
+    signal intermediate[4][16];
     intermediate[0] <== lastTag;
 
-    component xor[NUM_BLOCKS];
-    component gfmul[NUM_BLOCKS];
+    component xor[3];
+    component gfmul[3];
 
     // Accumulate each block using GHASH multiplication
-    for (var i = 0; i < NUM_BLOCKS; i++) {
+    for (var i = 0; i < 3; i++) {
         xor[i] = XORBLOCK(16);
         gfmul[i] = GhashMul();
 
@@ -63,7 +64,7 @@ template GHASHFOLDABLE(NUM_BLOCKS) {
 
     // For foldable ghash, we must output all intermediates and select the correct one 
     // dependent on where we are in the encryption process. 
-    for (var i = 0; i < NUM_BLOCKS; i++) {
+    for (var i = 0; i < 3; i++) {
         possibleTags[i] <== intermediate[i+1];
     }
 }

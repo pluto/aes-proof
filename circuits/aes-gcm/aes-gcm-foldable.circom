@@ -42,7 +42,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
 
     // Outputs
     signal output cipherText[16];
-    signal output authTag[16]; //   Authentication tag length is 128 bits (16 bytes)
+    signal output authTag[16];
 
     component zeroBlock = ToBlocks(16);
     for (var i = 0; i < 16; i++) {
@@ -87,27 +87,30 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
     // 
+    //  block count is aways 1 when folding a single block. 
     // var blockCount  = 1 + (16%16 > 0 ? 1 : 0); // blocksize is 16 bytes
-    var ghashBlocks = 3; 
+    // var ghashBlocks = 3; // always 3 blocks for single block ?
 
-    component targetMode    = SelectGhashMode(TOTAL_BLOCKS, 1, ghashBlocks);
+    component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
     targetMode.foldedBlocks <== foldedBlocks;
 
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    component selectedBlocks = SelectGhashBlocks(ghashBlocks, TOTAL_BLOCKS);
+    component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
     selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
     selectedBlocks.targetMode <== targetMode.mode;
 
     // Step 5: Define a block, S
-    // TODO: Remove this blocks-to-stream translation by migrating the ghash select
-    // logic to using streams by default. 
-    component ghash = GHASHFOLDABLE(ghashBlocks);
+    component ghash = GHASHFOLDABLE();
     component cipherToStream = ToStream(1, 16);
     cipherToStream.blocks[0] <== cipherH.cipher;
     ghash.HashKey <== cipherToStream.stream;
-    component selectedBlocksToStream[ghashBlocks];
-    for(var i = 0; i < ghashBlocks; i++) {
+
+
+    // TODO: Remove this blocks-to-stream translation by migrating the ghash select
+    // logic to using streams by default. 
+    component selectedBlocksToStream[3];
+    for(var i = 0; i < 3; i++) {
         selectedBlocksToStream[i] = ToStream(1, 16);
         selectedBlocksToStream[i].blocks[0] <== selectedBlocks.blocks[i];
         ghash.msg[i] <== selectedBlocksToStream[i].stream;
@@ -120,11 +123,10 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // lengths of the AAD and the ciphertext, and the GHASH function is applied to the result to
     // produce a single output block.
 
-    component selectTag = SelectGhashTag(ghashBlocks);
+    component selectTag = SelectGhashTag();
     selectTag.possibleTags <== ghash.possibleTags;
     selectTag.targetMode <== targetMode.mode;
 
-    // TODO: Cleanup, in the end always encrypt with 0001.
     component StartJ0 = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
         StartJ0.stream[i] <== iv[i];
@@ -160,25 +162,25 @@ template GhashModes() {
     signal output END_MODE       <== 3;
 }
 
-template SelectGhashBlocks(ghashBlocks, totalBlocks) {
+template SelectGhashBlocks(totalBlocks) {
     signal input aad[16];
     signal input cipherText[16]; 
     signal input targetMode;
-    signal output blocks[ghashBlocks][4][4];
+    signal output blocks[3][4][4];
 
-    signal targetBlocks[3][ghashBlocks*4*4];
+    signal targetBlocks[3][3*4*4];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start  = GhashStartMode(totalBlocks, ghashBlocks);
+    component start  = GhashStartMode(totalBlocks);
     start.aad        <== aad;
     start.cipherText <== cipherText;
     targetBlocks[0]  <== start.blocks;
 
-    component stream  = GhashStreamMode(ghashBlocks);
+    component stream  = GhashStreamMode();
     stream.cipherText <== cipherText;
     targetBlocks[1]   <== stream.blocks;
 
-    component end   = GhashEndMode(totalBlocks, ghashBlocks);
+    component end   = GhashEndMode(totalBlocks);
     end.cipherText  <== cipherText;
     targetBlocks[2] <== end.blocks;
     
@@ -186,21 +188,21 @@ template SelectGhashBlocks(ghashBlocks, totalBlocks) {
     mapModeToArray.in        <== modeToBlocks;
     mapModeToArray.index     <== targetMode;
 
-    component chooseBlocks = ArraySelector(3, ghashBlocks*4*4);
+    component chooseBlocks = ArraySelector(3, 3*4*4);
     chooseBlocks.in        <== targetBlocks;
     chooseBlocks.index     <== mapModeToArray.out;
     
-    component toBlocks = ToBlocks(ghashBlocks*4*4);
+    component toBlocks = ToBlocks(3*4*4);
     toBlocks.stream    <== chooseBlocks.out;
     blocks             <== toBlocks.blocks;
 }
 
-template SelectGhashTag(ghashBlocks) {
-    signal input possibleTags[ghashBlocks][16];
+template SelectGhashTag() {
+    signal input possibleTags[3][16];
     signal input targetMode;
     signal output tag[16];
 
-    // Intermediate tag choosing log
+    // Intermediate tag choosing logic
     // 
     // case 1: If we are in start_mode: Choose ghashblocks-2 (skip end tag)
     // case 2: If we are in start_end_mode: Choose ghashblocks-1 (skip none)
@@ -212,22 +214,22 @@ template SelectGhashTag(ghashBlocks) {
     mapModeToIndex.in <== modeToIndex;
     mapModeToIndex.index <== targetMode;
     
-    signal tagIndex <== ghashBlocks - mapModeToIndex.out;
+    signal tagIndex <== 3 - mapModeToIndex.out;
 
-    component s = ArraySelector(ghashBlocks, 16);
+    component s = ArraySelector(3, 16);
     s.in <== possibleTags;
     s.index <== tagIndex; 
 
     tag <== s.out;
 }
 
-template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
+template SelectGhashMode(totalBlocks) {
     signal input foldedBlocks;
     signal output mode;
 
     // May need to compute these differently due to foldedBlocks. 
     // i.e. using GT operator, Equal operator, etc. 
-    signal isFinish <-- (blocksPerFold >= totalBlocks-foldedBlocks) ? 1 : 0;
+    signal isFinish <-- (1 >= totalBlocks-foldedBlocks) ? 1 : 0;
     signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
@@ -243,21 +245,13 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     component choice = Mux2();
     choice.c <== [m.STREAM_MODE, m.START_MODE, m.END_MODE, m.START_END_MODE];
     choice.s <== [isStart, isFinish];
-    
-    signal isStartEndMode <== IsEqual()([choice.out, m.START_END_MODE]);
-    signal isStartMode    <== IsEqual()([choice.out, m.START_MODE]);
-    signal isStreamMode   <== IsEqual()([choice.out, m.STREAM_MODE]);
-    signal isEndMode      <== IsEqual()([choice.out, m.END_MODE]);
-
-    isStartEndMode + isStartMode + isStreamMode + isEndMode === 1;
-
     mode <== choice.out;
 }
 
-template GhashStartMode(totalBlocks, ghashBlocks) {
+template GhashStartMode(totalBlocks) {
     signal input aad[16];
     signal input cipherText[16];
-    signal output blocks[ghashBlocks*4*4];
+    signal output blocks[3*4*4];
 
     // set aad as first block (16 bytes)
     var blockIndex = 0;
@@ -299,9 +293,9 @@ template GhashStartMode(totalBlocks, ghashBlocks) {
 // TODO: Mildly more efficient if we add this, maybe it's needed?
 // template GhashStartAndEndMode(l, blockCount, ghashBlocks) {}
 
-template GhashStreamMode(ghashBlocks) {
+template GhashStreamMode() {
     signal input cipherText[16];
-    signal output blocks[ghashBlocks*4*4];
+    signal output blocks[3*4*4];
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
@@ -311,14 +305,14 @@ template GhashStreamMode(ghashBlocks) {
     }
     
     // pad remainder 
-    for (var i=blockIndex; i<ghashBlocks*4*4; i++) {
+    for (var i=blockIndex; i<3*4*4; i++) {
         blocks[i] <== 0x00; 
     }
 }
 
-template GhashEndMode(totalBlocks, ghashBlocks) {
+template GhashEndMode(totalBlocks) {
     signal input cipherText[16];
-    signal output blocks[ghashBlocks*4*4];
+    signal output blocks[3*4*4];
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)

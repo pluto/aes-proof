@@ -5,7 +5,6 @@ include "./aes-gcm-foldable.circom";
 // Compute AES-GCM 
 template AESGCMFOLD(totalBytes) {
     // cannot fold outside chunk boundaries.
-    // assert(bytesPerFold % 16 == 0);
     assert(totalBytes % 16 == 0);
 
     signal input key[16];
@@ -20,6 +19,7 @@ template AESGCMFOLD(totalBytes) {
     // step_in[20]    => foldedBlocks
     signal input step_in[21]; 
 
+    // pass in number of 16 byte blocks.
     component aes = AESGCMFOLDABLE(totalBytes\16);
     aes.key       <== key;
     aes.iv        <== iv;
