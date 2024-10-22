@@ -55,7 +55,7 @@ template AESGCM(l) {
     J0WordIncrementer.in <== J0builder.blocks[0][3];
 
     component J0WordIncrementer2 = IncrementWord();
-    J0WordIncrementer2.in <== J0WordIncrementer.out;
+    J0WordIncrementer2.in <== J0WordIncrementer.ou
 
     signal J0[4][4];
     for (var i = 0; i < 3; i++) {
@@ -71,7 +71,7 @@ template AESGCM(l) {
 
 
     // Step 4: Let u and v (v is always zero with out key size and aad length)
-    var u = 128 * (l \ 128) - l;
+    // var u = 128 * (l \ 128) - l;
     var blockCount = l\16;
     if(l%16 > 0){
         blockCount = blockCount + 1;

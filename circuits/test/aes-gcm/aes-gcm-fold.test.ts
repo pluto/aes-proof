@@ -17,7 +17,7 @@ describe("aes-gcm-fold", () => {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
             // ciphertext bytes, total bytes => i.e. one fold.
-            params: [16, 16],
+            params: [16],
         });
         console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
@@ -39,7 +39,7 @@ describe("aes-gcm-fold", () => {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
             // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
+            params: [48],
         });
         console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
@@ -63,7 +63,7 @@ describe("aes-gcm-fold", () => {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
             // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
+            params: [48],
         });
         console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
@@ -88,7 +88,7 @@ describe("aes-gcm-fold", () => {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
             // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
+            params: [48],
         });
         console.log("#constraints:", await circuit_one_block.getConstraintCount());
 

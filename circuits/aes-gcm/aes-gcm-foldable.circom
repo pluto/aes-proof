@@ -24,11 +24,12 @@ include "gctr.circom";
 /// cipherText: encrypted ciphertext
 /// authTag: authentication tag
 /// 
-template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
+/// in thoery this should just do a single block,
+template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // Inputs
     signal input key[16]; // 128-bit key
     signal input iv[12]; // IV length is 96 bits (12 bytes)
-    signal input plainText[l];
+    signal input plainText[16]; // only fold 16 bytes at a time.
     signal input aad[16]; // AAD length is 128 bits (16 bytes)
 
     // Fold inputs
@@ -40,7 +41,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     signal output counter[4];      
 
     // Outputs
-    signal output cipherText[l];
+    signal output cipherText[16];
     signal output authTag[16]; //   Authentication tag length is 128 bits (16 bytes)
 
     component zeroBlock = ToBlocks(16);
@@ -48,25 +49,22 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
         zeroBlock.stream[i] <== 0;
     }
 
-    // Step 1: Let H = CIPHK(0128)
-    component cipherH = Cipher(); // 128-bit key -> 4 32-bit words -> 10 rounds
+    // Step 1: Let HashKey = aes(key, zeroBlock)
+    component cipherH = Cipher(); 
     cipherH.key <== key;
     cipherH.block <== zeroBlock.blocks[0];
 
     // Step 2: Define a block, J0 with 96 bits of iv and 32 bits of 0s
-    // you can of the 96bits as a nonce and the 32 bits of 0s as an integer counter
     component J0builder = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
         J0builder.stream[i] <== iv[i];
     }
-    // NOTE: Use the fold counter as input. 
+    // Use the fold counter as input. 
     for (var i = 12; i < 16; i++) {
         J0builder.stream[i] <== lastCounter[i%4]; // initialize to 0001. 
     }
     component J0WordIncrementer = IncrementWord();
     J0WordIncrementer.in <== J0builder.blocks[0][3];
-
-    // NOTE: With folding, start at counter 0001 always, then increment by 1. Same amount of work in every fold.
 
     signal J0[4][4];
     for (var i = 0; i < 3; i++) {
@@ -75,7 +73,7 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     J0[3] <== J0WordIncrementer.out;
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
-    component gctr = GCTR(l);
+    component gctr = GCTR(16);
     gctr.key <== key;
     gctr.initialCounterBlock <== J0;
     gctr.plainText <== plainText;
@@ -89,15 +87,14 @@ template AESGCMFOLDABLE(l, TOTAL_BLOCKS) {
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
     // 
-    var blockCount  = l\16 + (l%16 > 0 ? 1 : 0); // blocksize is 16 bytes
-    var ghashBlocks = 1 + blockCount + 1; 
+    // var blockCount  = 1 + (16%16 > 0 ? 1 : 0); // blocksize is 16 bytes
+    var ghashBlocks = 3; 
 
-    component targetMode    = SelectGhashMode(TOTAL_BLOCKS, blockCount, ghashBlocks);
+    component targetMode    = SelectGhashMode(TOTAL_BLOCKS, 1, ghashBlocks);
     targetMode.foldedBlocks <== foldedBlocks;
 
-    // TODO(CR 2024-10-18): THIS BLOCK IS PROBLEM CHILD SO FAR
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    component selectedBlocks = SelectGhashBlocks(l, ghashBlocks, TOTAL_BLOCKS);
+    component selectedBlocks = SelectGhashBlocks(ghashBlocks, TOTAL_BLOCKS);
     selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
     selectedBlocks.targetMode <== targetMode.mode;
@@ -163,25 +160,25 @@ template GhashModes() {
     signal output END_MODE       <== 3;
 }
 
-template SelectGhashBlocks(l, ghashBlocks, totalBlocks) {
+template SelectGhashBlocks(ghashBlocks, totalBlocks) {
     signal input aad[16];
-    signal input cipherText[l]; 
+    signal input cipherText[16]; 
     signal input targetMode;
     signal output blocks[ghashBlocks][4][4];
 
     signal targetBlocks[3][ghashBlocks*4*4];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start  = GhashStartMode(l, totalBlocks, ghashBlocks);
+    component start  = GhashStartMode(totalBlocks, ghashBlocks);
     start.aad        <== aad;
     start.cipherText <== cipherText;
     targetBlocks[0]  <== start.blocks;
 
-    component stream  = GhashStreamMode(l, ghashBlocks);
+    component stream  = GhashStreamMode(ghashBlocks);
     stream.cipherText <== cipherText;
     targetBlocks[1]   <== stream.blocks;
 
-    component end   = GhashEndMode(l, totalBlocks, ghashBlocks);
+    component end   = GhashEndMode(totalBlocks, ghashBlocks);
     end.cipherText  <== cipherText;
     targetBlocks[2] <== end.blocks;
     
@@ -257,9 +254,9 @@ template SelectGhashMode(totalBlocks, blocksPerFold, ghashBlocks) {
     mode <== choice.out;
 }
 
-template GhashStartMode(l, totalBlocks, ghashBlocks) {
+template GhashStartMode(totalBlocks, ghashBlocks) {
     signal input aad[16];
-    signal input cipherText[l];
+    signal input cipherText[16];
     signal output blocks[ghashBlocks*4*4];
 
     // set aad as first block (16 bytes)
@@ -270,7 +267,7 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
     }
 
     // layout blocks of cipherText (l*16 bytes)
-    for (var i=0; i<l; i++) {
+    for (var i=0; i<16; i++) {
         blocks[blockIndex] <== cipherText[i];
         blockIndex += 1;
     }
@@ -302,13 +299,13 @@ template GhashStartMode(l, totalBlocks, ghashBlocks) {
 // TODO: Mildly more efficient if we add this, maybe it's needed?
 // template GhashStartAndEndMode(l, blockCount, ghashBlocks) {}
 
-template GhashStreamMode(l, ghashBlocks) {
-    signal input cipherText[l];
+template GhashStreamMode(ghashBlocks) {
+    signal input cipherText[16];
     signal output blocks[ghashBlocks*4*4];
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
-    for (var i=0; i<l; i++) {
+    for (var i=0; i<16; i++) {
         blocks[blockIndex] <== cipherText[i];
         blockIndex += 1;
     }
@@ -319,13 +316,13 @@ template GhashStreamMode(l, ghashBlocks) {
     }
 }
 
-template GhashEndMode(l, totalBlocks, ghashBlocks) {
-    signal input cipherText[l];
+template GhashEndMode(totalBlocks, ghashBlocks) {
+    signal input cipherText[16];
     signal output blocks[ghashBlocks*4*4];
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
-    for (var i=0; i<l; i++) {
+    for (var i=0; i<16; i++) {
         blocks[blockIndex] <== cipherText[i];
         blockIndex += 1;
     }

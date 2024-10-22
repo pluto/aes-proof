@@ -3,15 +3,15 @@ pragma circom 2.1.9;
 include "./aes-gcm-foldable.circom";
 
 // Compute AES-GCM 
-template AESGCMFOLD(bytesPerFold, totalBytes) {
+template AESGCMFOLD(totalBytes) {
     // cannot fold outside chunk boundaries.
-    assert(bytesPerFold % 16 == 0);
+    // assert(bytesPerFold % 16 == 0);
     assert(totalBytes % 16 == 0);
 
     signal input key[16];
     signal input iv[12];
     signal input aad[16];
-    signal input plainText[bytesPerFold];
+    signal input plainText[16];
 
     // Output from the last encryption step
     // Always use last bytes for inputs which are not same size.
@@ -20,8 +20,7 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
     // step_in[20]    => foldedBlocks
     signal input step_in[21]; 
 
-    // For now, attempt to support variable fold size. Potential fix at 16 in the future.
-    component aes = AESGCMFOLDABLE(bytesPerFold, totalBytes\16);
+    component aes = AESGCMFOLDABLE(totalBytes\16);
     aes.key       <== key;
     aes.iv        <== iv;
     aes.aad       <== aad;
@@ -34,7 +33,6 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
     for(var i = 0; i < 16; i++) {
         aes.lastTag[i] <== step_in[4 + i];
     }
-    // TODO:tracy range check, assertions, stuff.
     aes.foldedBlocks <== step_in[20];
 
     // Fold Outputs
@@ -45,10 +43,8 @@ template AESGCMFOLD(bytesPerFold, totalBytes) {
     for(var i = 0; i < 16; i++) {
         step_out[4 + i] <== aes.authTag[i];
     }
-    step_out[20] <== step_in[20] + bytesPerFold \ 16;
+    step_out[20] <== step_in[20] + 16 \ 16;
 
     signal output authTag[16] <== aes.authTag;
-    signal output cipherText[bytesPerFold] <== aes.cipherText;
+    signal output cipherText[16] <== aes.cipherText;
 }
-
-component main = AESGCMFOLD(16, 16);
