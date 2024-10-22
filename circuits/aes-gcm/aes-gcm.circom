@@ -55,7 +55,7 @@ template AESGCM(l) {
     J0WordIncrementer.in <== J0builder.blocks[0][3];
 
     component J0WordIncrementer2 = IncrementWord();
-    J0WordIncrementer2.in <== J0WordIncrementer.ou
+    J0WordIncrementer2.in <== J0WordIncrementer.out;
 
     signal J0[4][4];
     for (var i = 0; i < 3; i++) {
@@ -149,3 +149,6 @@ template AESGCM(l) {
     authTag <== gctrT.cipherText;
     cipherText <== gctr.cipherText;
 }
+
+
+component main = AESGCM(16);

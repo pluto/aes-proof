@@ -1,3 +1,3 @@
 include "aes-gcm-fold.circom";
 
-component main = AESGCMFOLD(16, 16);
+component main = AESGCMFOLD(1024);

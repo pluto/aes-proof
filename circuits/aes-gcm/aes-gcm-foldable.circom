@@ -87,7 +87,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // len(A) => u64
     // len(b) => u64 (together, 1 block)
     // 
-    //  block count is aways 1 when folding a single block. 
+    // block count is aways 1 when folding a single block. 
     // var blockCount  = 1 + (16%16 > 0 ? 1 : 0); // blocksize is 16 bytes
     // var ghashBlocks = 3; // always 3 blocks for single block ?
 

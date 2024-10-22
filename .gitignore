@@ -14,3 +14,5 @@ circuits/main/*
 ir_log/*
 log_input_signals.txt
 *.bin
+ghash_gmul.r1cs
+main.r1cs
