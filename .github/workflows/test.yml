@@ -33,3 +33,15 @@ jobs:
 
     - name: Run tests
       run: npm run test
+
+    - name: Setup circom-witnesscalc
+      run: | 
+        cd .. && git clone https://github.com/iden3/circom-witnesscalc.git
+        cd circom-witnesscalc
+        cargo install --path .
+        echo $(which build-circuit)
+
+    - name: Build witness for aes-gcm
+      run: |
+        build-circuit circuits/aes-gcm/aes-gcm.circom
+        
