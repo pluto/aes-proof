@@ -16,3 +16,4 @@ log_input_signals.txt
 *.bin
 ghash_gmul.r1cs
 main.r1cs
+*.r1cs

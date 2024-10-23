@@ -28,7 +28,7 @@ include "ghash_gmul.circom";
 //      │  TAG1   │ ─────┘      │   TAG2  │ ──────┘      │   TAGM  │
 //      └─────────┘             └─────────┘              └─────────┘
 // 
-
+// TODO(WJ 2024-10-23): Question: why are we folding just three blocks? Ask Tracy about this.
 // should only fold a single aes block at a time.
 template GHASHFOLDABLE() {
     signal input HashKey[16]; // Hash subkey (128 bits)

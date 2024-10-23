@@ -88,6 +88,8 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // len(b) => u64 (together, 1 block)
     // 
     // block count is aways 1 when folding a single block. 
+    // TODO(WJ 2024-10-23): this is so strange. We are folding 3 ghash blocks and then using a selector? 
+    // TODO(WJ 2024-10-23): it seems like we should just be folding 1 ghash block at a time then we wouldn't need the selector.
     // var blockCount  = 1 + (16%16 > 0 ? 1 : 0); // blocksize is 16 bytes
     // var ghashBlocks = 3; // always 3 blocks for single block ?
 
@@ -95,6 +97,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     targetMode.foldedBlocks <== foldedBlocks;
 
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
+    // TODO(WJ 2024-10-23): first thing is the slectghashblock components outputs three blocks.
     component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
     selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
@@ -106,9 +109,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     cipherToStream.blocks[0] <== cipherH.cipher;
     ghash.HashKey <== cipherToStream.stream;
 
-
-    // TODO: Remove this blocks-to-stream translation by migrating the ghash select
-    // logic to using streams by default. 
+    // TODO(WJ 2024-10-23): this is where we are folding 3 ghash blocks for some reason?
     component selectedBlocksToStream[3];
     for(var i = 0; i < 3; i++) {
         selectedBlocksToStream[i] = ToStream(1, 16);
@@ -287,15 +288,13 @@ template GhashStartMode(totalBlocks) {
         blocks[blockIndex+7-i] <== byteValue;
     }
     // 16 + l + 8 + 8
-    blockIndex+=8; // TODO(CR 2024-10-18): I don't think this does anything
+    // blockIndex+=8; // TODO(CR 2024-10-18): I don't think this does anything
 }
 
 // TODO: Mildly more efficient if we add this, maybe it's needed?
-// template GhashStartAndEndMode(l, blockCount, ghashBlocks) {}
-
 template GhashStreamMode() {
     signal input cipherText[16];
-    signal output blocks[3*4*4];
+    signal output blocks[48];
 
     var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
@@ -305,7 +304,7 @@ template GhashStreamMode() {
     }
     
     // pad remainder 
-    for (var i=blockIndex; i<3*4*4; i++) {
+    for (var i=blockIndex; i<48; i++) {
         blocks[i] <== 0x00; 
     }
 }

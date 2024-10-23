@@ -4,7 +4,7 @@ include "./aes-gcm-foldable.circom";
 
 // Compute AES-GCM 
 template AESGCMFOLD(totalBytes) {
-    // cannot fold outside chunk boundaries.
+    // fix for now
     assert(totalBytes % 16 == 0);
 
     signal input key[16];
