@@ -35,7 +35,7 @@ template AESGCMFOLD(totalBytes) {
         aes.lastTag[i] <== step_in[4 + i];
     }
     // Fold input folded blocks
-    aes.foldedBlocks <== step_in[20];
+    aes.numberOfFoldedBlocks <== step_in[20];
 
     // Fold Output next counter
     signal output step_out[21];
@@ -46,6 +46,7 @@ template AESGCMFOLD(totalBytes) {
     for(var i = 0; i < 16; i++) {
         step_out[4 + i] <== aes.authTag[i];
     }
+    // Fold output folded blocks
     step_out[20] <== step_in[20] + 16 \ 16;
 
     signal output authTag[16] <== aes.authTag;

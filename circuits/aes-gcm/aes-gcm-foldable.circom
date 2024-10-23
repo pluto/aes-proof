@@ -96,6 +96,11 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
     targetMode.numberOfFoldedBlocks <== numberOfFoldedBlocks;
 
+    var mode = targetMode.mode;
+    log("mode", mode);
+    log("numberOfFoldedBlocks", numberOfFoldedBlocks);
+
+
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     // TODO(WJ 2024-10-23): first thing is the slectghashblock components outputs three blocks.
     component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
