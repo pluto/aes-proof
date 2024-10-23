@@ -71,12 +71,16 @@ template AESGCM(l) {
 
 
     // Step 4: Let u and v (v is always zero with out key size and aad length)
-    // var u = 128 * (l \ 128) - l;
     var blockCount = l\16;
     if(l%16 > 0){
         blockCount = blockCount + 1;
     }
-    var ghashblocks = 1 + blockCount + 1; // blocksize is 16 bytes
+    // so the reason there is a plus two is because 
+    // the first block is the aad 
+    // the second is the ciphertext
+    // the last is the length of the aad and ciphertext
+    // i.e. S = GHASHH (A || C || [len(A)] || [len(C)]). <- which is always 48 bytes: 3 blocks
+    var ghashblocks = blockCount + 2; // blocksize is 16 bytes
 
     //
     // A => 1 => length of AAD (always at most 128 bits)

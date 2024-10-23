@@ -36,6 +36,8 @@ template GHASHFOLDABLE() {
 
     // folding signals, the last tag. 
     signal input lastTag[16];
+    // TODO(WJ 2024-10-23): Okay so not that we know that each ghash fold has a msg of 48 bytes: three 16 byte blocks
+    // the next question is why we are outputting intermediate tags from the first three blocks?
     signal output possibleTags[3][16]; // Output tag (16 bytes)
 
     // Intermediate tags

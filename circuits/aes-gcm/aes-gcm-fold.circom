@@ -26,20 +26,23 @@ template AESGCMFOLD(totalBytes) {
     aes.aad       <== aad;
     aes.plainText <== plainText;
 
-    // Fold inputs
+    // Fold input last counter
     for(var i = 0; i < 4; i++) {
         aes.lastCounter[i] <== step_in[i];
     }
+    // Fold input last tag
     for(var i = 0; i < 16; i++) {
         aes.lastTag[i] <== step_in[4 + i];
     }
+    // Fold input folded blocks
     aes.foldedBlocks <== step_in[20];
 
-    // Fold Outputs
+    // Fold Output next counter
     signal output step_out[21];
     for(var i = 0; i < 4; i++) {
         step_out[i] <== aes.counter[i];
     }
+    // Fold output auth tag
     for(var i = 0; i < 16; i++) {
         step_out[4 + i] <== aes.authTag[i];
     }

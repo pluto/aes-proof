@@ -18,7 +18,6 @@ template GhashMul() {
     signal input Y[16];
     signal output out[16];
 
-    // Let R be the bit string 11100001 || 0120. Given two blocks X and Y
     // byte 0xE1 is 11100001 in binary
     // 1. Let x0, x1...x127 denote the sequence of bits in X.
     // 2. Let Z0 = 0128 and V0 = Y.

@@ -27,15 +27,15 @@ include "gctr.circom";
 /// in thoery this should just do a single block,
 template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // Inputs
-    signal input key[16]; // 128-bit key
-    signal input iv[12]; // IV length is 96 bits (12 bytes)
-    signal input plainText[16]; // only fold 16 bytes at a time.
-    signal input aad[16]; // AAD length is 128 bits (16 bytes)
+    signal input key[16];           // 128-bit key
+    signal input iv[12];            // IV length is 96 bits (12 bytes)
+    signal input plainText[16];     // only fold 16 bytes at a time.
+    signal input aad[16];           // AAD length is 128 bits (16 bytes)
 
     // Fold inputs
-    signal input lastCounter[4];    // Always start at one, then bring forward last counter.
-    signal input lastTag[16];       // Always start at zero, bring forward last tag.
-    signal input foldedBlocks;      // running counter of how many blocks have folded, needed for ghash.
+    signal input lastCounter[4];            // Always start at one, then bring forward last counter.
+    signal input lastTag[16];               // Always start at zero, bring forward last tag.
+    signal input numberOfFoldedBlocks;      // running counter of how many blocks have folded, needed for ghash.
 
     // Fold outputs
     signal output counter[4];      
@@ -94,7 +94,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     // var ghashBlocks = 3; // always 3 blocks for single block ?
 
     component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
-    targetMode.foldedBlocks <== foldedBlocks;
+    targetMode.numberOfFoldedBlocks <== numberOfFoldedBlocks;
 
     // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
     // TODO(WJ 2024-10-23): first thing is the slectghashblock components outputs three blocks.
@@ -118,12 +118,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     }
     ghash.lastTag <== lastTag;
 
-    // In Steps 4 and 5, the AAD and the ciphertext are each appended with the minimum number of
-    // ‘0’ bits, possibly none, so that the bit lengths of the resulting strings are multiples of the block
-    // size. The concatenation of these strings is appended with the 64-bit representations of the
-    // lengths of the AAD and the ciphertext, and the GHASH function is applied to the result to
-    // produce a single output block.
-
+    // TODO(WJ 2024-10-23): okay here is where we are outputting the possible tags, there will be three. (why?)
     component selectTag = SelectGhashTag();
     selectTag.possibleTags <== ghash.possibleTags;
     selectTag.targetMode <== targetMode.mode;
@@ -198,6 +193,7 @@ template SelectGhashBlocks(totalBlocks) {
     blocks             <== toBlocks.blocks;
 }
 
+// TODO(WJ 2024-10-23): okay so we then go here. 
 template SelectGhashTag() {
     signal input possibleTags[3][16];
     signal input targetMode;
@@ -224,14 +220,15 @@ template SelectGhashTag() {
     tag <== s.out;
 }
 
+// TODO(WJ 2024-10-23): Been looking at this for days trying to figure out why this is needed.
 template SelectGhashMode(totalBlocks) {
-    signal input foldedBlocks;
+    signal input numberOfFoldedBlocks;
     signal output mode;
 
-    // May need to compute these differently due to foldedBlocks. 
+    // May need to compute these differently due to numberOfFoldedBlocks. 
     // i.e. using GT operator, Equal operator, etc. 
-    signal isFinish <-- (1 >= totalBlocks-foldedBlocks) ? 1 : 0;
-    signal isStart <-- (foldedBlocks == 0) ? 1: 0; 
+    signal isFinish <-- (1 >= totalBlocks-numberOfFoldedBlocks) ? 1 : 0;
+    signal isStart <-- (numberOfFoldedBlocks == 0) ? 1: 0; 
 
     isFinish * (isFinish - 1) === 0;
     isStart * (isStart - 1)   === 0;
@@ -287,11 +284,9 @@ template GhashStartMode(totalBlocks) {
         // Insert in reversed (big endian) order. 
         blocks[blockIndex+7-i] <== byteValue;
     }
-    // 16 + l + 8 + 8
-    // blockIndex+=8; // TODO(CR 2024-10-18): I don't think this does anything
 }
 
-// TODO: Mildly more efficient if we add this, maybe it's needed?
+// TODO: Tracy Mildly more efficient if we add this, maybe it's needed?
 template GhashStreamMode() {
     signal input cipherText[16];
     signal output blocks[48];
@@ -314,7 +309,6 @@ template GhashEndMode(totalBlocks) {
     signal output blocks[3*4*4];
 
     var blockIndex = 0;
-    // layout ciphertext (l*16 bytes)
     for (var i=0; i<16; i++) {
         blocks[blockIndex] <== cipherText[i];
         blockIndex += 1;
