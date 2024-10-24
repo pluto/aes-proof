@@ -216,3 +216,102 @@ describe("selectors", () => {
         assert.deepEqual(witness.out, BigInt(0x08))
     });
 });
+
+describe("array_builder", () => {
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = array_to_write_at_index.concat(new Array(160 - array_to_write_at_index.length).fill(0x00));
+    let index = 0;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = [0x00].concat(array_to_write_at_index).concat(new Array(160 - array_to_write_at_index.length - 1).fill(0x00));
+    let index = 1;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = [0x00, 0x00].concat(array_to_write_at_index).concat(new Array(160 - array_to_write_at_index.length - 2).fill(0x00));
+    let index = 2;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    // let expected = [0x00, 0x00].concat(array_to_write_at_index).concat(new Array(160 - array_to_write_at_index.length - 2).fill(0x00));
+    let index = -1;
+
+    let witness = await circuit.compute(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      ["out"]
+    );
+    console.log("witness", JSON.stringify(witness.out));
+  });
+  
+});

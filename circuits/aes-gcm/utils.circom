@@ -379,7 +379,9 @@ template WriteToIndex(m, n) {
 
     signal output out[m];
 
-    // assert(m>=n);
+    assert(m >= n);
+
+    // Note: this is underconstrained, we need to constrain that index + n <= m
     // Need to constrain that index + n <= m -- can't be an assertion, because uses a signal
     // ------------------------- //
 
@@ -413,7 +415,7 @@ template WriteToIndex(m, n) {
     or.b <== (1 - writeAt.out) * array_to_write_to[0];
     out[0] <== or.out;
     //          IF accum == 1 then { array_to_write_at } ELSE IF accum != 1 then { array to write_to }
-    var accum_index;
+    var accum_index = accum[0];
 
     component writeSelector[m];
     component indexSelector[m];
@@ -445,5 +447,3 @@ template WriteToIndex(m, n) {
         // use array index
     }
 }
-
-component main = WriteToIndex(160, 16);

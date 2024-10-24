@@ -1,7 +1,13 @@
 pragma circom 2.1.9;
 
 include "./aes-gcm-foldable.circom";
+include "./utils.circom";
 
+// E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
+// template WriteToIndex(m, n) {
+//     signal input array_to_write_to[m]; // For our example, step_in/out size
+//     signal input array_to_write_at_index[n]; // n == 16, size of block, except for last?
+//     signal input index;
 // Compute AES-GCM 
 template AESGCMFOLD(INPUT_LEN) {
     assert(INPUT_LEN % 16 == 0);
@@ -26,23 +32,13 @@ template AESGCMFOLD(INPUT_LEN) {
 
     signal counter <== step_in[INPUT_LEN*2 + 4];
 
-
-
-
-    // copy over plain text and cipher text from previous step.
-    for(var i = 0; i < counter * 16; i++) {
-        step_out[i] <== step_in[i];
-        step_out[INPUT_LEN + i] <== step_in[INPUT_LEN + i];
-    }
-
     // write new plain text block.
-    for(var i = 0; i < 16; i++) {
-        step_out[counter * 16 + i] <== plainText[i];
-    }
-    // write rest of plain text as zeros
-    for(var i = (counter + 1) * 16; i < INPUT_LEN; i++) {
-        step_out[i] <== 0;
-    }
+    signal plainTextAccumulator[DATA_BYTES];    
+    component writeToIndex = WriteToIndex(DATA_BYTES, 16);
+    writeToIndex.array_to_write_to <== step_in;
+    writeToIndex.array_to_write_at_index <== plainText;
+    writeToIndex.index <== counter * 16;
+    writeToIndex.out ==> plainTextAccumulator;
 
     // folds one block
     component aes = AESGCMFOLDABLE();
@@ -57,25 +53,30 @@ template AESGCMFOLD(INPUT_LEN) {
     }
 
     // Fold input folded blocks // TODO(WJ 2024-10-24): Are the counter and folded blocks the same? Maybe it is redundant.
-    aes.numberOfFoldedBlocks <== step_in[INPUT_LEN*2 + 5];
+    aes.numberOfFoldedBlocks <== step_in[INPUT_LEN*2 + 4];
 
-    // Fold Output next counter
-    for(var i = 0; i < 4; i++) {
-        step_out[INPUT_LEN*2 + i] <== aes.counter[i];
-    }
+    // accumulate cipher text
+    signal cipherTextAccumulator[DATA_BYTES];
+    component writeCipherText = WriteToIndex(DATA_BYTES, 16);
+    writeCipherText.array_to_write_to <== plainTextAccumulator;
+    writeCipherText.array_to_write_at_index <== aes.cipherText;
+    writeCipherText.index <== INPUT_LEN + counter * 16;
+    writeCipherText.out ==> cipherTextAccumulator;
 
-    // Fold output number of folded blocks
-    step_out[INPUT_LEN*2 + 5] <== step_in[INPUT_LEN*2 + 5] + 1; // increment counter for next fold
+    // get counter
+    signal counterAccumulator[DATA_BYTES];
+    component writeCounter = WriteToIndex(DATA_BYTES, 4);
+    writeCounter.array_to_write_to <== cipherTextAccumulator;
+    writeCounter.array_to_write_at_index <== aes.counter;
+    writeCounter.index <== INPUT_LEN*2;
+    writeCounter.out ==> counterAccumulator;
 
-    // write new ct block
-    for(var i = 0; i < 16; i++) {
-        step_out[counter * 16 + INPUT_LEN + i] <== aes.cipherText[i];
-    }
-
-    // write rest of cipher text as zeros
-    for(var i = (counter + 1) * 16; i < INPUT_LEN; i++) {
-        step_out[i] <== 0;
-    }
+    // accumulate number of folded blocks
+    component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
+    writeNumberOfFoldedBlocks.array_to_write_to <== cipherTextAccumulator;
+    writeNumberOfFoldedBlocks.array_to_write_at_index <== [step_in[INPUT_LEN*2 + 4] + 1];
+    writeNumberOfFoldedBlocks.index <== INPUT_LEN*2 + 4;
+    writeNumberOfFoldedBlocks.out ==> step_out;
 }
 
 /// example: 1024 bytes
