@@ -11,9 +11,11 @@ template AESGCMFOLD(totalBytes) {
     signal input iv[12];
     signal input aad[16];
     signal input plainText[16];
+    signal input cipherText[16];
 
     // Output from the last encryption step
     // Always use last bytes for inputs which are not same size.
+    // step_in[0..total bytes] => hold plaintext here
     // step_in[0..4]  => lastCounter
     // step_in[5]     => foldedBlocks
     signal input step_in[5]; 
@@ -30,6 +32,7 @@ template AESGCMFOLD(totalBytes) {
         aes.lastCounter[i] <== step_in[i];
     }
 
+    
     // Fold input folded blocks
     aes.numberOfFoldedBlocks <== step_in[4];
 
@@ -47,4 +50,5 @@ template AESGCMFOLD(totalBytes) {
 
     // signal output authTag[16] <== aes.authTag;
     signal output cipherText[16] <== aes.cipherText;
+    // TODO(WJ 2024-10-24): waylon constrain this to be equal to 
 }
