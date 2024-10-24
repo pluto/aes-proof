@@ -78,5 +78,3 @@ template AESGCMFOLD(INPUT_LEN) {
     writeNumberOfFoldedBlocks.index <== INPUT_LEN*2 + 4;
     writeNumberOfFoldedBlocks.out ==> step_out;
 }
-
-/// example: 1024 bytes

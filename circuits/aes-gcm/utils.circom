@@ -370,7 +370,7 @@ template Selector(n) {
     out <== sums[n];
 }
 
-
+// TODO(WJ 2024-10-24): we are alloca
 // E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
 template WriteToIndex(m, n) {
     signal input array_to_write_to[m]; // For our example, step_in/out size
@@ -405,7 +405,7 @@ template WriteToIndex(m, n) {
 
     // Next n indices should be 1
     signal accum[m];
-    accum[0] <== indexMatched[0]; // will be zero as long as n not zero
+    accum[0] <== indexMatched[0]; 
 
     component writeAt = IsZero();
     writeAt.in <== accum[0] - 1;
@@ -417,33 +417,33 @@ template WriteToIndex(m, n) {
     //          IF accum == 1 then { array_to_write_at } ELSE IF accum != 1 then { array to write_to }
     var accum_index = accum[0];
 
-    component writeSelector[m];
-    component indexSelector[m];
-    component ors[m];
+    component writeSelector[m - 1];
+    component indexSelector[m - 1];
+    component ors[m-1];
     for(var i = 1 ; i < m ; i++) {
         // accum will be 1 at all indices where we want to write the new array
         accum[i] <== accum[i-1] + indexMatched[i];
 
-        writeSelector[i] = IsZero();
-        writeSelector[i].in <== accum[i] - 1;
+        writeSelector[i-1] = IsZero();
+        writeSelector[i-1].in <== accum[i] - 1;
         // IsZero(accum[i] - 1); --> tells us we are in the range where we want to write the new array
         // for(var j = 0 ; j < n ; j++) {
         //     temp[j] = IsZero(accum[i + j] - 1) * array_to_write_at_index[j] + (1 - IsZero(accum[i + j] - 1)) * array_to_write_to[i + j];
         // }
 
-        indexSelector[i] = IndexSelector(n);
-        indexSelector[i].index <== accum_index;
-        indexSelector[i].in <== array_to_write_at_index;
+        indexSelector[i-1] = IndexSelector(n);
+        indexSelector[i-1].index <== accum_index;
+        indexSelector[i-1].in <== array_to_write_at_index;
         // When accum is not zero, out is array_to_write_at_index, otherwise it is array_to_write_to
 
-        ors[i] = OR();
-        ors[i].a <== (writeSelector[i].out * indexSelector[i].out);
-        ors[i].b <== (1 - writeSelector[i].out) * array_to_write_to[i];
+        ors[i-1] = OR();
+        ors[i-1].a <== (writeSelector[i-1].out * indexSelector[i-1].out);
+        ors[i-1].b <== (1 - writeSelector[i-1].out) * array_to_write_to[i];
 
-        out[i] <== ors[i].out;
+        out[i] <== ors[i-1].out;
         // out[i] <== writeSelector[i].out * indexSelector[i].out + (1 - writeSelector[i].out) * array_to_write_to[i];
         //                                this has to index wrt to n ^
-        accum_index += writeSelector[i].out;
+        accum_index += writeSelector[i-1].out;
         // use array index
     }
 }
