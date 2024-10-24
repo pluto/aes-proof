@@ -114,18 +114,6 @@ template BitwiseRightShift(n, r) {
 }
 
 
-template BitwiseLeftShift(n, r) {
-    signal input in[n];
-    signal output out[n];
-    for (var i=0; i<n-r; i++) {
-        out[i] <== in[i+r];
-    }
-    for (var i=n-r; i<n; i++) {
-        out[i] <== 0;
-    }
-}
-
-
 template BitwiseXor(n) {
     signal input a[n];
     signal input b[n];
@@ -135,16 +123,6 @@ template BitwiseXor(n) {
     for (var k=0; k<n; k++) {
         mid[k] <== a[k]*b[k];
         out[k] <== a[k] + b[k] - 2*mid[k];
-    }
-}
-
-template BitwiseAnd(n) {
-    signal input a[n];
-    signal input b[n];
-    signal output out[n];
-
-    for (var k=0; k<n; k++) {
-        out[k] <== a[k]*b[k];
     }
 }
 
@@ -194,37 +172,6 @@ template XorMultiple(n, m) {
     }
 
     out <== mids[n-1];
-}
-
-
-// reverse the byte order in a 16 byte array
-template ReverseByteArray128() {
-    signal input in[128];
-    signal output out[128];
-
-    for (var i = 0; i < 16; i++) {
-        for (var j = 0; j < 8; j++) {
-            out[j + 8*i] <== in[(15-i)*8 +j];
-        }
-    }
-}
-// in a 128-bit array, reverse the byte order in the first 64 bits, and the second 64 bits
-template ReverseByteArrayHalves128() {
-    signal input in[128];
-    signal output out[128];
-
-    for (var i=0; i<8; i++){
-        for (var j=0; j<8; j++){
-            var SWAP_IDX = 56-(i*8)+j;
-            out[i*8+j] <== in[SWAP_IDX];
-        }
-    }
-    for (var i=0; i<8; i++){
-        for (var j=0; j<8; j++){
-            var SWAP_IDX = 56-(i*8)+j+64;
-            out[i*8+j+64] <== in[SWAP_IDX];
-        }
-    }
 }
 
 // Increment a 32-bit word, represented as a 4-byte array
@@ -343,7 +290,6 @@ template ArraySelector(m, n) {
     }
 }
 
-// TODO(WJ 2024-10-23): this is over constrained see arrayMux for a simpler(maybe underconstrained) version.
 template Selector(n) {
     signal input in[n];
     signal input index;
@@ -370,11 +316,10 @@ template Selector(n) {
     out <== sums[n];
 }
 
-// TODO(WJ 2024-10-24): Bug: when passing (37, and 4) with an index of 32, this returns the wrong value.
 // E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
 template WriteToIndex(m, n) {
-    signal input array_to_write_to[m]; // For our example, step_in/out size
-    signal input array_to_write_at_index[n]; // n == 16, size of block, except for last?
+    signal input array_to_write_to[m];
+    signal input array_to_write_at_index[n]; 
     signal input index;
 
     signal output out[m];
@@ -403,8 +348,6 @@ template WriteToIndex(m, n) {
     // => indexMatch[47] == 1;
     // => otherwise, all 0. 
 
-
-    // Next n indices should be 1
     signal accum[m];
     accum[0] <== indexMatched[0]; 
 
@@ -424,13 +367,9 @@ template WriteToIndex(m, n) {
     for(var i = 1 ; i < m ; i++) {
         // accum will be 1 at all indices where we want to write the new array
         accum[i] <== accum[i-1] + indexMatched[i];
-
         writeSelector[i-1] = IsZero();
         writeSelector[i-1].in <== accum[i] - 1;
         // IsZero(accum[i] - 1); --> tells us we are in the range where we want to write the new array
-        // for(var j = 0 ; j < n ; j++) {
-        //     temp[j] = IsZero(accum[i + j] - 1) * array_to_write_at_index[j] + (1 - IsZero(accum[i + j] - 1)) * array_to_write_to[i + j];
-        // }
 
         indexSelector[i-1] = IndexSelector(n);
         indexSelector[i-1].index <== accum_index;
@@ -440,11 +379,7 @@ template WriteToIndex(m, n) {
         ors[i-1] = OR();
         ors[i-1].a <== (writeSelector[i-1].out * indexSelector[i-1].out);
         ors[i-1].b <== (1 - writeSelector[i-1].out) * array_to_write_to[i];
-
         out[i] <== ors[i-1].out;
-        // out[i] <== writeSelector[i].out * indexSelector[i].out + (1 - writeSelector[i].out) * array_to_write_to[i];
-        //                                this has to index wrt to n ^
         accum_index += writeSelector[i-1].out;
-        // use array index
     }
 }
