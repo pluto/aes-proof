@@ -370,7 +370,7 @@ template Selector(n) {
     out <== sums[n];
 }
 
-// TODO(WJ 2024-10-24): we are alloca
+// TODO(WJ 2024-10-24): Bug: when passing (37, and 4) with an index of 32, this returns the wrong value.
 // E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
 template WriteToIndex(m, n) {
     signal input array_to_write_to[m]; // For our example, step_in/out size
@@ -392,9 +392,9 @@ template WriteToIndex(m, n) {
     component indexEnding[m];
     for(var i = 0 ; i < m ; i++) {
         indexBegining[i] = IsZero();
-        indexBegining[i].in <== i - index; // 16 - 16
+        indexBegining[i].in <== i - index; 
         indexEnding[i] = IsZero();
-        indexEnding[i].in <== i - (2*n); // 
+        indexEnding[i].in <== i - (index + n);
         indexMatched[i] <== indexBegining[i].out + indexEnding[i].out;
     }
 

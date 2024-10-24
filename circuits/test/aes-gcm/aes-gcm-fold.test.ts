@@ -33,19 +33,16 @@ describe("aes-gcm-fold", () => {
         let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         let ct        = [0x03, 0x88, 0xda, 0xce, 0x60, 0xb6, 0xa3, 0x92, 0xf3, 0x28, 0xc2, 0xb9, 0x71, 0xb2, 0xfe, 0x78];
 
-        // len * 2 + 5 = 37 -> step in
-        // pt: 16 bytes
-        // key: 16 bytes
-        // iv: 12 bytes
-        // aad: 16 bytes
-        // total: 97 bytes
-        const counter = [0x00, 0x00, 0x00, 0x01];
+        const counter = [0x00, 0x00, 0x00, 0x00];
         const foldedBlocks = [0x00];
         const step_in = plainText.concat(plainText).concat(counter).concat(foldedBlocks);
         console.log("step in before",step_in);
 
+        let expected = plainText.concat(ct).concat(counter).concat(foldedBlocks);
+
+
         const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
         console.log("witness.step_out", witness.step_out);
-        // assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct));
+        assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 });

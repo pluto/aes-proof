@@ -66,14 +66,6 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCipherText.index <== INPUT_LEN + counter * 16;
     writeCipherText.out ==> cipherTextAccumulator;
 
-    log("index");
-    log(INPUT_LEN + counter * 16);
-
-    log("cipherTextAccumulator");
-    for (var i = 0; i < DATA_BYTES; i++) {
-        log(cipherTextAccumulator[i]);
-    }
-
     // get counter
     signal counterAccumulator[DATA_BYTES];
     component writeCounter = WriteToIndex(DATA_BYTES, 4);
@@ -81,6 +73,16 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCounter.array_to_write_at_index <== aes.counter;
     writeCounter.index <== INPUT_LEN*2;
     writeCounter.out ==> counterAccumulator;
+
+    log("counter");
+    for (var i = 0 ; i < 4 ; i++) {
+        log(aes.counter[i]);
+    }
+
+    log("counterAccumulator");
+    for (var i = 0; i < DATA_BYTES; i++) {
+        log(counterAccumulator[i]);
+    }
 
     // accumulate number of folded blocks
     component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
