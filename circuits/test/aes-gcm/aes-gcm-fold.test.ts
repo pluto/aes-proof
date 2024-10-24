@@ -5,28 +5,13 @@ import { circomkit, hexBytesToBigInt, hexToBytes } from "../common";
 describe("aes-gcm-fold", () => {
     let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad", "step_in"], ["step_out"]>;
 
-    // const shared_witness = {
-    //     key: hexToBytes('31313131313131313131313131313131'),
-    //     iv: hexToBytes('313131313131313131313131'),
-    //     plainText: hexToBytes('7465737468656c6c6f30303030303030'),
-    //     aad: hexToBytes('00000000000000000000000000000000'),
-    // };
-
     it("all correct for self generated single block case", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
             params: [16], // input len is 16 bytes
         });
-        console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
-
-        // step_in[0..INPUT_LEN] => accumulate plaintext blocks
-        // step_in[INPUT_LEN..INPUT_LEN*2]  => accumulate ciphertext blocks
-        // TODO(WJ 2024-10-24): Are the counter and folded blocks the same? Maybe it is redundant.
-        // step_in[INPUT_LEN*2..INPUT_LEN*2+4]  => lastCounter
-        // step_in[INPUT_LEN*2+5]     => foldedBlocks
-        // first block (16bytes) is the plaintext
         let key       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         let plainText = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         let iv        = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
@@ -40,7 +25,6 @@ describe("aes-gcm-fold", () => {
         let expected = plainText.concat(ct).concat([0x00, 0x00, 0x00, 0x02]).concat([0x01]);
 
         const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
-        console.log("witness.step_out", JSON.stringify(witness.step_out));
         assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 });

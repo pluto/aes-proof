@@ -11,7 +11,6 @@ describe("aes-gcm", () => {
       template: "AESGCM",
       params: [16],
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("should have correct output", async () => {
@@ -34,7 +33,6 @@ describe("aes-gcm", () => {
       template: "AESGCM",
       params: [16],
     });
-    console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
     const key = hexToBytes('31313131313131313131313131313131');
     const iv = hexToBytes('313131313131313131313131');
@@ -56,7 +54,6 @@ describe("aes-gcm", () => {
       template: "AESGCM",
       params: [32],
     });
-    console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
     const key = hexToBytes('31313131313131313131313131313131');
     const iv = hexToBytes('313131313131313131313131');

@@ -19,7 +19,6 @@ describe("reverse_byte_array", () => {
     const result = bitArrayToHex(
       (_res.out as number[]).map((bit) => Number(bit))
     );
-    // console.log("expect: ", expect, "\nresult: ", result);
     assert.equal(expect, result);
   });
 });
@@ -82,7 +81,6 @@ describe("ArrayMux", () => {
       template: "ArrayMux",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute selector mux Correctly", async () => {
@@ -111,7 +109,6 @@ describe("XORBLOCK", () => {
       template: "XORBLOCK",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute block XOR Correctly", async () => {
@@ -131,23 +128,18 @@ describe("ToBytes", () => {
       template: "BitsToBytes",
       params: [1]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute bytesToBits Correctly", async () => {
     let input = hexToBitArray("0x01");
     const expected = hexByteToBigInt("0x01");
-    // console.log("expected", expected);
     const _res = await circuit.compute({ in: input }, ["out"]);
-    // console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });
   it("Should Compute bytesToBits Correctly", async () => {
     let input = hexToBitArray("0xFF");
     const expected = hexByteToBigInt("0xFF");
-    // console.log("expected", expected);
     const _res = await circuit.compute({ in: input }, ["out"]);
-    // console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });
 });
@@ -161,20 +153,17 @@ describe("ToBits", () => {
       template: "BytesToBits",
       params: [2]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute bytesToBits Correctly", async () => {
     let input = [0x01, 0x00];
     const expected = hexToBitArray("0x0100");
-    // console.log("expected", expected);
-    const _res = await circuit.expectPass({ in: input }, { out: expected });
+    await circuit.expectPass({ in: input }, { out: expected });
   });
   it("Should Compute bytesToBits Correctly", async () => {
     let input = [0xFF, 0x00];
     const expected = hexToBitArray("0xFF00");
-    // console.log("expected", expected);
-    const _res = await circuit.expectPass({ in: input }, { out: expected });
+    await circuit.expectPass({ in: input }, { out: expected });
   });
 });
 
@@ -194,9 +183,7 @@ describe("selectors", () => {
             [0x0,0x0,0x0,0x03],
         ]
         let selected = [0x06,0x07,0x08,0x09].map(BigInt);
-        console.log("selections", selections);
         const witness = await circuit.compute({in: selections, index: selector}, ["out"])
-        console.log("selected", witness.out);
         assert.deepEqual(witness.out, selected)
     });
 
@@ -210,9 +197,7 @@ describe("selectors", () => {
 
         let selector = 2;
         let selections = [0x0,0x0,0x08,0x01];
-        console.log("selections", selections);
         const witness = await circuit.compute({in: selections, index: selector}, ["out"])
-        console.log("selected", witness.out);
         assert.deepEqual(witness.out, BigInt(0x08))
     });
 });
