@@ -42,7 +42,7 @@ describe("aes-gcm-fold", () => {
 
 
         const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
-        console.log("witness.step_out", witness.step_out);
+        console.log("witness.step_out", JSON.stringify(witness.step_out));
         assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 });

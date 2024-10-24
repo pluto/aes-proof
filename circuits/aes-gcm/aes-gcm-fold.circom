@@ -74,15 +74,6 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCounter.index <== INPUT_LEN*2;
     writeCounter.out ==> counterAccumulator;
 
-    log("counter");
-    for (var i = 0 ; i < 4 ; i++) {
-        log(aes.counter[i]);
-    }
-
-    log("counterAccumulator");
-    for (var i = 0; i < DATA_BYTES; i++) {
-        log(counterAccumulator[i]);
-    }
 
     // accumulate number of folded blocks
     component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
