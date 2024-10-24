@@ -44,6 +44,7 @@ describe("aes-gcm-fold", () => {
         console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
         // NOTE: We use the same plaintext, but expect a different ct because the counter has increased.
+        // TODO(WJ 2024-10-23): okay but the ciphertext is the same?
         const ct = hexToBytes('2929d2bb1ae94804402b8e776e0d3356');
         const expectedTag = hexToBytes('0b1fb4f1762e2f93f521e3f5acab2e03');
         const counter = [0x00, 0x00, 0x00, 0x01];

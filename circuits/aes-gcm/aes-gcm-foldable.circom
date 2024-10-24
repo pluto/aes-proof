@@ -78,20 +78,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     gctr.initialCounterBlock <== J0;
     gctr.plainText <== plainText;
 
-    // Step 4: Let u and v, compute ghash steps. 
-    // 
-    // A => 1 => length of AAD (always at most 128 bits)
-    // 0^v => padding bytes, none for v
-    // C => l\16+1 => number of ciphertext blocks
-    // 0^u => padding bytes, u value
-    // len(A) => u64
-    // len(b) => u64 (together, 1 block)
-    // 
-    // block count is aways 1 when folding a single block. 
-    // TODO(WJ 2024-10-23): this is so strange. We are folding 3 ghash blocks and then using a selector? 
-    // TODO(WJ 2024-10-23): it seems like we should just be folding 1 ghash block at a time then we wouldn't need the selector.
-    // var blockCount  = 1 + (16%16 > 0 ? 1 : 0); // blocksize is 16 bytes
-    // var ghashBlocks = 3; // always 3 blocks for single block ?
+    // Step 4 is mute when folding a single block with fixed size aad and ciphertext.
 
     component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
     targetMode.numberOfFoldedBlocks <== numberOfFoldedBlocks;
@@ -101,8 +88,8 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     log("numberOfFoldedBlocks", numberOfFoldedBlocks);
 
 
-    // S = GHASHH (A || 0^v || C || 0^u || [len(A)] || [len(C)]).
-    // TODO(WJ 2024-10-23): first thing is the slectghashblock components outputs three blocks.
+    // S = GHASHH (A || C || [len(A)] || [len(C)]): 48 bytes = 3 blocks of 16 bytes.
+    // TODO(WJ 2024-10-23): the slectghashblock components outputs three blocks.
     component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
     selectedBlocks.aad        <== aad;
     selectedBlocks.cipherText <== gctr.cipherText;
@@ -114,13 +101,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     cipherToStream.blocks[0] <== cipherH.cipher;
     ghash.HashKey <== cipherToStream.stream;
 
-    // TODO(WJ 2024-10-23): this is where we are folding 3 ghash blocks for some reason?
-    component selectedBlocksToStream[3];
-    for(var i = 0; i < 3; i++) {
-        selectedBlocksToStream[i] = ToStream(1, 16);
-        selectedBlocksToStream[i].blocks[0] <== selectedBlocks.blocks[i];
-        ghash.msg[i] <== selectedBlocksToStream[i].stream;
-    }
+    ghash.msg <== selectedBlocks.blocks;
     ghash.lastTag <== lastTag;
 
     // TODO(WJ 2024-10-23): okay here is where we are outputting the possible tags, there will be three. (why?)
@@ -152,7 +133,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
 
     authTag <== useEncryption.out;
     cipherText <== gctr.cipherText;
-    // TODO: Need to fork gctr to output its counter, right now we also incr by 1.
+    // TODO: tracy Need to fork gctr to output its counter, right now we also incr by 1.
     counter <== J0[3];
 }
 
@@ -167,12 +148,12 @@ template SelectGhashBlocks(totalBlocks) {
     signal input aad[16];
     signal input cipherText[16]; 
     signal input targetMode;
-    signal output blocks[3][4][4];
+    signal output blocks[3][16];
 
-    signal targetBlocks[3][3*4*4];
+    signal targetBlocks[3][48];
     signal modeToBlocks[4] <== [0, 0, 1, 2];
 
-    component start  = GhashStartMode(totalBlocks);
+    component start  = GhashStartMode();
     start.aad        <== aad;
     start.cipherText <== cipherText;
     targetBlocks[0]  <== start.blocks;
@@ -189,23 +170,29 @@ template SelectGhashBlocks(totalBlocks) {
     mapModeToArray.in        <== modeToBlocks;
     mapModeToArray.index     <== targetMode;
 
-    component chooseBlocks = ArraySelector(3, 3*4*4);
+    component chooseBlocks = ArraySelector(3, 48);
     chooseBlocks.in        <== targetBlocks;
     chooseBlocks.index     <== mapModeToArray.out;
     
-    component toBlocks = ToBlocks(3*4*4);
-    toBlocks.stream    <== chooseBlocks.out;
-    blocks             <== toBlocks.blocks;
+    /// TODO(WJ 2024-10-23): i could get ride of these 48 constraints if we are just always using 3 blocks.
+    /// the challenge there is the strange selector logic, where we would need a 3 dimensional selector which is pain. 
+    /// there has to be a better way. Still need to figure out why we need to do ghash 9 times. I understand doing it once one 3 blocks
+    /// but 9 times seems... unnecessary. 
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 16; j++) {
+            blocks[i][j] <== chooseBlocks.out[i*16 + j];
+        }
+    }
 }
 
-// TODO(WJ 2024-10-23): okay so we then go here. 
+// essentially given three possible tags, we select one based on the mode.
 template SelectGhashTag() {
     signal input possibleTags[3][16];
     signal input targetMode;
     signal output tag[16];
 
     // Intermediate tag choosing logic
-    // 
+    // TODO(WJ 2024-10-23): I don't understand this logic.
     // case 1: If we are in start_mode: Choose ghashblocks-2 (skip end tag)
     // case 2: If we are in start_end_mode: Choose ghashblocks-1 (skip none)
     // case 3: If we are in stream_mode: Choose ghashblocks-3 (first item, skip start/end)
@@ -250,8 +237,9 @@ template SelectGhashMode(totalBlocks) {
     choice.s <== [isStart, isFinish];
     mode <== choice.out;
 }
-
-template GhashStartMode(totalBlocks) {
+// TODO(WJ 2024-10-23): this makes three blocks that look like the following:
+// aad || cipherText || [len(aad)] | [len(cipherText)] ||
+template GhashStartMode() {
     signal input aad[16];
     signal input cipherText[16];
     signal output blocks[3*4*4];
@@ -259,7 +247,7 @@ template GhashStartMode(totalBlocks) {
     // set aad as first block (16 bytes)
     var blockIndex = 0;
     for (var i = 0; i<16; i++) {
-        blocks[blockIndex] <== aad[i];
+        blocks[i] <== aad[i];
         blockIndex += 1;
     }
 
@@ -276,39 +264,34 @@ template GhashStartMode(totalBlocks) {
         blockIndex += 1;
     }
 
-    // length of blocks as a u64 (8 bytes)
-    var len = totalBlocks * 128;
+    // length of blocks as a u64 (8 bytes) same as above.
     for (var i=0; i<8; i++) {
-        var byteValue = 0;
-        var val = 1;
-        for (var j=0; j<8; j++) {
-            var bit = (len >> i*8+j) & 1;
-            byteValue += bit*val;
-            val = val+val;
-        }
-        // Insert in reversed (big endian) order. 
-        blocks[blockIndex+7-i] <== byteValue;
+        blocks[blockIndex] <== lengthData[i];
+        blockIndex += 1;
     }
 }
 
 // TODO: Tracy Mildly more efficient if we add this, maybe it's needed?
+// TODO(WJ 2024-10-23): this makes 3 blocks that look like the following:
+// cipherText || 0s || 0s ||
 template GhashStreamMode() {
     signal input cipherText[16];
     signal output blocks[48];
 
-    var blockIndex = 0;
     // layout ciphertext (l*16 bytes)
     for (var i=0; i<16; i++) {
-        blocks[blockIndex] <== cipherText[i];
-        blockIndex += 1;
+        blocks[i] <== cipherText[i];
     }
     
     // pad remainder 
-    for (var i=blockIndex; i<48; i++) {
+    for (var i=16; i<48; i++) {
         blocks[i] <== 0x00; 
     }
 }
 
+// TODO(WJ 2024-10-23): this makes three blocks that look like the following:
+// cipherText || [len(cipherText)] || 0s ||
+// edit: not sure if this is actually what is going on here. dive deeper tomorrow morning. 
 template GhashEndMode(totalBlocks) {
     signal input cipherText[16];
     signal output blocks[3*4*4];

@@ -99,76 +99,7 @@ template ArrayMux(n) {
     }
 }
 
-// parse LE bits to int
-template ParseLEBytes64() {
-    signal input in[64];
-    signal output out;
-    var temp = 0;
 
-    // Iterate through the input bits
-    for (var i = 7; i >= 0; i--) {
-        for (var j = 0; j < 8; j++) {
-            // Shift the existing value left by 1 and add the new bit
-            var IDX = i*8+j;
-            temp = temp * 2 + in[IDX];
-        }
-    }
-
-    // Assign the final value to the output signal
-    out <== temp;
-}
-
-// parse BE bits as bytes and log them. Assumes that the number of bytes logged is a multiple of 8.
-template ParseAndLogBitsAsBytes(N_BYTES){
-    var N_BITS = N_BYTES * 8;
-    signal input in[N_BITS];
-    component Parser = ParseBEBitsToBytes(N_BYTES);
-    for (var i=0; i<N_BITS; i++){
-        Parser.in[i] <== in[i];
-    }
-    for (var i=0; i<N_BYTES / 8; i++){
-        log("in[", i, "]=",
-            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3],
-        Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]
-        );
-    }
-}
-
-// parse BE bits to bytes.
-template ParseBEBitsToBytes(N_BYTES) {
-    var N_BITS = N_BYTES * 8;
-    signal input in[N_BITS];
-    signal output out[N_BYTES];
-
-    // Iterate through the input bits
-    signal temp[N_BYTES][8];
-    for (var i = 0; i < N_BYTES; i++) {
-        temp[i][0] <== 0;
-        for (var j = 7; j >= 0; j--) {
-            temp[i][j] = temp[i][j+1] + 2**j * in[i*8 + 7 - j];
-        }
-    }
-
-    for (var i=0; i< N_BYTES; i++) {
-        out[i] <== temp[i][0];
-    }
-}
-
-// parse 64-bits to integer value
-template ParseBEBytes64() {
-    signal input in[64];
-    signal output out;
-    var temp = 0;
-
-    // Iterate through the input bits
-    for (var i = 0; i < 64; i++) {
-        // Shift the existing value left by 1 and add the new bit
-        temp = temp * 2 + in[i];
-    }
-
-    // Assign the final value to the output signal
-    out <== temp;
-}
 
 template BitwiseRightShift(n, r) {
     signal input in[n];
@@ -411,6 +342,7 @@ template ArraySelector(m, n) {
     }
 }
 
+// TODO(WJ 2024-10-23): this is over constrained see arrayMux for a simpler(maybe underconstrained) version.
 template Selector(n) {
     signal input in[n];
     signal input index;
