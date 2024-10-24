@@ -33,13 +33,11 @@ describe("aes-gcm-fold", () => {
         let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         let ct        = [0x03, 0x88, 0xda, 0xce, 0x60, 0xb6, 0xa3, 0x92, 0xf3, 0x28, 0xc2, 0xb9, 0x71, 0xb2, 0xfe, 0x78];
 
-        const counter = [0x00, 0x00, 0x00, 0x00];
+        const counter = [0x00, 0x00, 0x00, 0x01];
         const foldedBlocks = [0x00];
         const step_in = plainText.concat(plainText).concat(counter).concat(foldedBlocks);
-        console.log("step in before",step_in);
 
-        let expected = plainText.concat(ct).concat(counter).concat(foldedBlocks);
-
+        let expected = plainText.concat(ct).concat([0x00, 0x00, 0x00, 0x02]).concat([0x01]);
 
         const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
         console.log("witness.step_out", JSON.stringify(witness.step_out));

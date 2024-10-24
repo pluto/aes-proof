@@ -34,7 +34,6 @@ template AESGCMFOLDABLE() {
 
     // Fold inputs
     signal input lastCounter[4];            // Always start at one, then bring forward last counter.
-    signal input numberOfFoldedBlocks;      // running counter of how many blocks have folded, needed for ghash.
 
     // Fold outputs
     signal output counter[4];      

@@ -23,12 +23,7 @@ template AESGCMFOLD(INPUT_LEN) {
     // step_in[INPUT_LEN*2+5]     => foldedBlocks
     signal input step_in[DATA_BYTES]; 
     signal output step_out[DATA_BYTES];
-
     signal counter <== step_in[INPUT_LEN*2 + 4];
-    log("counter");
-    log(counter);
-    log("data bytes");
-    log(DATA_BYTES);
 
     // write new plain text block.
     signal plainTextAccumulator[DATA_BYTES];    
@@ -55,9 +50,6 @@ template AESGCMFOLD(INPUT_LEN) {
         aes.lastCounter[i] <== step_in[INPUT_LEN*2 + i];
     }
 
-    // Fold input folded blocks // TODO(WJ 2024-10-24): Are the counter and folded blocks the same? Maybe it is redundant.
-    aes.numberOfFoldedBlocks <== step_in[INPUT_LEN*2 + 4];
-
     // accumulate cipher text
     signal cipherTextAccumulator[DATA_BYTES];
     component writeCipherText = WriteToIndex(DATA_BYTES, 16);
@@ -77,7 +69,7 @@ template AESGCMFOLD(INPUT_LEN) {
 
     // accumulate number of folded blocks
     component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
-    writeNumberOfFoldedBlocks.array_to_write_to <== cipherTextAccumulator;
+    writeNumberOfFoldedBlocks.array_to_write_to <== counterAccumulator;
     writeNumberOfFoldedBlocks.array_to_write_at_index <== [step_in[INPUT_LEN*2 + 4] + 1];
     writeNumberOfFoldedBlocks.index <== INPUT_LEN*2 + 4;
     writeNumberOfFoldedBlocks.out ==> step_out;
