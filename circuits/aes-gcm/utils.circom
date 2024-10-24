@@ -4,7 +4,6 @@ include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/mux1.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
-include "parser-attestor/circuits/utils/array.circom";
 
 // n is the number of bytes to convert to bits
 template BytesToBits(n_bytes) {
@@ -314,6 +313,42 @@ template Selector(n) {
     }
 
     out <== sums[n];
+}
+
+// TODO(WJ 2024-10-24): shared across parser circuits should consolidate.
+template SumMultiple(n) {
+    signal input nums[n];
+    signal output sum;
+
+    signal sums[n];
+    sums[0] <== nums[0];
+
+    for(var i=1; i<n; i++) {
+        sums[i] <== sums[i-1] + nums[i];
+    }
+
+    sum <== sums[n-1];
+}
+
+// TODO(WJ 2024-10-24): shared across parser circuits should consolidate.
+template IndexSelector(total) {
+    signal input in[total];
+    signal input index;
+    signal output out;
+
+    //maybe add (index<total) check later when we decide number of bits
+
+    component calcTotal = SumMultiple(total);
+    component equality[total];
+
+    for(var i=0; i<total; i++){
+        equality[i] = IsEqual();
+        equality[i].in[0] <== i;
+        equality[i].in[1] <== index;
+        calcTotal.nums[i] <== equality[i].out * in[i];
+    }
+
+    out <== calcTotal.sum;
 }
 
 // E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
