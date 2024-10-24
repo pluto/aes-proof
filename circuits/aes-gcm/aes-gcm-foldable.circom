@@ -25,7 +25,7 @@ include "gctr.circom";
 /// authTag: authentication tag
 /// 
 /// This folds a single block without authentication via ghash.
-template AESGCMFOLDABLE(TOTAL_BLOCKS) {
+template AESGCMFOLDABLE() {
     // Inputs
     signal input key[16];           // 128-bit key
     signal input iv[12];            // IV length is 96 bits (12 bytes)

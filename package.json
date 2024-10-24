@@ -7,7 +7,8 @@
   },
   "dependencies": {
     "circomkit": "^0.2.1",
-    "circomlib": "^2.0.5"
+    "circomlib": "^2.0.5",
+    "parser-attestor": "github:pluto/parser-attestor#b9feeeb240ddf867da85198de7d59e73cba4b008"
   },
   "devDependencies": {
     "@types/chai": "^4.3.17",

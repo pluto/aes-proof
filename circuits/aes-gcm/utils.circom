@@ -4,6 +4,7 @@ include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/mux1.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
+include "parser-attestor/circuits/utils/array.circom";
 
 // n is the number of bytes to convert to bits
 template BytesToBits(n_bytes) {
@@ -368,3 +369,81 @@ template Selector(n) {
 
     out <== sums[n];
 }
+
+
+// E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
+template WriteToIndex(m, n) {
+    signal input array_to_write_to[m]; // For our example, step_in/out size
+    signal input array_to_write_at_index[n]; // n == 16, size of block, except for last?
+    signal input index;
+
+    signal output out[m];
+
+    // assert(m>=n);
+    // Need to constrain that index + n <= m -- can't be an assertion, because uses a signal
+    // ------------------------- //
+
+    // Here, we get an array of ALL zeros, except at the `index` AND `index + n`
+    //                                    beginning-------^^^^^ end---^^^^^^^^^  
+    signal indexMatched[m];
+    component indexBegining[m];
+    component indexEnding[m];
+    for(var i = 0 ; i < m ; i++) {
+        indexBegining[i] = IsZero();
+        indexBegining[i].in <== i - index;
+        indexEnding[i] = IsZero();
+        indexEnding[i].in <== i - index + n;
+        indexMatched[i] <== indexBegining[i].out + indexEnding[i].out;
+    }
+    // E.g., index == 31, m == 160, n == 16
+    // => indexMatch[31] == 1;
+    // => indexMatch[47] == 1;
+    // => otherwise, all 0. 
+
+
+    // Next n indices should be 1
+    signal accum[m];
+    accum[0] <== indexMatched[0]; // will be zero as long as n not zero
+
+    component writeAt = IsZero();
+    writeAt.in <== accum[0] - 1;
+
+    component or = OR();
+    or.a <== (writeAt.out * array_to_write_at_index[0]);
+    or.b <== (1 - writeAt.out) * array_to_write_to[0];
+    out[0] <== or.out;
+    //          IF accum == 1 then { array_to_write_at } ELSE IF accum != 1 then { array to write_to }
+    var accum_index;
+
+    component writeSelector[m];
+    component indexSelector[m];
+    component ors[m];
+    for(var i = 1 ; i < m ; i++) {
+        // accum will be 1 at all indices where we want to write the new array
+        accum[i] <== accum[i-1] + indexMatched[i];
+
+        writeSelector[i] = IsZero();
+        writeSelector[i].in <== accum[i] - 1;
+        // IsZero(accum[i] - 1); --> tells us we are in the range where we want to write the new array
+        // for(var j = 0 ; j < n ; j++) {
+        //     temp[j] = IsZero(accum[i + j] - 1) * array_to_write_at_index[j] + (1 - IsZero(accum[i + j] - 1)) * array_to_write_to[i + j];
+        // }
+
+        indexSelector[i] = IndexSelector(n);
+        indexSelector[i].index <== accum_index;
+        indexSelector[i].in <== array_to_write_at_index;
+        // When accum is not zero, out is array_to_write_at_index, otherwise it is array_to_write_to
+
+        ors[i] = OR();
+        ors[i].a <== (writeSelector[i].out * indexSelector[i].out);
+        ors[i].b <== (1 - writeSelector[i].out) * array_to_write_to[i];
+
+        out[i] <== ors[i].out;
+        // out[i] <== writeSelector[i].out * indexSelector[i].out + (1 - writeSelector[i].out) * array_to_write_to[i];
+        //                                this has to index wrt to n ^
+        accum_index += writeSelector[i].out;
+        // use array index
+    }
+}
+
+component main = WriteToIndex(160, 16);
