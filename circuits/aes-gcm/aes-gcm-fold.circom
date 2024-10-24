@@ -3,11 +3,6 @@ pragma circom 2.1.9;
 include "./aes-gcm-foldable.circom";
 include "./utils.circom";
 
-// E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
-// template WriteToIndex(m, n) {
-//     signal input array_to_write_to[m]; // For our example, step_in/out size
-//     signal input array_to_write_at_index[n]; // n == 16, size of block, except for last?
-//     signal input index;
 // Compute AES-GCM 
 template AESGCMFOLD(INPUT_LEN) {
     assert(INPUT_LEN % 16 == 0);
