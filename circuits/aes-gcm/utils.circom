@@ -392,11 +392,12 @@ template WriteToIndex(m, n) {
     component indexEnding[m];
     for(var i = 0 ; i < m ; i++) {
         indexBegining[i] = IsZero();
-        indexBegining[i].in <== i - index;
+        indexBegining[i].in <== i - index; // 16 - 16
         indexEnding[i] = IsZero();
-        indexEnding[i].in <== i - index + n;
+        indexEnding[i].in <== i - (2*n); // 
         indexMatched[i] <== indexBegining[i].out + indexEnding[i].out;
     }
+
     // E.g., index == 31, m == 160, n == 16
     // => indexMatch[31] == 1;
     // => indexMatch[47] == 1;

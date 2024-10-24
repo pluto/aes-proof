@@ -13,7 +13,6 @@ template AESGCMFOLD(INPUT_LEN) {
     signal input iv[12];
     signal input aad[16];
     signal input plainText[16];
-    signal input cipherText[16];
 
     // Output from the last encryption step
     // Always use last bytes for inputs which are not same size.
@@ -26,6 +25,10 @@ template AESGCMFOLD(INPUT_LEN) {
     signal output step_out[DATA_BYTES];
 
     signal counter <== step_in[INPUT_LEN*2 + 4];
+    log("counter");
+    log(counter);
+    log("data bytes");
+    log(DATA_BYTES);
 
     // write new plain text block.
     signal plainTextAccumulator[DATA_BYTES];    
@@ -34,6 +37,11 @@ template AESGCMFOLD(INPUT_LEN) {
     writeToIndex.array_to_write_at_index <== plainText;
     writeToIndex.index <== counter * 16;
     writeToIndex.out ==> plainTextAccumulator;
+
+    // log("plainTextAccumulator");
+    // for (var i = 0; i < DATA_BYTES; i++) {
+    //     log(plainTextAccumulator[i]);
+    // }
 
     // folds one block
     component aes = AESGCMFOLDABLE();
@@ -57,6 +65,14 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCipherText.array_to_write_at_index <== aes.cipherText;
     writeCipherText.index <== INPUT_LEN + counter * 16;
     writeCipherText.out ==> cipherTextAccumulator;
+
+    log("index");
+    log(INPUT_LEN + counter * 16);
+
+    log("cipherTextAccumulator");
+    for (var i = 0; i < DATA_BYTES; i++) {
+        log(cipherTextAccumulator[i]);
+    }
 
     // get counter
     signal counterAccumulator[DATA_BYTES];
