@@ -34,7 +34,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
 
     // Fold inputs
     signal input lastCounter[4];            // Always start at one, then bring forward last counter.
-    signal input lastTag[16];               // Always start at zero, bring forward last tag.
+    // signal input lastTag[16];               // Always start at zero, bring forward last tag.
     signal input numberOfFoldedBlocks;      // running counter of how many blocks have folded, needed for ghash.
 
     // Fold outputs
@@ -42,7 +42,7 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
 
     // Outputs
     signal output cipherText[16];
-    signal output authTag[16];
+    // signal output authTag[16];
 
     component zeroBlock = ToBlocks(16);
     for (var i = 0; i < 16; i++) {
@@ -80,34 +80,34 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
 
     // Step 4 is mute when folding a single block with fixed size aad and ciphertext.
 
-    component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
-    targetMode.numberOfFoldedBlocks <== numberOfFoldedBlocks;
+    // component targetMode    = SelectGhashMode(TOTAL_BLOCKS);
+    // targetMode.numberOfFoldedBlocks <== numberOfFoldedBlocks;
 
-    var mode = targetMode.mode;
-    log("mode", mode);
-    log("numberOfFoldedBlocks", numberOfFoldedBlocks);
+    // var mode = targetMode.mode;
+    // log("mode", mode);
+    // log("numberOfFoldedBlocks", numberOfFoldedBlocks);
 
 
     // S = GHASHH (A || C || [len(A)] || [len(C)]): 48 bytes = 3 blocks of 16 bytes.
     // TODO(WJ 2024-10-23): the slectghashblock components outputs three blocks.
-    component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
-    selectedBlocks.aad        <== aad;
-    selectedBlocks.cipherText <== gctr.cipherText;
-    selectedBlocks.targetMode <== targetMode.mode;
+    // component selectedBlocks = SelectGhashBlocks(TOTAL_BLOCKS);
+    // selectedBlocks.aad        <== aad;
+    // selectedBlocks.cipherText <== gctr.cipherText;
+    // selectedBlocks.targetMode <== targetMode.mode;
 
     // Step 5: Define a block, S
-    component ghash = GHASHFOLDABLE();
-    component cipherToStream = ToStream(1, 16);
-    cipherToStream.blocks[0] <== cipherH.cipher;
-    ghash.HashKey <== cipherToStream.stream;
+    // component ghash = GHASHFOLDABLE();
+    // component cipherToStream = ToStream(1, 16);
+    // cipherToStream.blocks[0] <== cipherH.cipher;
+    // ghash.HashKey <== cipherToStream.stream;
 
-    ghash.msg <== selectedBlocks.blocks;
-    ghash.lastTag <== lastTag;
+    // ghash.msg <== selectedBlocks.blocks;
+    // ghash.lastTag <== lastTag;
 
     // TODO(WJ 2024-10-23): okay here is where we are outputting the possible tags, there will be three. (why?)
-    component selectTag = SelectGhashTag();
-    selectTag.possibleTags <== ghash.possibleTags;
-    selectTag.targetMode <== targetMode.mode;
+    // component selectTag = SelectGhashTag();
+    // selectTag.possibleTags <== ghash.possibleTags;
+    // selectTag.targetMode <== targetMode.mode;
 
     component StartJ0 = ToBlocks(16);
     for (var i = 0; i < 12; i++) {
@@ -118,20 +118,20 @@ template AESGCMFOLDABLE(TOTAL_BLOCKS) {
     }
 
     // Step 6: Encrypt the tag. Let T = MSBt(GCTRK(J0, S))
-    component gctrT = GCTR(16);
-    gctrT.key <== key;
-    gctrT.initialCounterBlock <== StartJ0.blocks[0];
-    gctrT.plainText <== selectTag.tag;
+    // component gctrT = GCTR(16);
+    // gctrT.key <== key;
+    // gctrT.initialCounterBlock <== StartJ0.blocks[0];
+    // gctrT.plainText <== selectTag.tag;
 
-    component m = GhashModes();
-    component isEnding = Contains(2);
-    isEnding.array <== [m.START_END_MODE, m.END_MODE];
-    isEnding.in <== targetMode.mode;
-    component useEncryption = ArraySelector(2, 16);
-    useEncryption.in <== [selectTag.tag, gctrT.cipherText];
-    useEncryption.index <== isEnding.out;
+    // component m = GhashModes();
+    // component isEnding = Contains(2);
+    // isEnding.array <== [m.START_END_MODE, m.END_MODE];
+    // isEnding.in <== targetMode.mode;
+    // component useEncryption = ArraySelector(2, 16);
+    // useEncryption.in <== [selectTag.tag, gctrT.cipherText];
+    // useEncryption.index <== isEnding.out;
 
-    authTag <== useEncryption.out;
+    // authTag <== useEncryption.out;
     cipherText <== gctr.cipherText;
     // TODO: tracy Need to fork gctr to output its counter, right now we also incr by 1.
     counter <== J0[3];
