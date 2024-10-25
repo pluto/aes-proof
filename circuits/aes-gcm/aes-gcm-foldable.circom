@@ -59,8 +59,15 @@ template AESGCMFOLDABLE() {
     // Use the fold counter as input. 
     for (var i = 12; i < 16; i++) {
         J0builder.stream[i] <== lastCounter[i%4]; // initialize to 0001. 
+        log("lastCounter and i");
+        log(lastCounter[i%4]);
+        log(i);
     }
     component J0WordIncrementer = IncrementWord();
+    log("J0builder.blocks[0][3]");
+    for (var i = 0; i < 4; i++) {
+        log(J0builder.blocks[0][3][i]);
+    }
     J0WordIncrementer.in <== J0builder.blocks[0][3];
 
     signal J0[4][4];
@@ -68,6 +75,19 @@ template AESGCMFOLDABLE() {
         J0[i] <== J0builder.blocks[0][i];
     }
     J0[3] <== J0WordIncrementer.out;
+
+    // component J0WordIncrementer = IncrementWord();
+    // J0WordIncrementer.in <== J0builder.blocks[0][3];
+
+    // component J0WordIncrementer2 = IncrementWord();
+    // J0WordIncrementer2.in <== J0WordIncrementer.out;
+
+    // signal J0[4][4];
+    // for (var i = 0; i < 3; i++) {
+    //     J0[i] <== J0builder.blocks[0][i];
+    // }
+    // J0[3] <== J0WordIncrementer2.out;
+
 
     // Step 3: Let C = GCTRK(inc32(J0), P)
     component gctr = GCTR(16);
