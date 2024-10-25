@@ -37,11 +37,8 @@ template AESGCMFOLD(INPUT_LEN) {
     aes.aad       <== aad;
     aes.plainText <== plainText;
 
-    // Fold input last counter
     for(var i = 0; i < 4; i++) {
         aes.lastCounter[i] <== step_in[INPUT_LEN*2 + i];
-        log("lastCounter");
-        log(step_in[INPUT_LEN*2 + i]);
     }
 
     // accumulate cipher text
@@ -59,12 +56,6 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCounter.array_to_write_at_index <== aes.counter;
     writeCounter.index <== INPUT_LEN*2;
     writeCounter.out ==> counterAccumulator;
-
-    // okay bug is actually in counter.
-    // log("counter");
-    // for (var i = 0; i < 4; i++) {
-    //     log(aes.counter[i]);
-    // }
 
     // accumulate number of folded blocks
     component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
