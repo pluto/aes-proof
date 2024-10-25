@@ -28,7 +28,6 @@ include "ghash_gmul.circom";
 //      │  TAG1   │ ─────┘      │   TAG2  │ ──────┘      │   TAGM  │
 //      └─────────┘             └─────────┘              └─────────┘
 // 
-// TODO(WJ 2024-10-23): Question: why are we folding just three blocks? Ask Tracy about this.
 // should only fold a single aes block at a time.
 template GHASHFOLDABLE() {
     signal input HashKey[16]; // Hash subkey (128 bits)
@@ -36,8 +35,6 @@ template GHASHFOLDABLE() {
 
     // folding signals, the last tag. 
     signal input lastTag[16];
-    // TODO(WJ 2024-10-23): Okay so not that we know that each ghash fold has a msg of 48 bytes: three 16 byte blocks
-    // the next question is why we are outputting intermediate tags from the first three blocks?
     signal output possibleTags[3][16]; // Output tag (16 bytes)
 
     // Intermediate tags

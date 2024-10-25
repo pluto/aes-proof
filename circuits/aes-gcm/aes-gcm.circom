@@ -80,16 +80,7 @@ template AESGCM(l) {
     // the second is the ciphertext
     // the last is the length of the aad and ciphertext
     // i.e. S = GHASHH (A || C || [len(A)] || [len(C)]). <- which is always 48 bytes: 3 blocks
-    var ghashblocks = blockCount + 2; // blocksize is 16 bytes
-
-    //
-    // A => 1 => length of AAD (always at most 128 bits)
-    // 0^v => padding bytes, none for v
-    // C => l\16+1 => number of ciphertext blocks
-    // 0^u => padding bytes, u value
-    // len(A) => u64
-    // len(b) => u64 (together, 1 block)
-    //
+    var ghashblocks = blockCount + 2; 
     signal ghashMessage[ghashblocks][4][4];
 
     // set aad as first block

@@ -14,13 +14,10 @@ template AESGCMFOLD(INPUT_LEN) {
     signal input aad[16];
     signal input plainText[16];
 
-    // Output from the last encryption step
-    // Always use last bytes for inputs which are not same size.
     // step_in[0..INPUT_LEN] => accumulate plaintext blocks
     // step_in[INPUT_LEN..INPUT_LEN*2]  => accumulate ciphertext blocks
-    // TODO(WJ 2024-10-24): Are the counter and folded blocks the same? Maybe it is redundant.
     // step_in[INPUT_LEN*2..INPUT_LEN*2+4]  => lastCounter
-    // step_in[INPUT_LEN*2+5]     => foldedBlocks
+    // step_in[INPUT_LEN*2+5]     => foldedBlocks // TODO(WJ 2024-10-24): technically not needed if can read 4 b    ytes as a 32 bit number
     signal input step_in[DATA_BYTES]; 
     signal output step_out[DATA_BYTES];
     signal counter <== step_in[INPUT_LEN*2 + 4];
@@ -32,11 +29,6 @@ template AESGCMFOLD(INPUT_LEN) {
     writeToIndex.array_to_write_at_index <== plainText;
     writeToIndex.index <== counter * 16;
     writeToIndex.out ==> plainTextAccumulator;
-
-    // log("plainTextAccumulator");
-    // for (var i = 0; i < DATA_BYTES; i++) {
-    //     log(plainTextAccumulator[i]);
-    // }
 
     // folds one block
     component aes = AESGCMFOLDABLE();
@@ -65,7 +57,6 @@ template AESGCMFOLD(INPUT_LEN) {
     writeCounter.array_to_write_at_index <== aes.counter;
     writeCounter.index <== INPUT_LEN*2;
     writeCounter.out ==> counterAccumulator;
-
 
     // accumulate number of folded blocks
     component writeNumberOfFoldedBlocks = WriteToIndex(DATA_BYTES, 1);
