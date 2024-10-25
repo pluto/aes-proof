@@ -229,7 +229,6 @@ describe("AddRoundKey", () => {
       file: "aes-gcm/aes/cipher",
       template: "AddRoundKey",
     });
-    console.log("@AddRoundKey #constraints:", await circuit.getConstraintCount());
 
     // 0x57 . 2 = 0xae
     await circuit.expectPass(
@@ -266,8 +265,6 @@ describe("SubBlock", () => {
       file: "aes-gcm/aes/cipher",
       template: "SubBlock",
     });
-    console.log("@SubBlock #constraints:", await circuit.getConstraintCount());
-
     // 0x57 . 2 = 0xae
     await circuit.expectPass(
       {
@@ -298,8 +295,6 @@ describe("ShiftRows", () => {
       template: "ShiftRows",
       params: [],
     });
-    console.log("@ShiftRows #constraints:", await circuit.getConstraintCount());
-
     // 0x57 . 2 = 0xae
     await circuit.expectPass(
       {

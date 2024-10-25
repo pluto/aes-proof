@@ -10,8 +10,6 @@ describe("ToBlocks", () => {
       template: "ToBlocks",
       params: [16],
     });
-    console.log("@ToBlocks #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         stream: [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0xa8, 0x8d, 0xa2, 0x34],
@@ -34,8 +32,6 @@ describe("ToBlocks", () => {
       template: "ToBlocks",
       params: [15],
     });
-    console.log("@EncryptCTR #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         stream: [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0xa8, 0x8d, 0xa2],
@@ -58,8 +54,6 @@ describe("ToBlocks", () => {
       template: "ToBlocks",
       params: [14],
     });
-    console.log("@ToBLocks #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         stream: [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0xa8, 0x8d],
@@ -82,8 +76,6 @@ describe("ToBlocks", () => {
       template: "ToBlocks",
       params: [17],
     });
-    console.log("@ToBLocks #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         stream: [0x32, 0x88, 0x31, 0xe0, 0x42, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0xa8, 0x8d, 0xa2, 0x34, 0x12],
@@ -117,8 +109,6 @@ describe("ToStream", () => {
       template: "ToStream",
       params: [1, 16],
     });
-    console.log("@ToStream #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         blocks: [
@@ -141,8 +131,6 @@ describe("ToStream", () => {
       template: "ToStream",
       params: [1, 15],
     });
-    console.log("@ToStream #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         blocks: [
@@ -165,8 +153,6 @@ describe("ToStream", () => {
       template: "ToStream",
       params: [2, 18],
     });
-    console.log("@ToStream #constraints:", await circuit.getConstraintCount());
-
     await circuit.expectPass(
       {
         blocks: [

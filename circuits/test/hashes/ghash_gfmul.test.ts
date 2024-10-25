@@ -10,7 +10,6 @@ describe("GhashMul", () => {
       file: "aes-gcm/ghash_gmul",
       template: "GhashMul",
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute GhashMul Correctly", async () => {
@@ -53,7 +52,6 @@ describe("BlockRightShift", () => {
       template: "BlockRightShift",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute BlockRightShift Correctly", async () => {
@@ -77,7 +75,6 @@ describe("Mulx", () => {
       template: "Mulx",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute Mulx Correctly", async () => {
@@ -96,7 +93,6 @@ describe("Z_UPDATE", () => {
       template: "Z_UPDATE",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute block XOR Correctly", async () => {

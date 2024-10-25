@@ -8,7 +8,6 @@ describe("Cipher", () => {
       file: "aes-gcm/aes/cipher",
       template: "Cipher",
     });
-    console.log("@Cipher #constraints:", await circuit.getConstraintCount());
 
     await circuit.expectPass(
       {
@@ -39,7 +38,6 @@ describe("Cipher", () => {
       file: "aes-gcm/aes/cipher",
       template: "Cipher",
     });
-    console.log("@Cipher #constraints:", await circuit.getConstraintCount());
 
     await circuit.expectPass(
       {
@@ -72,7 +70,6 @@ describe("NextRound", () => {
         file: "aes-gcm/aes/key_expansion",
         template: "NextRound",
       });
-      console.log("#constraints:", await circuit.getConstraintCount());
     }
 
     it("should compute correctly", async () => {
