@@ -1,29 +1,6 @@
 import { WitnessTester } from "circomkit";
-import { bitArrayToHex, circomkit, hexByteToBigInt, hexToBitArray } from ".";
+import { circomkit, hexByteToBigInt, hexToBitArray } from ".";
 import { assert } from "chai";
-
-describe("reverse_byte_array", () => {
-  let circuit: WitnessTester<["in"], ["out"]>;
-
-  before(async () => {
-    circuit = await circomkit.WitnessTester(`reverse_bytes`, {
-      file: "aes-gcm/utils",
-      template: "ReverseByteArray128",
-    });
-  });
-
-  it("test reverse_byte_array", async () => {
-    let bits = hexToBitArray("0102030405060708091011121314151f");
-    let expect = "1f151413121110090807060504030201";
-    const _res = await circuit.compute({ in: bits }, ["out"]);
-    const result = bitArrayToHex(
-      (_res.out as number[]).map((bit) => Number(bit))
-    );
-    // console.log("expect: ", expect, "\nresult: ", result);
-    assert.equal(expect, result);
-  });
-});
-
 
 describe("IncrementWord", () => {
   let circuit: WitnessTester<["in"], ["out"]>;
@@ -73,47 +50,6 @@ describe("IncrementWord", () => {
 });
 
 
-describe("ParseBytesBE", () => {
-  let circuit: WitnessTester<["in"], ["out"]>;
-
-  before(async () => {
-    circuit = await circomkit.WitnessTester(`ParseBEBytes64`, {
-      file: "aes-gcm/utils",
-      template: "ParseBEBytes64",
-    });
-  });
-
-  it("Should parse bytes in BE order", async () => {
-    const X = hexToBitArray("0x0000000000000001");
-    const expected = 1;
-    const _result = await circuit.compute({ in: X }, ["out"]);
-    const result = _result.out as number;
-
-    assert.equal(result, expected, "parse incorrect");
-  });
-});
-
-
-describe("ParseBytesLE", () => {
-  let circuit: WitnessTester<["in"], ["out"]>;
-
-  before(async () => {
-    circuit = await circomkit.WitnessTester(`ParseLEBytes64`, {
-      file: "aes-gcm/utils",
-      template: "ParseLEBytes64",
-    });
-  });
-
-  it("Should parse bytes in LE order", async () => {
-    const X = hexToBitArray("0x0100000000000000");
-    const expected = 1;
-    const _result = await circuit.compute({ in: X }, ["out"]);
-    const result = _result.out as number;
-
-    assert.equal(result, expected, "parse incorrect");
-  });
-});
-
 describe("ArrayMux", () => {
   let circuit: WitnessTester<["a", "b", "sel"], ["out"]>;
 
@@ -123,7 +59,6 @@ describe("ArrayMux", () => {
       template: "ArrayMux",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute selector mux Correctly", async () => {
@@ -152,7 +87,6 @@ describe("XORBLOCK", () => {
       template: "XORBLOCK",
       params: [16]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
   // msb is 1 so we xor the first byte with 0xE1
   it("Should Compute block XOR Correctly", async () => {
@@ -172,23 +106,18 @@ describe("ToBytes", () => {
       template: "BitsToBytes",
       params: [1]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute bytesToBits Correctly", async () => {
     let input = hexToBitArray("0x01");
     const expected = hexByteToBigInt("0x01");
-    // console.log("expected", expected);
     const _res = await circuit.compute({ in: input }, ["out"]);
-    // console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });
   it("Should Compute bytesToBits Correctly", async () => {
     let input = hexToBitArray("0xFF");
     const expected = hexByteToBigInt("0xFF");
-    // console.log("expected", expected);
     const _res = await circuit.compute({ in: input }, ["out"]);
-    // console.log("res:", _res.out);
     assert.deepEqual(_res.out, expected);
   });
 });
@@ -202,20 +131,17 @@ describe("ToBits", () => {
       template: "BytesToBits",
       params: [2]
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   it("Should Compute bytesToBits Correctly", async () => {
     let input = [0x01, 0x00];
     const expected = hexToBitArray("0x0100");
-    // console.log("expected", expected);
-    const _res = await circuit.expectPass({ in: input }, { out: expected });
+    await circuit.expectPass({ in: input }, { out: expected });
   });
   it("Should Compute bytesToBits Correctly", async () => {
     let input = [0xFF, 0x00];
     const expected = hexToBitArray("0xFF00");
-    // console.log("expected", expected);
-    const _res = await circuit.expectPass({ in: input }, { out: expected });
+    await circuit.expectPass({ in: input }, { out: expected });
   });
 });
 
@@ -235,9 +161,7 @@ describe("selectors", () => {
             [0x0,0x0,0x0,0x03],
         ]
         let selected = [0x06,0x07,0x08,0x09].map(BigInt);
-        console.log("selections", selections);
         const witness = await circuit.compute({in: selections, index: selector}, ["out"])
-        console.log("selected", witness.out);
         assert.deepEqual(witness.out, selected)
     });
 
@@ -251,9 +175,193 @@ describe("selectors", () => {
 
         let selector = 2;
         let selections = [0x0,0x0,0x08,0x01];
-        console.log("selections", selections);
         const witness = await circuit.compute({in: selections, index: selector}, ["out"])
-        console.log("selected", witness.out);
         assert.deepEqual(witness.out, BigInt(0x08))
     });
 });
+
+describe("toBlocks", () => {
+  it("test toBlocks", async () => {
+    let circuit: WitnessTester<["stream"], ["blocks"]>;
+    circuit = await circomkit.WitnessTester(`ToBlocks`, {
+      file: "aes-gcm/aes/utils",
+      template: "ToBlocks",
+      params: [16],
+    });
+    await circuit.expectPass(
+      {
+        stream: [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0xa8, 0x8d, 0xa2, 0x34],
+      },
+      {
+        blocks: [
+          [
+            [0x32, 0x43, 0xf6, 0xa8],
+            [0x88, 0x5a, 0x30, 0x8d],
+            [0x31, 0x31, 0x98, 0xa2],
+            [0xe0, 0x37, 0x07, 0x34],
+          ],
+        ],
+    }
+    );
+  });
+});
+
+describe("toBlocksRowWise", () => {
+  it("test toBlocksRowWise", async () => {
+    let circuit: WitnessTester<["stream"], ["blocks"]>;
+    circuit = await circomkit.WitnessTester(`ToBlocksRowWise`, {
+      file: "aes-gcm/aes/utils",
+      template: "ToBlocksRowWise",
+      params: [16],
+    });
+
+    let expected = [
+      [
+        [0x31, 0x31, 0x31, 0x31],
+        [0x31, 0x31, 0x31, 0x31],
+        [0x31, 0x31, 0x31, 0x31],
+        [0x00, 0x00, 0x00, 0x01],
+      ],
+    ];
+    await circuit.expectPass(
+      {
+        stream: [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x00, 0x00, 0x00, 0x01],
+      },
+      {
+        blocks: expected
+      }
+    );
+  });
+});
+
+describe("array_builder", () => {
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = array_to_write_at_index.concat(new Array(160 - array_to_write_at_index.length).fill(0x00));
+    let index = 0;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = [0x00].concat(array_to_write_at_index).concat(new Array(160 - array_to_write_at_index.length - 1).fill(0x00));
+    let index = 1;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [160, 16],
+    });
+
+    let array_to_write_to = new Array(160).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = [0x00, 0x00].concat(array_to_write_at_index).concat(new Array(160 - array_to_write_at_index.length - 2).fill(0x00));
+    let index = 2;
+
+    await circuit.expectPass(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      {
+        out: expected
+      }
+    );
+  });
+  it("test array builder with index = n", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [37, 16],
+    });
+
+    let array_to_write_to = new Array(37).fill(0x00);
+    let array_to_write_at_index = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
+    let expected = new Array(16).fill(0x00).concat(array_to_write_at_index).concat(new Array(37 - array_to_write_at_index.length - 16).fill(0x00));
+    let index = 16;
+
+    let witness = await circuit.compute(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      ["out"]
+    );
+    assert.deepEqual(witness.out, expected.map(BigInt));
+  });
+
+  it("test array builder with index > n", async () => {
+    let circuit: WitnessTester<["array_to_write_to", "array_to_write_at_index", "index"], ["out"]>;
+    circuit = await circomkit.WitnessTester(`ArrayBuilder`, {
+      file: "aes-gcm/utils",
+      template: "WriteToIndex",
+      params: [37, 4],
+    });
+
+    let array_to_write_to = [
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x03, 0x88, 0xDA, 0xCE, 0x60, 0xB6, 0xA3, 0x92, 0xF3, 0x28, 0xC2, 0xB9, 0x71, 0xB2, 0xFE, 0x78,
+      0x00, 0x00, 0x00, 0x00, 0x00
+    ];
+    let array_to_write_at_index = [0x00, 0x00, 0x00, 0x01];
+    let expected = [
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x03, 0x88, 0xDA, 0xCE, 0x60, 0xB6, 0xA3, 0x92, 0xF3, 0x28, 0xC2, 0xB9, 0x71, 0xB2, 0xFE, 0x78,
+      0x00, 0x00, 0x00, 0x01, 0x00
+    ];
+    let index = 32;
+
+    let witness = await circuit.compute(
+      {
+        array_to_write_to: array_to_write_to,
+        array_to_write_at_index: array_to_write_at_index,
+        index: index
+      },
+      ["out"]
+    );
+    assert.deepEqual(witness.out, expected.map(BigInt));
+  });
+  
+});
+

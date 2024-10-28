@@ -131,6 +131,36 @@ template ToBlocks(l){
         }
 }
 
+// converts a stream to row wise blocks of 16 bytes
+template ToBlocksRowWise(l){
+        signal input stream[l];
+
+        var n = l\16;
+        if(l%16 > 0){
+                n = n + 1;
+        }
+        signal output blocks[n][4][4];
+
+        var i, j, k;
+        for (var idx = 0; idx < l; idx++) {
+            blocks[i][k][j] <== stream[idx];
+            j = (j + 1);
+            if (j == 4){
+                k = k + 1;
+                j = 0;
+                if (k == 4){
+                    j = 0;
+                    i = i + 1;
+                }
+            }
+        }
+
+        if (l%16 > 0){
+               blocks[i][k][j] <== 1;
+               j = j + 1;
+        }
+}
+
 // convert blocks of 16 bytes to stream of bytes
 template ToStream(n,l){
         signal input blocks[n][4][4];

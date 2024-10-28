@@ -10,7 +10,6 @@ describe("SBox128", () => {
         file: "aes-gcm/aes/sbox128",
         template: "SBox128",
       });
-      console.log("#constraints:", await circuit.getConstraintCount());
     });
 
     it("should compute correctly", async () => {
@@ -28,7 +27,6 @@ describe("FieldInv", () => {
       file: "aes-gcm/aes/ff",
       template: "FieldInv",
     });
-    console.log("#constraints:", await circuit.getConstraintCount());
   });
 
   let inverses = [0x00, 0x01, 0x8d, 0xf6, 0xcb, 0x52, 0x7b, 0xd1, 0xe8, 0x4f, 0x29, 0xc0, 0xb0, 0xe1, 0xe5, 0xc7,

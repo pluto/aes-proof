@@ -3,105 +3,104 @@ import { WitnessTester } from "circomkit";
 import { circomkit, hexBytesToBigInt, hexToBytes } from "../common";
 
 describe("aes-gcm-fold", () => {
-    let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad", "step_in"], ["cipherText", "tag", "step_out"]>;
+    let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad", "step_in"], ["step_out"]>;
 
-    const shared_witness = {
-        key: hexToBytes('31313131313131313131313131313131'),
-        iv: hexToBytes('313131313131313131313131'),
-        plainText: hexToBytes('7465737468656c6c6f30303030303030'),
-        aad: hexToBytes('00000000000000000000000000000000'),
-    };
-
-    it("all correct for self generated single block case", async () => {
+    it("all correct for self generated single zero pt block case", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
-            // ciphertext bytes, total bytes => i.e. one fold.
-            params: [16, 16],
+            params: [16], // input len is 16 bytes
         });
-        console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
-        const ct = hexToBytes('2929d2bb1ae94804402b8e776e0d3356');
-        const authTag = hexToBytes('9a636f50dc842820c798d001d9a9c4bd');
+        let key       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let plainText = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let iv        = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let ct        = [0x03, 0x88, 0xda, 0xce, 0x60, 0xb6, 0xa3, 0x92, 0xf3, 0x28, 0xc2, 0xb9, 0x71, 0xb2, 0xfe, 0x78];
 
         const counter = [0x00, 0x00, 0x00, 0x01];
-        const startTag = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         const foldedBlocks = [0x00];
-        const step_in = [counter, startTag, foldedBlocks];
+        const step_in = new Array(32).fill(0x00).concat(counter).concat(foldedBlocks); 
 
-        const witness = await circuit_one_block.compute({ ...shared_witness, step_in: step_in }, ["cipherText", "authTag", "step_out"])
-        assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct));
-        assert.deepEqual((witness.step_out as BigInt[]).slice(4, 20), hexBytesToBigInt(authTag));
+        let expected = plainText.concat(ct).concat([0x00, 0x00, 0x00, 0x02]).concat([0x01]);
+
+        const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
+        assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 
-    it("outputs correct tag in start mode", async () => {
+    it("all correct for self generated single non zero pt block", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
-            // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
+            params: [16], // input len is 16 bytes
         });
-        console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
-        // NOTE: We use the same plaintext, but expect a different ct because the counter has increased.
-        const ct = hexToBytes('2929d2bb1ae94804402b8e776e0d3356');
-        const expectedTag = hexToBytes('0b1fb4f1762e2f93f521e3f5acab2e03');
+        
+        let key       = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let plainText = [0x74, 0x65, 0x73, 0x74, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30];
+        let iv        = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let ct        = [0x29, 0x29, 0xd2, 0xbb, 0x1a, 0xe9, 0x48, 0x04, 0x40, 0x2b, 0x8e, 0x77, 0x6e, 0x0d, 0x33, 0x56];
+
         const counter = [0x00, 0x00, 0x00, 0x01];
-        const startTag = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         const foldedBlocks = [0x00];
-        const step_in = [counter, startTag, foldedBlocks];
+        const step_in = new Array(32).fill(0x00).concat(counter).concat(foldedBlocks); 
 
-        const witness = await circuit_one_block.compute({ ...shared_witness, step_in: step_in }, ["cipherText", "authTag", "step_out"])
-        const intermediateTag = (witness.step_out as BigInt[]).slice(4, 20);
-        console.log("intermediate tag", intermediateTag);
-        assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct));
-        assert.deepEqual(intermediateTag, hexBytesToBigInt(expectedTag));
+        let expected = plainText.concat(ct).concat([0x00, 0x00, 0x00, 0x02]).concat([0x01]);
+
+        const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText, aad: aad, step_in: step_in }, ["step_out"])
+        assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 
-    it("outputs correct tag in stream mode", async () => {
+
+
+    it("all correct for self generated two block case first fold", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
             file: "aes-gcm/aes-gcm-fold",
             template: "AESGCMFOLD",
-            // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
+            params: [32], // input len is 32 bytes
         });
-        console.log("#constraints:", await circuit_one_block.getConstraintCount());
 
-        const ct = hexToBytes('26756530713e4c065af1d3c4f56e0204');
-        const expectedTag = hexToBytes('116057c3018743e61233919efb60c62c');
+        let zero_block = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let key       = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let plainText1 = [0x74, 0x65, 0x73, 0x74, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30];
+        let plainText2 = [0x74, 0x65, 0x73, 0x74, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30];
+        let iv        = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let ct_part1 = [0x29, 0x29, 0xd2, 0xbb, 0x1a, 0xe9, 0x48, 0x04, 0x40, 0x2b, 0x8e, 0x77, 0x6e, 0x0d, 0x33, 0x56];
+        let ct_part2 = [0x26, 0x75, 0x65, 0x30, 0x71, 0x3e, 0x4c, 0x06, 0x5a, 0xf1, 0xd3, 0xc4, 0xf5, 0x6e, 0x02, 0x04];
+
+        const counter = [0x00, 0x00, 0x00, 0x01];
+        const foldedBlocks = [0x00];
+        const step_in = new Array(64).fill(0x00).concat(counter).concat(foldedBlocks); 
+        let expected = plainText1.concat(zero_block).concat(ct_part1).concat(zero_block).concat([0x00, 0x00, 0x00, 0x02]).concat([0x01]);
+
+        const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText1, aad: aad, step_in: step_in }, ["step_out"])
+        assert.deepEqual(witness.step_out, expected.map(BigInt));
+    });
+
+    it("all correct for self generated two block case second fold", async () => {
+        circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
+            file: "aes-gcm/aes-gcm-fold",
+            template: "AESGCMFOLD",
+            params: [32], // input len is 32 bytes
+        });
+
+        let zero_block = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let key       = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let plainText1 = [0x74, 0x65, 0x73, 0x74, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30];
+        let plainText2 = [0x74, 0x65, 0x73, 0x74, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30];
+        let iv        = [0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31];
+        let aad       = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let ct_part1 = [0x29, 0x29, 0xd2, 0xbb, 0x1a, 0xe9, 0x48, 0x04, 0x40, 0x2b, 0x8e, 0x77, 0x6e, 0x0d, 0x33, 0x56];
+        let ct_part2 = [0x26, 0x75, 0x65, 0x30, 0x71, 0x3e, 0x4c, 0x06, 0x5a, 0xf1, 0xd3, 0xc4, 0xf5, 0x6e, 0x02, 0x04];
 
         const counter = [0x00, 0x00, 0x00, 0x02];
-        const startTag = [0x0b, 0x1f, 0xb4, 0xf1, 0x76, 0x2e, 0x2f, 0x93, 0xf5, 0x21, 0xe3, 0xf5, 0xac, 0xab, 0x2e, 0x03];
         const foldedBlocks = [0x01];
-        const step_in = [counter, startTag, foldedBlocks];
+        const step_in = plainText1.concat(zero_block).concat(ct_part1).concat(zero_block).concat(counter).concat(foldedBlocks); 
+        let expected = plainText1.concat(plainText2).concat(ct_part1).concat(ct_part2).concat([0x00, 0x00, 0x00, 0x03]).concat([0x02]);
 
-        const witness = await circuit_one_block.compute({ ...shared_witness, step_in: step_in }, ["cipherText", "authTag", "step_out"])
-        const intermediateTag = (witness.step_out as BigInt[]).slice(4, 20);
-        console.log("intermediate tag", intermediateTag);
-        assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct));
-        assert.deepEqual(intermediateTag, hexBytesToBigInt(expectedTag));
-    });
-
-    // Finally, we are on the end fold. Check the correct tag and cipher based on the intermediate stages.
-    it("outputs correct tag in end mode", async () => {
-        circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
-            file: "aes-gcm/aes-gcm-fold",
-            template: "AESGCMFOLD",
-            // ciphertext bytes, total bytes => first fold, but many folds to do.
-            params: [16, 48],
-        });
-        console.log("#constraints:", await circuit_one_block.getConstraintCount());
-
-        const ct = hexToBytes('36854c327ec16e03d895c3ff8c007654');
-        const expectedTag = hexToBytes('4a1722a2ad1673c17c057cd9a886e33d');
-        const counter = [0x00, 0x00, 0x00, 0x03];
-        const startTag = [0x11, 0x60, 0x57, 0xc3, 0x01, 0x87, 0x43, 0xe6, 0x12, 0x33, 0x91, 0x9e, 0xfb, 0x60, 0xc6, 0x2c];
-        const foldedBlocks = [0x02];
-        const step_in = [counter, startTag, foldedBlocks];
-
-        const witness = await circuit_one_block.compute({ ...shared_witness, step_in: step_in }, ["cipherText", "authTag", "step_out"])
-        const intermediateTag = (witness.step_out as BigInt[]).slice(4, 20);
-        assert.deepEqual(witness.cipherText, hexBytesToBigInt(ct));
-        assert.deepEqual(intermediateTag, hexBytesToBigInt(expectedTag));
+        const witness = await circuit_one_block.compute({ key: key, iv: iv, plainText: plainText2, aad: aad, step_in: step_in }, ["step_out"])
+        assert.deepEqual(witness.step_out, expected.map(BigInt));
     });
 });

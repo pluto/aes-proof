@@ -10,3 +10,8 @@ One place where we might have created some redundant intermediate signals is in 
 
 ### Folding
 I think the other thing I am incline to look into is the folding. Now there might be some dragons here because tracy wrote the folding circuits so i don't have the greatest intuition on them. However they seem to be very similar to the non folding circuits with some minor differences in passing a "step_in" signal. I think we should try to fold the circuits and see if we can get a smaller circuit. I think that it is possible that we could within the the ghash foldable maybe instead fold the the gmul within the ghash since that has the most repeated components and has a lost of constraints. Ghash mul has `81552` constraints and is called for each cipher block (16 bytes of plain text). So if we can figure out how to fold the main loop in gmul so that we are folding each 128bit itteration then we could potentially reduce the constraints drastically (I hypothesize by a factor of 128). This does seem like it might need some careful thought and more work and should probably only come after we look for other low hanging fruit.
+
+### Important to note
+circom kit doesn't use circom compiler optimizations. So when you log constraints in these tests they are wrong.
+The right way to get the "prod" compiled constraints is to use the circom compiler directly.
+with this command:  `circom circuits/aes-gcm/aes-gcm.circom -l node_modules --r1cs`

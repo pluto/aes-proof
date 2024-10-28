@@ -99,76 +99,7 @@ template ArrayMux(n) {
     }
 }
 
-// parse LE bits to int
-template ParseLEBytes64() {
-    signal input in[64];
-    signal output out;
-    var temp = 0;
 
-    // Iterate through the input bits
-    for (var i = 7; i >= 0; i--) {
-        for (var j = 0; j < 8; j++) {
-            // Shift the existing value left by 1 and add the new bit
-            var IDX = i*8+j;
-            temp = temp * 2 + in[IDX];
-        }
-    }
-
-    // Assign the final value to the output signal
-    out <== temp;
-}
-
-// parse BE bits as bytes and log them. Assumes that the number of bytes logged is a multiple of 8.
-template ParseAndLogBitsAsBytes(N_BYTES){
-    var N_BITS = N_BYTES * 8;
-    signal input in[N_BITS];
-    component Parser = ParseBEBitsToBytes(N_BYTES);
-    for (var i=0; i<N_BITS; i++){
-        Parser.in[i] <== in[i];
-    }
-    for (var i=0; i<N_BYTES / 8; i++){
-        log("in[", i, "]=",
-            Parser.out[i*8+0],  Parser.out[i*8+1],  Parser.out[i*8+2],  Parser.out[i*8+3],
-        Parser.out[i*8+4],  Parser.out[i*8+5],  Parser.out[i*8+6],  Parser.out[i*8+7]
-        );
-    }
-}
-
-// parse BE bits to bytes.
-template ParseBEBitsToBytes(N_BYTES) {
-    var N_BITS = N_BYTES * 8;
-    signal input in[N_BITS];
-    signal output out[N_BYTES];
-
-    // Iterate through the input bits
-    signal temp[N_BYTES][8];
-    for (var i = 0; i < N_BYTES; i++) {
-        temp[i][0] <== 0;
-        for (var j = 7; j >= 0; j--) {
-            temp[i][j] = temp[i][j+1] + 2**j * in[i*8 + 7 - j];
-        }
-    }
-
-    for (var i=0; i< N_BYTES; i++) {
-        out[i] <== temp[i][0];
-    }
-}
-
-// parse 64-bits to integer value
-template ParseBEBytes64() {
-    signal input in[64];
-    signal output out;
-    var temp = 0;
-
-    // Iterate through the input bits
-    for (var i = 0; i < 64; i++) {
-        // Shift the existing value left by 1 and add the new bit
-        temp = temp * 2 + in[i];
-    }
-
-    // Assign the final value to the output signal
-    out <== temp;
-}
 
 template BitwiseRightShift(n, r) {
     signal input in[n];
@@ -182,18 +113,6 @@ template BitwiseRightShift(n, r) {
 }
 
 
-template BitwiseLeftShift(n, r) {
-    signal input in[n];
-    signal output out[n];
-    for (var i=0; i<n-r; i++) {
-        out[i] <== in[i+r];
-    }
-    for (var i=n-r; i<n; i++) {
-        out[i] <== 0;
-    }
-}
-
-
 template BitwiseXor(n) {
     signal input a[n];
     signal input b[n];
@@ -203,16 +122,6 @@ template BitwiseXor(n) {
     for (var k=0; k<n; k++) {
         mid[k] <== a[k]*b[k];
         out[k] <== a[k] + b[k] - 2*mid[k];
-    }
-}
-
-template BitwiseAnd(n) {
-    signal input a[n];
-    signal input b[n];
-    signal output out[n];
-
-    for (var k=0; k<n; k++) {
-        out[k] <== a[k]*b[k];
     }
 }
 
@@ -262,37 +171,6 @@ template XorMultiple(n, m) {
     }
 
     out <== mids[n-1];
-}
-
-
-// reverse the byte order in a 16 byte array
-template ReverseByteArray128() {
-    signal input in[128];
-    signal output out[128];
-
-    for (var i = 0; i < 16; i++) {
-        for (var j = 0; j < 8; j++) {
-            out[j + 8*i] <== in[(15-i)*8 +j];
-        }
-    }
-}
-// in a 128-bit array, reverse the byte order in the first 64 bits, and the second 64 bits
-template ReverseByteArrayHalves128() {
-    signal input in[128];
-    signal output out[128];
-
-    for (var i=0; i<8; i++){
-        for (var j=0; j<8; j++){
-            var SWAP_IDX = 56-(i*8)+j;
-            out[i*8+j] <== in[SWAP_IDX];
-        }
-    }
-    for (var i=0; i<8; i++){
-        for (var j=0; j<8; j++){
-            var SWAP_IDX = 56-(i*8)+j+64;
-            out[i*8+j+64] <== in[SWAP_IDX];
-        }
-    }
 }
 
 // Increment a 32-bit word, represented as a 4-byte array
@@ -435,4 +313,108 @@ template Selector(n) {
     }
 
     out <== sums[n];
+}
+
+// TODO(WJ 2024-10-24): shared across parser circuits should consolidate.
+template SumMultiple(n) {
+    signal input nums[n];
+    signal output sum;
+
+    signal sums[n];
+    sums[0] <== nums[0];
+
+    for(var i=1; i<n; i++) {
+        sums[i] <== sums[i-1] + nums[i];
+    }
+
+    sum <== sums[n-1];
+}
+
+// TODO(WJ 2024-10-24): shared across parser circuits should consolidate.
+template IndexSelector(total) {
+    signal input in[total];
+    signal input index;
+    signal output out;
+
+    //maybe add (index<total) check later when we decide number of bits
+
+    component calcTotal = SumMultiple(total);
+    component equality[total];
+
+    for(var i=0; i<total; i++){
+        equality[i] = IsEqual();
+        equality[i].in[0] <== i;
+        equality[i].in[1] <== index;
+        calcTotal.nums[i] <== equality[i].out * in[i];
+    }
+
+    out <== calcTotal.sum;
+}
+
+// E.g., given an array of m=160, we want to write at `index` to the n=16 bytes at that index.
+template WriteToIndex(m, n) {
+    signal input array_to_write_to[m];
+    signal input array_to_write_at_index[n]; 
+    signal input index;
+
+    signal output out[m];
+
+    assert(m >= n);
+
+    // Note: this is underconstrained, we need to constrain that index + n <= m
+    // Need to constrain that index + n <= m -- can't be an assertion, because uses a signal
+    // ------------------------- //
+
+    // Here, we get an array of ALL zeros, except at the `index` AND `index + n`
+    //                                    beginning-------^^^^^ end---^^^^^^^^^  
+    signal indexMatched[m];
+    component indexBegining[m];
+    component indexEnding[m];
+    for(var i = 0 ; i < m ; i++) {
+        indexBegining[i] = IsZero();
+        indexBegining[i].in <== i - index; 
+        indexEnding[i] = IsZero();
+        indexEnding[i].in <== i - (index + n);
+        indexMatched[i] <== indexBegining[i].out + indexEnding[i].out;
+    }
+
+    // E.g., index == 31, m == 160, n == 16
+    // => indexMatch[31] == 1;
+    // => indexMatch[47] == 1;
+    // => otherwise, all 0. 
+
+    signal accum[m];
+    accum[0] <== indexMatched[0]; 
+
+    component writeAt = IsZero();
+    writeAt.in <== accum[0] - 1;
+
+    component or = OR();
+    or.a <== (writeAt.out * array_to_write_at_index[0]);
+    or.b <== (1 - writeAt.out) * array_to_write_to[0];
+    out[0] <== or.out;
+    //          IF accum == 1 then { array_to_write_at } ELSE IF accum != 1 then { array to write_to }
+    var accum_index = accum[0];
+
+    component writeSelector[m - 1];
+    component indexSelector[m - 1];
+    component ors[m-1];
+    for(var i = 1 ; i < m ; i++) {
+        // accum will be 1 at all indices where we want to write the new array
+        accum[i] <== accum[i-1] + indexMatched[i];
+        writeSelector[i-1] = IsZero();
+        writeSelector[i-1].in <== accum[i] - 1;
+        // IsZero(accum[i] - 1); --> tells us we are in the range where we want to write the new array
+
+        indexSelector[i-1] = IndexSelector(n);
+        indexSelector[i-1].index <== accum_index;
+        indexSelector[i-1].in <== array_to_write_at_index;
+        // When accum is not zero, out is array_to_write_at_index, otherwise it is array_to_write_to
+
+        ors[i-1] = OR();
+        ors[i-1].a <== (writeSelector[i-1].out * indexSelector[i-1].out);
+        ors[i-1].b <== (1 - writeSelector[i-1].out) * array_to_write_to[i];
+        out[i] <== ors[i-1].out;
+        accum_index += writeSelector[i-1].out;
+    }
 }
