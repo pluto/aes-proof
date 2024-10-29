@@ -1,10 +1,6 @@
 pragma circom 2.1.9;
 
 include "aes/cipher.circom";
-include "circomlib/circuits/bitify.circom";
-include "circomlib/circuits/mux2.circom";
-include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/gates.circom";
 include "utils.circom";
 include "gctr.circom";
 

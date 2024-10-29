@@ -2,7 +2,6 @@ pragma circom 2.1.9;
 
 include "ghash.circom";
 include "aes/cipher.circom";
-include "circomlib/circuits/bitify.circom";
 include "utils.circom";
 include "gctr.circom";
 

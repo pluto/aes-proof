@@ -1,6 +1,5 @@
 pragma circom 2.1.9;
 
-include "circomlib/circuits/comparators.circom"; // isZero
 include "utils.circom"; // bitwise right shift
 include "circomlib/circuits/mux1.circom"; // multiplexer
 
