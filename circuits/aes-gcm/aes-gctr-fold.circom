@@ -1,10 +1,10 @@
 pragma circom 2.1.9;
 
-include "./aes-gcm-foldable.circom";
+include "./aes-gctr-foldable.circom";
 include "./utils.circom";
 
-// Compute AES-GCM 
-template AESGCMFOLD(INPUT_LEN) {
+// Compute AES-GCTR
+template AESGCTRFOLD(INPUT_LEN) {
     assert(INPUT_LEN % 16 == 0);
     var DATA_BYTES = (INPUT_LEN * 2) + 4;
     signal input key[16];
@@ -41,7 +41,7 @@ template AESGCMFOLD(INPUT_LEN) {
     writeToIndex.out ==> plainTextAccumulator;
 
     // folds one block
-    component aes = AESGCMFOLDABLE();
+    component aes = AESGCTRFOLDABLE();
     aes.key       <== key;
     aes.iv        <== iv;
     aes.aad       <== aad;

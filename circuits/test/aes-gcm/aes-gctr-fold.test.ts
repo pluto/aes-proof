@@ -2,13 +2,13 @@ import { assert } from "chai";
 import { WitnessTester } from "circomkit";
 import { circomkit, hexBytesToBigInt, hexToBytes } from "../common";
 
-describe("aes-gcm-fold", () => {
+describe("aes-gctr-fold", () => {
     let circuit_one_block: WitnessTester<["key", "iv", "plainText", "aad", "step_in"], ["step_out"]>;
 
     it("all correct for self generated single zero pt block case", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
-            file: "aes-gcm/aes-gcm-fold",
-            template: "AESGCMFOLD",
+            file: "aes-gcm/aes-gctr-fold",
+            template: "AESGCTRFOLD",
             params: [16], // input len is 16 bytes
         });
 
@@ -28,8 +28,8 @@ describe("aes-gcm-fold", () => {
 
     it("all correct for self generated single non zero pt block", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
-            file: "aes-gcm/aes-gcm-fold",
-            template: "AESGCMFOLD",
+            file: "aes-gcm/aes-gctr-fold",
+            template: "AESGCTRFOLD",
             params: [16], // input len is 16 bytes
         });
         
@@ -52,8 +52,8 @@ describe("aes-gcm-fold", () => {
 
     it("all correct for self generated two block case first fold", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
-            file: "aes-gcm/aes-gcm-fold",
-            template: "AESGCMFOLD",
+            file: "aes-gcm/aes-gctr-fold",
+            template: "AESGCTRFOLD",
             params: [32], // input len is 32 bytes
         });
 
@@ -76,8 +76,8 @@ describe("aes-gcm-fold", () => {
 
     it("all correct for self generated two block case second fold", async () => {
         circuit_one_block = await circomkit.WitnessTester("aes-gcm-fold", {
-            file: "aes-gcm/aes-gcm-fold",
-            template: "AESGCMFOLD",
+            file: "aes-gcm/aes-gctr-fold",
+            template: "AESGCTRFOLD",
             params: [32], // input len is 32 bytes
         });
 

@@ -8,7 +8,7 @@ include "circomlib/circuits/gates.circom";
 include "utils.circom";
 include "gctr.circom";
 
-/// AES-GCM with 128 bit key authenticated encryption according to: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
+/// AES-GCTR with 128 bit key encryption according to: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-38d.pdf
 /// 
 /// Parameters:
 /// l: length of the plaintext
@@ -21,10 +21,9 @@ include "gctr.circom";
 ///
 /// Outputs:
 /// cipherText: encrypted ciphertext
-/// authTag: authentication tag
 /// 
 /// This folds a single block without authentication via ghash.
-template AESGCMFOLDABLE() {
+template AESGCTRFOLDABLE() {
     // Inputs
     signal input key[16];           // 128-bit key
     signal input iv[12];            // IV length is 96 bits (12 bytes)
