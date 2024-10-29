@@ -17,7 +17,7 @@ template AESGCMFOLD(INPUT_LEN) {
     // step_in[0..INPUT_LEN] => accumulate plaintext blocks
     // step_in[INPUT_LEN..INPUT_LEN*2]  => accumulate ciphertext blocks
     // step_in[INPUT_LEN*2..INPUT_LEN*2+4]  => lastCounter
-    // step_in[INPUT_LEN*2+5]     => foldedBlocks // TODO(WJ 2024-10-24): technically not needed if can read 4 bytes as a 32 bit number
+    // step_in[INPUT_LEN*2+5]     => foldedBlocks // TODO(WJ 2024-10-24): technically not needed if can read 4 bytes as a 32 bit number, Can do this easy with bits2num
     signal input step_in[DATA_BYTES]; 
     signal output step_out[DATA_BYTES];
     signal counter <== step_in[INPUT_LEN*2 + 4];

@@ -4,6 +4,7 @@ pragma circom 2.1.9;
 include "circomlib/circuits/bitify.circom";
 include "../utils.circom";
 
+// All this is for a properly constrained sbox since we don't have lookup arguments
 // Finite field addition, the signal variable plus a compile-time constant
 template FieldAddConst(c) {
     signal input in[8];
@@ -202,5 +203,81 @@ template AffineTransform() {
         }
         lc += offset[i];
         outBits[i] <== IsOdd(3)(lc);
+    }
+}
+
+// XTimes2: Multiplies by 2 in GF(2^8)
+template XTimes2(){
+    signal input in[8];
+    signal output out[8];
+
+    component xtimeConstant = Num2Bits(8);
+    xtimeConstant.in <== 0x1b;
+
+    component xor[7];
+
+    component isZero = IsZero();
+    isZero.in <== in[7];
+
+    out[0] <== 1-isZero.out;
+    for (var i = 0; i < 7; i++) {
+        xor[i] = XOR();
+        xor[i].a <== in[i];
+        xor[i].b <== xtimeConstant.out[i+1] * (1-isZero.out);
+        out[i+1] <== xor[i].out;
+    }
+}
+
+// XTimes: Multiplies by n in GF(2^8)
+// This uses a fast multiplication algorithm that uses the XTimes2 component
+// Number of constaints is always constant
+template XTimes(n){
+    signal input in[8];
+    signal output out[8];
+
+    component bits = Num2Bits(8);
+    bits.in <== n;
+
+    component XTimes2[7];
+
+    XTimes2[0] = XTimes2();
+    XTimes2[0].in <== in;
+
+    for (var i = 1; i < 7; i++) {
+            XTimes2[i] = XTimes2();
+            XTimes2[i].in <== XTimes2[i-1].out;
+    }
+
+    component xor[8];
+    component mul[8];
+    signal inter[8][8];
+
+    mul[0] = MulByte();
+    mul[0].a <== bits.out[0];
+    mul[0].b <== in;
+    inter[0] <== mul[0].c;
+
+    for (var i = 1; i < 8; i++) {
+        mul[i] = MulByte();
+        mul[i].a <== bits.out[i];
+        mul[i].b <== XTimes2[i-1].out;
+
+                xor[i] = XorBits();
+                xor[i].a <== inter[i-1];
+                xor[i].b <== mul[i].c;
+                inter[i] <== xor[i].out;
+        }
+
+    out <== inter[7];
+}
+
+// Multiplies a byte by an array of bits
+template MulByte(){
+    signal input a;
+    signal input b[8];
+    signal output c[8];
+
+    for (var i = 0; i < 8; i++) {
+        c[i] <== a * b[i];
     }
 }

@@ -1,7 +1,9 @@
 // from: https://github.com/crema-labs/aes-circom/tree/main/circuits
 pragma circom 2.1.9;
 
-include "utils.circom";
+include "../utils.circom";
+include "sbox128.circom";
+
 
 // Key Expansion Process
 //
@@ -107,18 +109,18 @@ template NextRound(){
     ];
     rcon.index <== round-1;
     component xorWord[4 + 1];
-    xorWord[0] = XorWord();
-    xorWord[0].bytes1 <== substituteWord[0].substituted;
-    xorWord[0].bytes2 <== rcon.out;
+    xorWord[0] = XORBLOCK(4);
+    xorWord[0].a <== substituteWord[0].substituted;
+    xorWord[0].b <== rcon.out;
 
     for (var i = 0; i < 4; i++) {
-        xorWord[i+1] = XorWord();
+        xorWord[i+1] = XORBLOCK(4);
         if (i == 0) {
-            xorWord[i+1].bytes1 <== xorWord[0].out;
+            xorWord[i+1].a <== xorWord[0].out;
         } else {
-            xorWord[i+1].bytes1 <== nextKey[i-1];
+            xorWord[i+1].a <== nextKey[i-1];
         }
-        xorWord[i+1].bytes2 <== key[i];
+        xorWord[i+1].b <== key[i];
 
         for (var j = 0; j < 4; j++) {
             nextKey[i][j] <== xorWord[i+1].out[j];
@@ -126,4 +128,53 @@ template NextRound(){
     }
 }
 
+// Outputs a round constant for a given round number
+template RCon(round) {
+    signal output out[4];
 
+    assert(round > 0 && round <= 10);
+
+    var rcon[10][4] = [
+        [0x01, 0x00, 0x00, 0x00],
+        [0x02, 0x00, 0x00, 0x00],
+        [0x04, 0x00, 0x00, 0x00],
+        [0x08, 0x00, 0x00, 0x00],
+        [0x10, 0x00, 0x00, 0x00],
+        [0x20, 0x00, 0x00, 0x00],
+        [0x40, 0x00, 0x00, 0x00],
+        [0x80, 0x00, 0x00, 0x00],
+        [0x1b, 0x00, 0x00, 0x00],
+        [0x36, 0x00, 0x00, 0x00]
+    ];
+
+    out <== rcon[round-1];
+}
+
+// Rotates an array of bytes to the left by a specified rotation
+template Rotate(rotation, length) {
+    assert(rotation < length);
+    signal input bytes[length];
+    signal output rotated[length];
+
+    for(var i = 0; i < length - rotation; i++) {
+        rotated[i] <== bytes[i + rotation];
+    }
+
+    for(var i = length - rotation; i < length; i++) {
+        rotated[i] <== bytes[i - length + rotation];
+    }
+}
+
+// Substitutes each byte in a word using the S-Box
+template SubstituteWord() {
+    signal input bytes[4];
+    signal output substituted[4];
+
+    component sbox[4];
+
+    for(var i = 0; i < 4; i++) {
+        sbox[i] = SBox128();
+        sbox[i].in <== bytes[i];
+        substituted[i] <== sbox[i].out;
+    }
+}

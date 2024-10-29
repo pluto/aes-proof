@@ -5,7 +5,6 @@ include "key_expansion.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
-include "transformations.circom";
 include "mix_columns.circom";
 
 // Cipher Process
@@ -94,4 +93,69 @@ template Cipher(){
         }
 
         cipher <== addRoundKey[10].newState;
+}
+
+// XORs a cipher state: 4x4 byte array
+template AddCipher(){
+    signal input state[4][4];
+    signal input cipher[4][4];
+    signal output newState[4][4];
+
+    component xorbyte[4][4];
+
+    for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 4; j++) {
+            xorbyte[i][j] = XorByte();
+            xorbyte[i][j].a <== state[i][j];
+            xorbyte[i][j].b <== cipher[i][j];
+            newState[i][j] <== xorbyte[i][j].out;
+        }
+    }
+}
+
+// ShiftRows: Performs circular left shift on each row
+// 0, 1, 2, 3 shifts for rows 0, 1, 2, 3 respectively
+template ShiftRows(){
+    signal input state[4][4];
+    signal output newState[4][4];
+
+    component shiftWord[4];
+
+    for (var i = 0; i < 4; i++) {
+        // Rotate: Performs circular left shift on each row
+        shiftWord[i] = Rotate(i, 4);
+        shiftWord[i].bytes <== state[i];
+        newState[i] <== shiftWord[i].rotated;
+    }
+}
+
+ // Applies S-box substitution to each byte
+template SubBlock(){
+        signal input state[4][4];
+        signal output newState[4][4];
+        component sbox[4];
+
+        for (var i = 0; i < 4; i++) {
+                sbox[i] = SubstituteWord();
+                sbox[i].bytes <== state[i];
+                newState[i] <== sbox[i].substituted;
+        }
+}
+
+// AddRoundKey: XORs the state with transposed the round key
+template AddRoundKey(){
+    signal input state[4][4];
+    signal input roundKey[4][4];
+    signal output newState[4][4];
+
+    component xorbyte[4][4];
+
+    for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 4; j++) {
+            xorbyte[i][j] = XorByte();
+            xorbyte[i][j].a <== state[i][j];
+            xorbyte[i][j].b <== roundKey[j][i];
+            newState[i][j] <== xorbyte[i][j].out;
+        }
+    }
 }
