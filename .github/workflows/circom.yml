@@ -48,5 +48,5 @@ jobs:
 
     - name: Build witness for aes-gcm
       run: |
-        build-circuit circuits/aes-gcm-fold/aes-gcm-fold.circom aes-fold.bin -l node_modules
+        build-circuit circuits/aes-gcm-fold/aes-gctr-fold.circom aes-fold.bin -l node_modules
         
