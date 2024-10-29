@@ -1,11 +1,10 @@
 // from: https://github.com/crema-labs/aes-circom/tree/main/circuits
 pragma circom 2.1.9;
 
-include "transformations.circom";
+include "key_expansion.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/gates.circom";
-include "tbox.circom";
 
 // MixColumns: Applies the equation for each column:
 // [s'0,c]   [2 3 1 1][s0,c]
@@ -197,4 +196,15 @@ template S3() {
     }
 
     out <== b2n.out;
+}
+
+template TBox(index) {
+    signal input subindex;
+    signal output out;
+
+    if (index == 0) {
+        out <== FieldMul2()(subindex);
+    } else if (index == 1) {
+        out <== FieldMul3()(subindex);
+    }
 }

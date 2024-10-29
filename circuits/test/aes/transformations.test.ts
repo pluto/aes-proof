@@ -51,24 +51,6 @@ describe("AES Key Expansion Components", () => {
       await generatePassCase(10, [0x36, 0x00, 0x00, 0x00]);
     });
   });
-
-  describe("XorWord", () => {
-    let circuit: WitnessTester<["bytes1", "bytes2"], ["out"]>;
-    before(async () => {
-      circuit = await circomkit.WitnessTester(`XorWord`, {
-        file: "aes-gcm/aes/key_expansion",
-        template: "XorWord",
-      });
-      console.log("XorWord #constraints:", await circuit.getConstraintCount());
-    });
-
-    it("should XOR correctly", async () => {
-      await circuit.expectPass(
-        { bytes1: [0x0a, 0x0b, 0x0c, 0x0d], bytes2: [0x01, 0x02, 0x03, 0x04] },
-        { out: [0x0b, 0x09, 0x0f, 0x09] }
-      );
-    });
-  });
 });
 
 describe("XTimes2", () => {

@@ -418,3 +418,56 @@ template WriteToIndex(m, n) {
         accum_index += writeSelector[i-1].out;
     }
 }
+
+//convert stream of plain text to blocks of 16 bytes
+template ToBlocks(l){
+        signal input stream[l];
+
+        var n = l\16;
+        if(l%16 > 0){
+                n = n + 1;
+        }
+        signal output blocks[n][4][4];
+
+        var i, j, k;
+
+        for (var idx = 0; idx < l; idx++) {
+                blocks[i][k][j] <== stream[idx];
+                k = k + 1;
+                if (k == 4){
+                        k = 0;
+                        j = j + 1;
+                        if (j == 4){
+                                j = 0;
+                                i = i + 1;
+                        }
+                }
+        }
+
+        if (l%16 > 0){
+               blocks[i][k][j] <== 1;
+               k = k + 1;
+        }
+}
+
+// convert blocks of 16 bytes to stream of bytes
+template ToStream(n,l){
+        signal input blocks[n][4][4];
+
+        signal output stream[l];
+
+        var i, j, k;
+
+        while(i*16 + j*4 + k < l){
+                stream[i*16 + j*4 + k] <== blocks[i][k][j];
+                k = k + 1;
+                if (k == 4){
+                        k = 0;
+                        j = j + 1;
+                        if (j == 4){
+                                j = 0;
+                                i = i + 1;
+                        }
+                }
+        }
+}
