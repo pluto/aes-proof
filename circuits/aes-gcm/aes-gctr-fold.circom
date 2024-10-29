@@ -14,7 +14,7 @@ template AESGCTRFOLD(INPUT_LEN) {
 
     // step_in[0..INPUT_LEN] => accumulate plaintext blocks
     // step_in[INPUT_LEN..INPUT_LEN*2]  => accumulate ciphertext blocks
-    // step_in[INPUT_LEN*2..INPUT_LEN*2+4]  => lastCounter
+    // step_in[INPUT_LEN*2..INPUT_LEN*2+4]  => accumulate counter
     signal input step_in[DATA_BYTES]; 
     signal output step_out[DATA_BYTES];
     signal counter;
