@@ -6,10 +6,7 @@ include "./utils.circom";
 // Compute AES-GCM 
 template AESGCMFOLD(INPUT_LEN) {
     assert(INPUT_LEN % 16 == 0);
-
     var DATA_BYTES = (INPUT_LEN * 2) + 4;
-    log(DATA_BYTES);
-
     signal input key[16];
     signal input iv[12];
     signal input aad[16];
